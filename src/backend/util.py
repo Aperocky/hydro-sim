@@ -26,11 +26,16 @@ def meshgrid_normal(size, min_feature_size=0.1, max_feature_size=1.9):
     return rel_heights
 
 
-def meshgrid_combine(size=100, reps = 100, adjust = 1, min_feature_size=0.1):
+def meshgrid_combine(size=100, reps = 100, min_feature_size=0.1, baseline=0):
     master = np.zeros((size, size))
     for _ in range(reps):
         grid = meshgrid_normal(size, min_feature_size=min_feature_size)
         grid *= np.random.uniform(-1,1)
         master += grid
-    master += adjust
+    baseline_map = {
+        0: 0,
+        1: master.min(),
+        2: master.mean(),
+    }
+    master -= baseline_map[baseline]
     return master
