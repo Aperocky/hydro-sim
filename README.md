@@ -21,20 +21,35 @@ Main package is written in typescript - with eventual goal of placing the terrai
 ---
 
 :white_check_mark: *Terrain Providing Flask(local) Backend.*
-:white_check_mark: *Sim reading from the local Backend*
-:white_check_mark: *Sim creating appropriately*
-:white_check_mark: *Basic structure of component/sim thought out*
-:white_check_mark: *Sim populating the flow directions*
-:black_square_button: *Sim populating the basins*
-:black_square_button: *Run initial water flows without sedimentation*
-:black_square_button: *Populate lakes with water*
-:black_square_button: *Add visualization, move from node to browser*
-:black_square_button: *Clickable display of variables within browser page*
-:black_square_button: *Add sedimentation and erosion*
-:black_square_button: *Climate change on whims*
-:white_check_mark: *Park a domain*
-:black_square_button: *Hook that domain to route53*
-:black_square_button: *Build stack with lambda and apig*
-:black_square_button: *Migrate frontend stack from local to S3*
-:black_square_button: *Bask in glory*
 
+:white_check_mark: *Sim reading from the local Backend*
+
+:white_check_mark: *Sim creating appropriately*
+
+:white_check_mark: *Basic structure of component/sim thought out*
+
+:white_check_mark: *Sim populating the flow directions*
+
+:black_square_button: *Sim populating the basins*
+
+:black_square_button: *Run initial water flows without sedimentation*
+
+:black_square_button: *Populate lakes with water*
+
+:black_square_button: *Add visualization, move from node to browser*
+
+:black_square_button: *Clickable display of variables within browser page*
+
+:black_square_button: *Add sedimentation and erosion*
+
+:black_square_button: *Climate change on whims*
+
+:white_check_mark: *Park a domain*
+
+:black_square_button: *Hook that domain to route53*
+
+:black_square_button: *Build stack with lambda and apig*
+
+:black_square_button: *Migrate frontend stack from local to S3*
+
+:black_square_button: *Bask in glory*
