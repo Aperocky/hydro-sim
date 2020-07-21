@@ -1,8 +1,7 @@
-import CONFIG from '../../conf/conf';
+import CONFIG from '../../../conf/conf';
 
 
 declare function require(name:string);
-const XMLHttpRequest = require('xhr2');
 const fetch = require('node-fetch');
 
 
@@ -42,19 +41,19 @@ async function callNumpy(size, reps, min_feature, name, baseline) {
 // None-async former functions - deprecated
 //
 
-function getResult(response, matrix, name): void {
-    matrix = response["matrix"];
-    console.log(`${name} MIN: ${response["min"]}`);
-    console.log(`${name} MAX: ${response["max"]}`);
-    console.log(`${name} MEAN: ${response["mean"]}`);
-}
-
-
-function ajaxGet(url, handler) {
-    let req = new XMLHttpRequest();
-    req.addEventListener('load', handler);
-    req.open("get", url, false);
-    req.responseType = 'json';
-    req.send();
-}
-
+//function getResult(response, matrix, name): void {
+//    matrix = response["matrix"];
+//    console.log(`${name} MIN: ${response["min"]}`);
+//    console.log(`${name} MAX: ${response["max"]}`);
+//    console.log(`${name} MEAN: ${response["mean"]}`);
+//}
+//
+//
+//function ajaxGet(url, handler) {
+//    let req = new XMLHttpRequest();
+//    req.addEventListener('load', handler);
+//    req.open("get", url, false);
+//    req.responseType = 'json';
+//    req.send();
+//}
+//

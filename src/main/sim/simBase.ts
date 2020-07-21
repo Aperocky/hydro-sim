@@ -1,26 +1,23 @@
-import { Square, SquareUtil } from './square/square';
-import { getData } from './loader';
+import { Square, SquareUtil } from '../components/square';
+import { Basin } from '../components/basin';
+import populateFlowDirection from './util/populateFlowDirection';
+import timer from './util/timer';
 
 
-export class Sim {
+export class SimBase {
 
     size: number;
     map: Square[][];
     initialized: boolean;
     altitude: number[][];
     precip: number[][];
+    basins: Map<string, Basin>;
 
     constructor(size) {
         this.size = size;
-        let promise = getData(size)
-        promise.then((data) => {
-            this.altitude = data['altitude'];
-            this.precip = data['precip'];
-            this.createMap();
-            this.initialized = true;
-        });
     }
 
+    // Create a map of squares based on numpy multivariate results
     createMap() {
         this.map = [];
         for (let i=0; i<this.size; i++) {
@@ -30,5 +27,6 @@ export class Sim {
                 this.map[i][j] = square;
             }
         }
+        timer("populateFlowDirection")(populateFlowDirection)(this.map, this.size);
     }
 }

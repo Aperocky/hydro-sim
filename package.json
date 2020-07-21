@@ -5,7 +5,10 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "@types/node": "^14.0.23",
+    "@types/uuid": "^8.0.0",
     "node-fetch": "^2.6.0",
+    "uuid": "^8.2.0",
     "xhr2": "^0.2.0"
   },
   "scripts": {

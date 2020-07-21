@@ -1,7 +1,15 @@
-import { Sim } from '../main/main'
+import { Sim } from '../main/sim/sim';
+import ping from '../main/sim/read/ping';
 
-const SIZE = 10;
+const SIZE = 100;
 
 let sim = new Sim(SIZE);
-console.log(sim.altitude);
-console.log(sim.precip);
+let healthCheck = () => {
+    if (sim.initialized) {
+        console.log(ping(sim))
+    } else {
+        console.log("100ms TIME")
+        setTimeout(healthCheck, 100);
+    }
+}
+healthCheck();
