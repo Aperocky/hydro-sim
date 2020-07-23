@@ -1,6 +1,7 @@
 import { Square, SquareUtil } from '../components/square';
 import { Basin } from '../components/basin';
 import populateFlowDirection from './util/populateFlowDirection';
+import populateBasins from './util/populateBasins';
 import timer from './util/timer';
 
 
@@ -20,6 +21,7 @@ export class SimBase {
     // Create a map of squares based on numpy multivariate results
     createMap() {
         this.map = [];
+        this.basins = new Map();
         for (let i=0; i<this.size; i++) {
             this.map.push([]);
             for (let j=0; j<this.size; j++) {
@@ -27,6 +29,7 @@ export class SimBase {
                 this.map[i][j] = square;
             }
         }
-        timer("populateFlowDirection")(populateFlowDirection)(this.map, this.size);
+        timer("populateFlowDirection")(populateFlowDirection)(this);
+        timer("populateBasins")(populateBasins)(this);
     }
 }

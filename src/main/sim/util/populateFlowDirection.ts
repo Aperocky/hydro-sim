@@ -1,8 +1,14 @@
 import { Square, SquareUtil } from '../../components/square';
 import { FlowUtil } from '../../components/flow';
+import { Sim } from '../sim';
+import * as constants from '../../constant/constant';
+
 
 // This populate all flow directions
-export default function populateFlowDirection(map: Square[][], size: number): void {
+export default function populateFlowDirection(sim: Sim): void {
+    let map: Square[][] = sim.map;
+    let size: number = sim.size;
+    let noflowCount = 0;
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(i, j, size);
@@ -15,7 +21,17 @@ export default function populateFlowDirection(map: Square[][], size: number): vo
                     maxHeightDiffPair = [key, heightDiff];
                 }
             });
-            FlowUtil.populateFlowDirection(currSquare.flow, maxHeightDiffPair[0], maxHeightDiffPair[1]);
+            let flowDirection = maxHeightDiffPair[0];
+            let flowVolume = maxHeightDiffPair[1];
+            FlowUtil.populateFlowDirection(currSquare.flow, flowDirection, flowVolume);
+            if (flowDirection === 0) {
+                noflowCount++;
+            } else {
+                let floc = adjacents.get(flowDirection);
+                let flowToSquare = map[floc[0]][floc[1]];
+                FlowUtil.addInFlowDir(flowToSquare.flow, constants.REVERSE.get(flowDirection));
+            }
         }
     }
+    console.log(`No flow count ${noflowCount}`);
 }

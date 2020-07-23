@@ -1,13 +1,20 @@
 import { Basin } from './basin';
+import { v4 as uuid } from 'uuid';
 
 export class SuperBasin extends Basin {
 
     // When water level drops below this number, the superbasin will be divided
     // into sub(Superbasins or basins)
+    superBasinId: string;
     // As no water bridge will connect the super basin anchors.
     divideElevation: number;
     // Upon division, the 2 separate basin member.
     divideBasinLayouts: string[][];
+
+    constructor() {
+        super(); // Placeholder, nothing is done in the base class constructor
+        this.superBasinId = uuid();
+    }
 
     static fromBasins(basinList: Basin[]) {
         // Extend to member basins
@@ -15,11 +22,13 @@ export class SuperBasin extends Basin {
 
         // Super basin specifics
         superBasin.isBaseBasin = false;
+        superBasin.isSubBasin = false;
+        superBasin.isFull = false;
         let basins = [].concat(...basinList.map(b => b.memberBasins));
         superBasin.memberBasins = basins;
         for (let basin of basins) {
-            // Do not need to keep the old superbasin once they're merged into new one
-            basin.subBasinUnder = superBasin.basinId;
+            basin.isSubBasin = true;
+            basin.subBasinUnder = superBasin.superBasinId;
         }
 
         // Populate regular basin parameter and divide

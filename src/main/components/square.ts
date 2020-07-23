@@ -6,6 +6,7 @@ export type Square = {
     altitude: number;
     precipitation: number;
     flow: Flow;
+    basin: string;
 }
 
 
@@ -16,6 +17,7 @@ export class SquareUtil {
             altitude: altitude,
             precipitation: precip,
             flow: FlowUtil.initFlow(),
+            basin: "",
         };
     }
 

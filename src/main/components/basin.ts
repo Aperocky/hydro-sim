@@ -6,7 +6,6 @@ import { v4 as uuid } from 'uuid';
 // def lowest point: A square where all other squares adjacent to it are higher than it.
 export class Basin {
 
-    basinId: string;
     // The lowest point square location
     anchor: string;
     // member Squares where the converges to the anchor
@@ -24,31 +23,27 @@ export class Basin {
     // Amount of water this basin can hold
     holdCapacity: number;
     // Is full
-    full: boolean;
-    // Is fully controlled under a superbasin ("" means None)
+    isFull: boolean;
+    // Is fully controlled under a superbasin
+    isSubBasin: boolean;
     subBasinUnder: string;
 
     // Super basin specifics
     isBaseBasin: boolean;
     memberBasins: string[];
 
-    constructor() {
-        this.basinId = uuid();
-    }
-
-    static fromMembers(anchor: string, members: string[], edgeMembers: string[], holdElevation: number, holdCapacity: number): Basin {
+    static fromMembers(anchor: string, members: string[]): Basin {
         let basin = new this();
         basin.isBaseBasin = true;
-        basin.memberBasins = [basin.basinId]
-        basin.populateInfo(anchor, members, edgeMembers, holdElevation, holdCapacity);
+        basin.anchor = anchor;
+        basin.memberBasins = [anchor];
+        basin.members = members;
+        basin.isFull = false;
+        basin.isSubBasin = false;
         return basin;
     }
 
-    populateInfo(anchor: string, members: string[], edgeMembers: string[], holdElevation: number, holdCapacity: number): void {
-        this.anchor = anchor;
-        this.members = members;
+    populateEdgeMembers(edgeMembers: string[]) {
         this.edgeMembers = edgeMembers;
-        this.holdElevation = holdElevation;
-        this.holdCapacity = holdCapacity;
     }
 }

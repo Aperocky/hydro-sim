@@ -6,3 +6,6 @@ tsc:
 
 test:
 	@find src/test -name "*.js" -type f | xargs -I{} node {} 
+
+service:
+	@python3 server/server.py

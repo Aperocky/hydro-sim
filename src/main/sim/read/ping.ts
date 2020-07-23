@@ -2,7 +2,7 @@ import { Sim } from '../sim';
 import { Square, SquareUtil } from '../../components/square';
 
 
-// health check of sim
+// health check of sim, marginally useful at returning basins
 export default function ping(sim: Sim): Object {
     let basinCount = 0;
     let maxHeight = 0;
