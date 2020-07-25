@@ -24,3 +24,17 @@ REVERSE.set(5, 1);
 REVERSE.set(6, 2);
 REVERSE.set(7, 3);
 REVERSE.set(8, 4);
+
+
+export const UNITS: Map<string, number> = new Map();
+// Altitude units are in meters.
+UNITS.set("altitude", 200);
+// Precipitation units are in mm
+UNITS.set("precipitation", 500);
+// Volume rates are in m**3
+// This takes consideration of fact that precipitation is in mm and area is in km**2
+UNITS.set("rainToVolume", 1000);
+// Square of depth x multiplied by this to get volume in m**3
+UNITS.set("squareToVolume", 1000000);
+// Area placeholder, each square is 1 km**2
+UNITS.set('area', 1);

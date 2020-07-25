@@ -1,7 +1,8 @@
 import { Square, SquareUtil } from '../components/square';
-import { Basin } from '../components/basin';
+import { Basin } from '../components/basin/basin';
 import populateFlowDirection from './util/populateFlowDirection';
 import populateBasins from './util/populateBasins';
+import populateBasinHold from './util/populateBasinHold';
 import timer from './util/timer';
 
 
@@ -31,5 +32,6 @@ export class SimBase {
         }
         timer("populateFlowDirection")(populateFlowDirection)(this);
         timer("populateBasins")(populateBasins)(this);
+        timer("populateBasinHold")(populateBasinHold)(this);
     }
 }

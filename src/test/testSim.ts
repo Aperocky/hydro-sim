@@ -11,35 +11,59 @@ const SIZE = 150;
 let testBasins = (sim: Sim) => {
     let count = 0;
     sim.basins.forEach((basin, anchor) => {
-        console.log(`${anchor}: ${basin.members.length} members`);
+        let logs: string[] = [];
+        logs.push(`${anchor} basin:`);
+        logs.push(`memberSize: ${basin.members.length}`);
+        logs.push(`edgeLength: ${basin.basinHold.edgeMembers.length}`);
+        logs.push(`holdVolume: ${Math.floor(basin.basinHold.holdCapacity)}`);
+        logs.push(`drainLocation: ${basin.basinHold.holdMember}`);
+        logs.push(`drainHeight: ${basin.basinHold.holdElevation}`);
+        logs.push(`drainTo: ${basin.basinHold.holdBasins}`);
+        logs.push(`----------------------`);
+        console.log(logs.join("\n"));
         count += basin.members.length
     })
     assert(count == sim.size * sim.size);
 }
 
 
-const TESTS = [
-    testBasins,
-]
+let testSquares = (sim: Sim) => {
+    let count = 0;
+    sim.map.forEach((arr) => {
+        arr.forEach((square) => {
+            if (square.basin) {
+                count++;
+            }
+        })
+    })
+    assert(count == sim.size * sim.size);
+}
+
+
+const TESTS = {
+    testBasin: testBasins,
+    testSquare: testSquares,
+}
+
 
 let sim = new Sim(SIZE);
 let iterCount = 0;
-let healthCheck = () => {
+let mainTest = () => {
     if (iterCount > 20) {
         console.log("Did not load in due time");
         return;
     }
     if (sim.initialized) {
         let result = timer('ping')(ping)(sim);
-        for (let test of TESTS) {
-            test(sim);
+        for (let [name, test] of Object.entries(TESTS)) {
+            timer(`TEST ${name}`)(test)(sim);
         }
         console.log(result);
     } else {
         iterCount++;
         console.log("100ms TIME")
-        setTimeout(healthCheck, 100);
+        setTimeout(mainTest, 100);
     }
 }
-healthCheck();
+mainTest();
 

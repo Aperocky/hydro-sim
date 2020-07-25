@@ -7,6 +7,7 @@ export type Square = {
     precipitation: number;
     flow: Flow;
     basin: string;
+    edgeOf: Set<string>;
 }
 
 
@@ -18,6 +19,7 @@ export class SquareUtil {
             precipitation: precip,
             flow: FlowUtil.initFlow(),
             basin: "",
+            edgeOf: new Set(),
         };
     }
 

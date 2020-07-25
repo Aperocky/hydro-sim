@@ -30,13 +30,15 @@ Main package is written in typescript - with eventual goal of placing the terrai
 
 :white_check_mark: *Sim populating the flow directions*
 
-:black_square_button: *Sim populating the basins*
+:white_check_mark: *Sim populating the basins*
+
+:black_square_button: *Visualization: Display Altitude map*
+
+:black_square_button: *Visualization: Display basins and watershed*
 
 :black_square_button: *Run initial water flows without sedimentation*
 
 :black_square_button: *Populate lakes with water*
-
-:black_square_button: *Add visualization, move from node to browser*
 
 :black_square_button: *Clickable display of variables within browser page*
 

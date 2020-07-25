@@ -1,5 +1,5 @@
 import { Square, SquareUtil } from '../../components/square';
-import { Basin } from '../../components/basin';
+import { Basin } from '../../components/basin/basin';
 import { Sim } from '../sim';
 import ping from '../read/ping';
 
@@ -18,7 +18,9 @@ export default function populateBasins(sim: Sim): void {
 }
 
 function createBasin(sim: Sim, anchor: string, members: string[]): Basin {
-    let basin: Basin = Basin.fromMembers(anchor, members)
+    let anchorLoc = JSON.parse(anchor);
+    let anchorAltitude: number = sim.map[anchorLoc.i][anchorLoc.j].altitude;
+    let basin: Basin = Basin.fromMembers(anchor, anchorAltitude, members)
     for (let member of members) {
         let currLoc: {i: number, j: number} = JSON.parse(member);
         let currSquare: Square = sim.map[currLoc.i][currLoc.j];
