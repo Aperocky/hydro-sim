@@ -27,11 +27,16 @@ export class SimBase {
             this.map.push([]);
             for (let j=0; j<this.size; j++) {
                 let square: Square = SquareUtil.createSquare(this.altitude[i][j], this.precip[i][j]);
+                square.location = SquareUtil.stringRep(i, j);
                 this.map[i][j] = square;
             }
         }
         timer("populateFlowDirection")(populateFlowDirection)(this);
         timer("populateBasins")(populateBasins)(this);
         timer("populateBasinHold")(populateBasinHold)(this);
+    }
+
+    getSquare(i: number, j: number): Square {
+        return this.map[i][j];
     }
 }

@@ -8,6 +8,7 @@ export type Square = {
     flow: Flow;
     basin: string;
     edgeOf: Set<string>;
+    location: string;
 }
 
 
@@ -15,12 +16,26 @@ export class SquareUtil {
 
     static createSquare(altitude: number, precip: number): Square {
         return {
-            altitude: altitude,
-            precipitation: precip,
+            altitude: SquareUtil.altAdjust(altitude),
+            precipitation: SquareUtil.precipAdjust(precip),
             flow: FlowUtil.initFlow(),
             basin: "",
             edgeOf: new Set(),
+            location: "", // To be filled
         };
+    }
+
+    static altAdjust(altitude: number): number {
+        return altitude * constants.UNITS.get('altitude');
+    }
+
+    static precipAdjust(precip: number): number {
+        let factor: number = constants.UNITS.get('precipitation');
+        if (precip > 0) {
+            return factor * ( 1 + precip );
+        }
+        let scale: number = Math.exp(precip);
+        return factor * scale;
     }
 
     static stringRep(i: number, j: number): string {
@@ -28,6 +43,11 @@ export class SquareUtil {
             i: i,
             j: j,
         })
+    }
+
+    static getAdjacentLocs(square: Square, size: number): Map<number, number[]> {
+        let loc: {i:number, j:number} = JSON.parse(square.location);
+        return SquareUtil.getAdjacentSquares(loc.i, loc.j, size);
     }
 
     static getAdjacentSquares(i: number, j: number, size: number): Map<number, number[]> {

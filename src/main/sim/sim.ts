@@ -1,7 +1,7 @@
 import { Square, SquareUtil } from '../components/square';
 import { getData } from '../async/loader';
 import { SimBase } from './simBase';
-import { Basin } from '../components/basin';
+import { Basin } from '../components/basin/basin';
 import timer from './util/timer';
 
 

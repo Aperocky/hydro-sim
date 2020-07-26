@@ -32,7 +32,9 @@ Main package is written in typescript - with eventual goal of placing the terrai
 
 :white_check_mark: *Sim populating the basins*
 
-:black_square_button: *Visualization: Display Altitude map*
+:white_check_mark: *Visualization: Display Altitude map*
+
+![Altitude Map](/images/alt_map.png)
 
 :black_square_button: *Visualization: Display basins and watershed*
 

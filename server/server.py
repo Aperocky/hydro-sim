@@ -1,9 +1,14 @@
 from flask import Flask
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from util import meshgrid_combine
 
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_url_path='/static',
+    static_folder='../asset/static',
+    template_folder='../asset/template'
+)
 GOOD = {"success": True}
 FAIL = {"success": False}
 
@@ -43,6 +48,11 @@ def get_combine_mesh():
     }
     result.update(GOOD)
     return jsonify(result)
+
+
+@app.route("/ui")
+def display():
+    return render_template("index.html")
 
 
 if __name__ == "__main__":

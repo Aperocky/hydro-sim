@@ -4,3 +4,5 @@
 src/**/*.js
 conf/**/*.js
 node_modules/*
+# asset/static are compiled from source
+asset/static/*
