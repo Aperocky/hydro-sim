@@ -19,8 +19,8 @@ async function getMatrix(url, name) {
 export async function getData(size) {
     let altitude: number[][];
     let precip: number[][];
-    altitude = await callNumpy(size, 200, 0.1, "ALTITUDE", 1);
-    precip = await callNumpy(size, 10, 1, "PRECIPITATION", 2);
+    altitude = await callNumpy(size, 250, 0.1, "ALTITUDE", 1);
+    precip = await callNumpy(size, 20, 1, "PRECIPITATION", 2);
     return {
         "altitude": altitude,
         "precip": precip,

@@ -3,6 +3,7 @@ import PAGE from './elements';
 import { Sim } from '../sim/sim';
 import { Square, SquareUtil } from '../components/square';
 import { SpriteUtil } from './render/sprite';
+import * as COLOR from '../constant/colors';
 
 
 const SPRITE_SIZE = 6
@@ -38,7 +39,7 @@ export class MapContainer {
         let loop = () => {
             if (sim.initialized) {
                 this.initializeComponents(sim);
-                this.createAltitudeTerrain();
+                this.createColorMap();
             } else {
                 console.log("Waiting 200ms for sim to initialize")
                 setTimeout(loop, 200);
@@ -69,10 +70,46 @@ export class MapContainer {
         console.log(`mapContainer has ${this.mapContainer.children.length} children`);
     }
 
-    createAltitudeTerrain(): void {
+    createColorMap(mapType='base'): void {
         this.mapComponents.forEach((val) => {
             let altitude = val.square.altitude;
-            let tint = SpriteUtil.getAltitudeTint(altitude);
+            let altConf = COLOR.MAP_CONFIG[mapType];
+            let tint = SpriteUtil.getTint(altitude, altConf);
+            val.sprite.tint = tint;
+        })
+    }
+
+    getAlphaTint(mapType: string, square: Square): number[] {
+        let alphaConf = COLOR.MAP_CONFIG[mapType];
+        switch(mapType) {
+            case 'precip': {
+                return SpriteUtil.getColor(square.precipitation, alphaConf);
+            }
+            case 'basin': {
+                if (square.isHold) {
+                    return [255, 255, 0];
+                }
+                if (square.edgeOf.size > 0) {
+                    return [200, 0, 0];
+                } else if (square.edgeOf.size > 2) {
+                    return [255, 0, 0];
+                } else {
+                    return [100, 100, 100];
+                }
+            }
+            default: {
+                return [255, 255, 255]
+            }
+        }
+    }
+
+    createAlphaColorMap(baseMapType: string, alphaMapType: string): void {
+        this.mapComponents.forEach((val) => {
+            let altitude = val.square.altitude;
+            let altConf = COLOR.MAP_CONFIG[baseMapType];
+            let baseColor = SpriteUtil.getColor(altitude, altConf);
+            let alphaColor = this.getAlphaTint(alphaMapType, val.square);
+            let tint = SpriteUtil.alphaBlend(alphaColor, baseColor, COLOR.OVERLAY_ALPHA);
             val.sprite.tint = tint;
         })
     }

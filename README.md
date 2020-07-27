@@ -6,8 +6,6 @@ I haven't been able to spend much time on the beach with flowing water, but what
 
 ## Design.
 
----
-
 *Server*:
 
 A python package to return a randomly generated terrain by multi-variate normal distributions, precipitation is also generated from the same package. The eventual goal is to put it on Lambda. It's just way too difficult to find the appropriate scientific computing package and functions for javascript, so it make sense to have a small self contained backend service.
@@ -17,8 +15,6 @@ A python package to return a randomly generated terrain by multi-variate normal 
 Main package is written in typescript - with eventual goal of placing the terrain in pixi containers, with turn by turn erosion/sedimentation. Might add in climate change for fun.
 
 ## Progress
-
----
 
 :white_check_mark: *Terrain Providing Flask(local) Backend.*
 
@@ -36,11 +32,17 @@ Main package is written in typescript - with eventual goal of placing the terrai
 
 ![Altitude Map](/images/alt_map.png)
 
-:black_square_button: *Visualization: Display basins and watershed*
+:white_check_mark: *Visualization: Display precipitation, basins and watershed*
 
-:black_square_button: *Run initial water flows without sedimentation*
+![Precipitation Map](/images/precip_map.png)
 
-:black_square_button: *Populate lakes with water*
+![Basin Map](/images/basin_map.png)
+
+:black_square_button: *build actual flow volume, and lake fill up turn based action*
+
+:black_square_button: *build basin overflow, merge actions*
+
+:black_square_button: *Visualization: Display rivers and lakes*
 
 :black_square_button: *Clickable display of variables within browser page*
 

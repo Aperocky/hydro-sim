@@ -51,6 +51,8 @@ function findHold(sim: Sim): void {
                 holdBasins = edgeSquare.edgeOf;
             }
         })
+        let loc = JSON.parse(minLoc);
+        sim.map[loc.i][loc.j].isHold = true;
         basinHold.holdMember = minLoc;
         basinHold.holdElevation = minimumHeight;
         let localSet = new Set(holdBasins);
@@ -59,6 +61,7 @@ function findHold(sim: Sim): void {
         findHoldCapacity(sim, basin)
     })
 }
+
 
 function findHoldCapacity(sim: Sim, basin: Basin): void {
     // Find hold capacity
