@@ -11,6 +11,7 @@ export type Square = {
     location: string;
     isHold: boolean;
     submerged: boolean;
+    isShore: boolean;
 }
 
 
@@ -26,6 +27,7 @@ export class SquareUtil {
             location: "", // To be filled
             isHold: false,
             submerged: false,
+            isShore: false,
         };
     }
 
@@ -81,5 +83,11 @@ export class SquareUtil {
             });
         });
         return result;
+    }
+
+    static getUpstreamSquares(square: Square, sim): Square[] {
+        let result: Square[] = [];
+        let inflowLocs = SquareUtil.getInflowLocs(square, sim.size);
+        return inflowLocs.map((loc) => sim.map[loc.i][loc.j]);
     }
 }

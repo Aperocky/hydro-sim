@@ -3,11 +3,12 @@ import { getData } from '../async/loader';
 import { SimBase } from './simBase';
 import { Basin } from '../components/basin/basin';
 import timer from './util/timer';
+import runTurn from './util/runTurn';
 
 
 export class Sim extends SimBase {
 
-    liveSuperBasins: Map<string, Basin>;
+    superBasins: Map<string, Basin>;
 
     constructor(size) {
         super(size);
@@ -15,8 +16,13 @@ export class Sim extends SimBase {
         promise.then((data) => {
             this.altitude = data['altitude'];
             this.precip = data['precip'];
+            this.superBasins = new Map();
             this.createMap();
             this.initialized = true;
         });
+    }
+
+    run(): void {
+        runTurn(this);
     }
 }

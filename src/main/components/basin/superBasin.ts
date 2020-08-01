@@ -9,7 +9,6 @@ export class SuperBasin extends Basin {
     // As no water bridge will connect the super basin anchors.
     divideElevation: number;
     // Upon division, the 2 separate basin member.
-    divideBasinLayouts: string[][];
 
     constructor() {
         super(); // Placeholder, nothing is done in the base class constructor
@@ -38,6 +37,5 @@ export class SuperBasin extends Basin {
 
     // Populate regular basin members from sub basins
     populateFromSubBasins() {
-        // TODO add this logic
     }
 }

@@ -1,6 +1,8 @@
 import { Sim } from '../main/sim/sim';
 import ping from '../main/sim/read/ping';
 import timer from '../main/sim/util/timer';
+import lakeFormationTests from './testLakeFormation';
+import runTests from './testRunTurn';
 
 
 declare function require(name:string);
@@ -43,6 +45,8 @@ let testSquares = (sim: Sim) => {
 const TESTS = {
     testBasin: testBasins,
     testSquare: testSquares,
+    ...lakeFormationTests,
+    ...runTests,
 }
 
 

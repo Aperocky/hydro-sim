@@ -21,12 +21,14 @@ function createBasin(sim: Sim, anchor: string, members: string[]): Basin {
     let anchorLoc = JSON.parse(anchor);
     let anchorAltitude: number = sim.map[anchorLoc.i][anchorLoc.j].altitude;
     let basin: Basin = Basin.fromMembers(anchor, anchorAltitude, members)
+    basin.lake.initiate(sim.map[anchorLoc.i][anchorLoc.j], sim);
     for (let member of members) {
         let currLoc: {i: number, j: number} = JSON.parse(member);
         let currSquare: Square = sim.map[currLoc.i][currLoc.j];
         currSquare.basin = anchor;
     }
     sim.basins.set(anchor, basin);
+    sim.superBasins.set(anchor, basin);
     return basin;
 }
 

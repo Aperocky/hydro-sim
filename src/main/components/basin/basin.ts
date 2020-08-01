@@ -1,8 +1,15 @@
 import { SquareUtil } from '../square';
 import { v4 as uuid } from 'uuid';
-import { LakeStatus, LakeStatusUtil } from './lakeStatus';
+import LakeFormation from './lakeFormation';
 import { BasinHold, HoldUtil } from './basinHold';
 
+
+export type BasinFullEvent = {
+    holdMember: string;
+    holdElevation: number;
+    overFlowVolume: number;
+    basin: Basin;
+}
 
 // A basin consist of a lowest point and all
 // Squares which flowDirection eventually converges to that lowest point
@@ -20,8 +27,9 @@ export class Basin {
     basinHold: BasinHold;
 
     // STATUS
-    lakeStatus: LakeStatus;
+    lake: LakeFormation
     isFull: boolean;
+    outFlowVolume: number;
     isSubBasin: boolean;
     subBasinUnder: string;
 
@@ -39,7 +47,23 @@ export class Basin {
         basin.isFull = false;
         basin.isSubBasin = false;
         basin.basinHold = HoldUtil.createHold();
-        basin.lakeStatus = LakeStatusUtil.getEmptyLake(anchorAltitude);
+        basin.lake = new LakeFormation();
         return basin;
+    }
+
+    processInflow(volume: number, sim): BasinFullEvent | null {
+        let currVolume = this.lake.getVolume();
+        if (currVolume + volume > this.basinHold.holdCapacity) {
+            let outFlowAmount = currVolume + volume - this.basinHold.holdCapacity;
+            this.lake.fillToVolume(sim, this.basinHold.holdCapacity);
+            return {
+                holdMember: this.basinHold.holdMember,
+                holdElevation: this.basinHold.holdElevation,
+                overFlowVolume: outFlowAmount,
+                basin: this,
+            }
+        }
+        this.lake.fillByVolume(sim, volume);
+        return null;
     }
 }

@@ -39,12 +39,11 @@ export class FlowUtil {
     }
 
     static addInFlowVol(flow: Flow, direction: number, volume: number): void {
-        if (direction.toString() in flow.inFlows) {
-            flow.inFlows.set(direction, 0);
+        if (flow.inFlows.has(direction)) {
+            flow.inFlows.set(direction, volume);
         } else {
-            console.log("Adding flow to no existing direction");
-            console.log("Something is likely wrong");
-            flow.inFlows[direction] = volume;
+            console.log(`Adding flow to no existing direction: ${Array.from(flow.inFlows.keys())}, ${direction}`);
+            flow.inFlows.set(direction, volume);
         }
     }
 }
