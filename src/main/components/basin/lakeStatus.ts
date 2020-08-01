@@ -4,7 +4,7 @@ export type LakeStatus = {
     volume: number;
 }
 
-export class LakeFormation {
+export class LakeStatusUtil {
 
     static getEmptyLake(bottom: number): LakeStatus {
         return {

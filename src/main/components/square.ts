@@ -9,7 +9,8 @@ export type Square = {
     basin: string;
     edgeOf: Set<string>;
     location: string;
-    isHold: boolean
+    isHold: boolean;
+    submerged: boolean;
 }
 
 
@@ -24,6 +25,7 @@ export class SquareUtil {
             edgeOf: new Set(),
             location: "", // To be filled
             isHold: false,
+            submerged: false,
         };
     }
 
@@ -63,5 +65,21 @@ export class SquareUtil {
             adjacents.set(key, [x, y]);
         });
         return adjacents;
+    }
+
+    // Easy way, only works when location has been published
+    static getInflowLocs(square: Square, size: number): {i: number, j: number}[] {
+        let inFlowMap: Map<number, number> = square.flow.inFlows;
+        let currLoc: {i: number, j: number} = JSON.parse(square.location);
+        let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(currLoc.i, currLoc.j, size);
+        let result = [];
+        inFlowMap.forEach((value, key) => {
+            let loc = adjacents.get(key);
+            result.push({
+                i: loc[0],
+                j: loc[1],
+            });
+        });
+        return result;
     }
 }

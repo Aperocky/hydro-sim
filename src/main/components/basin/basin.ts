@@ -1,6 +1,6 @@
 import { SquareUtil } from '../square';
 import { v4 as uuid } from 'uuid';
-import { LakeStatus, LakeFormation } from './lakeStatus';
+import { LakeStatus, LakeStatusUtil } from './lakeStatus';
 import { BasinHold, HoldUtil } from './basinHold';
 
 
@@ -39,7 +39,7 @@ export class Basin {
         basin.isFull = false;
         basin.isSubBasin = false;
         basin.basinHold = HoldUtil.createHold();
-        basin.lakeStatus = LakeFormation.getEmptyLake(anchorAltitude);
+        basin.lakeStatus = LakeStatusUtil.getEmptyLake(anchorAltitude);
         return basin;
     }
 }

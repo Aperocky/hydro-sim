@@ -3,7 +3,10 @@ import PAGE from './elements';
 import { Sim } from '../sim/sim';
 import { Square, SquareUtil } from '../components/square';
 import { SpriteUtil } from './render/sprite';
+import { Console } from './console';
 import * as COLOR from '../constant/colors';
+import dataStore from './helper/dataStore';
+import generalInfo from '../sim/read/generalInfo';
 
 
 const SPRITE_SIZE = 6
@@ -29,9 +32,15 @@ export class MapContainer {
             width: 900, height: 900, view: canvas
         });
         let mapContainer = new PIXI.Container();
+        mapContainer.interactive = true;
+        mapContainer.on('mouseout', () => {
+            Console.clearText();
+            Console.displayGeneralInfo();
+        });
         app.stage.addChild(mapContainer);
         this.mapContainer = mapContainer;
         this.mapComponents = new Map();
+        Console.appendText("INITIATE MAPCONTAINER");
     }
 
     initialize(sim: Sim): void {
@@ -40,6 +49,7 @@ export class MapContainer {
             if (sim.initialized) {
                 this.initializeComponents(sim);
                 this.createColorMap();
+                dataStore.setGeneralInfo(generalInfo(sim));
             } else {
                 console.log("Waiting 200ms for sim to initialize")
                 setTimeout(loop, 200);
@@ -57,6 +67,12 @@ export class MapContainer {
                 let x = SPRITE_SIZE * i;
                 let y = SPRITE_SIZE * j;
                 let sprite: PIXI.Sprite = SpriteUtil.getBaseSprite(x, y);
+                sprite.interactive = true;
+                sprite.
+                    on('mouseover', () => {
+                        Console.displaySquare(square);
+                        Console.displayBasin(sim.basins.get(square.basin));
+                    });
                 this.mapContainer.addChild(sprite);
                 let record: Component = {
                     locStr: square.location,
@@ -66,7 +82,6 @@ export class MapContainer {
                 this.mapComponents.set(square.location, record);
             }
         }
-        console.log(`Added ${this.mapComponents.size} sprites`);
         console.log(`mapContainer has ${this.mapContainer.children.length} children`);
     }
 

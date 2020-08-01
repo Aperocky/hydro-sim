@@ -40,12 +40,10 @@ function dfsAddBasinMember(sim: Sim, currNode: string, members: string[]): void 
     members.push(currNode);
     let currLoc: {i: number, j: number} = JSON.parse(currNode);
     let currSquare: Square = sim.map[currLoc.i][currLoc.j];
-    let inFlowMap: Map<number, number> = currSquare.flow.inFlows;
-    let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(currLoc.i, currLoc.j, sim.size)
-    inFlowMap.forEach((value, key) => {
-        let loc = adjacents.get(key);
-        let locStr = JSON.stringify({i: loc[0], j: loc[1]})
+    let inFlowLocs = SquareUtil.getInflowLocs(currSquare, sim.size);
+    for (let loc of inFlowLocs) {
+        let locStr = JSON.stringify(loc);
         dfsAddBasinMember(sim, locStr, members);
-    })
+    }
 }
 

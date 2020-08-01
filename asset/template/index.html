@@ -36,6 +36,17 @@
             display: inline-block;
             margin: 10px;
         }
+        #console {
+            font-family: monospace;
+            color: #eee;
+            padding: 20px;
+            width: 100%;
+            height: 450px;
+            background: #222;
+            border-radius: 40px;
+            border: 10px solid #555;
+            overflow-y: auto;
+        }
     </style>
 </head>
 
@@ -58,6 +69,13 @@
                 <button type="button" class="btn btn-info inlineb" id="show_alt">ALTITUDE</button>
                 <button type="button" class="btn btn-info inlineb" id="show_precip">PRECIP</button>
                 <button type="button" class="btn btn-info inlineb" id="show_basin">BASIN</button>
+            </div>
+            <div class="row">
+                <p class='text-muted'>Information Panel</p>
+            </div>
+            <div class="row">
+                <div id='console'>
+                </div>
             </div>
         </div>
     </div>

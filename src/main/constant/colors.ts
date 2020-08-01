@@ -3,7 +3,7 @@
 export const OVERLAY_ALPHA: number = 0.2;
 
 const BASE_COLOR_MAP: Map<number, number[]> = new Map();
-BASE_COLOR_MAP.set(0, [100, 180, 100]);
+BASE_COLOR_MAP.set(0, [80, 140, 80]);
 BASE_COLOR_MAP.set(1, [210, 240, 210]);
 
 const ALT_COLOR_MAP: Map<number, number[]> = new Map();
@@ -14,7 +14,7 @@ ALT_COLOR_MAP.set(3, [160, 100, 50]); // Brown
 ALT_COLOR_MAP.set(4, [200, 200, 200]); // Gray
 
 const PRECIP_COLOR_MAP: Map<number, number[]> = new Map();
-PRECIP_COLOR_MAP.set(0, [200, 200, 200]); // Gray
+PRECIP_COLOR_MAP.set(0, [120, 120, 0]); // Desert
 PRECIP_COLOR_MAP.set(1, [175, 215, 230]); // Light blue
 PRECIP_COLOR_MAP.set(2, [20, 30, 240]); // Blue
 PRECIP_COLOR_MAP.set(3, [0, 0, 130]); // Navy
