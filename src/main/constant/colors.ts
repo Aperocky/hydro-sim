@@ -1,6 +1,7 @@
 // Governs colors of mapping
 
 export const OVERLAY_ALPHA: number = 0.2;
+export const LAKE_BLUE = [70, 100, 200];
 
 const BASE_COLOR_MAP: Map<number, number[]> = new Map();
 BASE_COLOR_MAP.set(0, [80, 140, 80]);

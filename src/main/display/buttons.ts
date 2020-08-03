@@ -39,4 +39,8 @@ export function registerButtons(): void {
         }
         basinToggler = !basinToggler;
     });
+    buttons.runButton.addEventListener('click', () => {
+        console.log("RUN TURN BUTTON TRIGGERED");
+        controller.runTurn();
+    })
 }

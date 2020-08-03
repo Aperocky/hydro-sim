@@ -3,6 +3,7 @@
 let mapspace = document.getElementById("mapspace");
 let console = document.getElementById("console");
 let loadButton = document.getElementById("reload");
+let runButton = document.getElementById("run");
 let altButton = document.getElementById("show_alt");
 let precipButton = document.getElementById("show_precip");
 let basinButton = document.getElementById("show_basin");
@@ -12,6 +13,7 @@ let elements = {
     console: console,
     buttons: {
         loadButton: loadButton,
+        runButton: runButton,
         altButton: altButton,
         precipButton: precipButton,
         basinButton: basinButton,

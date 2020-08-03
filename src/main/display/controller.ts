@@ -60,4 +60,13 @@ export class StateController {
         this.mapContainer.createAlphaColorMap(this.displayState, alphaDisplayState);
         this.alphaDisplayState = alphaDisplayState;
     }
+
+    runTurn() {
+        this.simAdapter.sim.run();
+        if (this.alphaDisplayState != AlphaDisplayState.NONE) {
+            this.mapContainer.createAlphaColorMap(this.displayState, this.alphaDisplayState);
+        } else {
+            this.mapContainer.createColorMap(this.displayState);
+        }
+    }
 }

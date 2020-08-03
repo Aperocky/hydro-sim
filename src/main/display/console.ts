@@ -57,6 +57,7 @@ export class Console {
             capDisplay = `Capacity ${massagedValue} m^3`;
         }
         texts.push(capDisplay);
+        texts.push(`Lake Area: ${basin.lake.getShore().length}`);
         texts.push(`Drain To: ${basin.basinHold.holdMember}`);
         Console.appendTexts(texts);
     }

@@ -87,11 +87,22 @@ export class MapContainer {
 
     createColorMap(mapType='base'): void {
         this.mapComponents.forEach((val) => {
-            let altitude = val.square.altitude;
-            let altConf = COLOR.MAP_CONFIG[mapType];
-            let tint = SpriteUtil.getTint(altitude, altConf);
-            val.sprite.tint = tint;
+            let baseColor = this.getBaseTint(mapType, val.square);
+            val.sprite.tint = SpriteUtil.getColorCode(baseColor[0], baseColor[1], baseColor[2]);
         })
+    }
+
+    getBaseTint(mapType: string, square: Square): number[] {
+        let baseConf = COLOR.MAP_CONFIG[mapType];
+        switch(mapType) {
+            case 'base':
+            case 'altitude': {
+                if (square.submerged) {
+                    return COLOR.LAKE_BLUE;
+                }
+                return SpriteUtil.getColor(square.altitude, baseConf);
+            }
+        }
     }
 
     getAlphaTint(mapType: string, square: Square): number[] {
@@ -121,8 +132,7 @@ export class MapContainer {
     createAlphaColorMap(baseMapType: string, alphaMapType: string): void {
         this.mapComponents.forEach((val) => {
             let altitude = val.square.altitude;
-            let altConf = COLOR.MAP_CONFIG[baseMapType];
-            let baseColor = SpriteUtil.getColor(altitude, altConf);
+            let baseColor = this.getBaseTint(baseMapType, val.square);
             let alphaColor = this.getAlphaTint(alphaMapType, val.square);
             let tint = SpriteUtil.alphaBlend(alphaColor, baseColor, COLOR.OVERLAY_ALPHA);
             val.sprite.tint = tint;

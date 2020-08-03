@@ -92,6 +92,7 @@ let testFillFullLake = (sim: Sim) => {
     logs.push(`HOLD ELEVATION: ${basin.basinHold.holdElevation}`);
     console.log(logs.join("\n"));
     assert(Math.abs(basin.basinHold.holdElevation - lakeFormation.surfaceElevation) < 0.001);
+    lakeFormation.drainToElevation(sim, lakeFormation.anchorElevation-1)
 }
 
 

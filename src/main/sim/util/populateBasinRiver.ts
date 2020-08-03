@@ -13,17 +13,18 @@ export default function populateBasinRiver(basin: Basin, sim: Sim): number {
         let flow = riverFormation(square, sim);
         totalFlow += flow;
     }
-    let totalPrecipitation = 0;
-    for (let locStr of basin.members) {
-        let loc = JSON.parse(locStr);
-        totalPrecipitation += sim.map[loc.i][loc.j].precipitation;
-    }
-    let logs = []
-    logs.push('===========================');
-    logs.push(`BASIN: ${basin.anchor}`);
-    logs.push(`TOTAL_PRECIPITATION: ${totalPrecipitation * 1000}`);
-    logs.push(`INFLOW: ${totalFlow}`);
-    logs.push(`CAPACITY: ${basin.basinHold.holdCapacity}`);
-    console.log(logs.join("\n"));
+    // Logging operations to make sure we're sane.
+//    let totalPrecipitation = 0;
+//    for (let locStr of basin.members) {
+//        let loc = JSON.parse(locStr);
+//        totalPrecipitation += sim.map[loc.i][loc.j].precipitation;
+//    }
+//    let logs = []
+//    logs.push('===========================');
+//    logs.push(`BASIN: ${basin.anchor}`);
+//    logs.push(`TOTAL_PRECIPITATION: ${totalPrecipitation * 1000}`);
+//    logs.push(`INFLOW: ${totalFlow}`);
+//    logs.push(`CAPACITY: ${basin.basinHold.holdCapacity}`);
+//    console.log(logs.join("\n"));
     return totalFlow;
 }

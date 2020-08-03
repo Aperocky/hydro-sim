@@ -33,6 +33,17 @@ export default class LakeFormation {
         this.initiateQueue(sim);
     }
 
+    initiateFromSuperBasin(anchor: Square, shore: Square[], flooded: Square[],
+            sumVolume: number, surfaceElevation: number): void {
+        this.anchor = anchor;
+        this.shore = new TinyQueue(shore, squareCompare);
+        console.log(`initiated from superBasin: ${this.shore.length}`);
+        this.flooded = new TinyQueue(flooded, (a, b) => -squareCompare(a, b));
+        this.volume = sumVolume;
+        this.surfaceElevation = surfaceElevation;
+        this.anchorElevation = anchor.altitude;
+    }
+
     initiateQueue(sim: Sim) {
         this.flooded.push(this.anchor);
         let initialUpstreams = SquareUtil.getUpstreamSquares(this.anchor, sim);
@@ -53,7 +64,7 @@ export default class LakeFormation {
     // This also assume that volume will be more than current volume
     fillToVolume(sim: Sim, volume: number): void {
         if (volume <= this.volume) {
-            console.log("fill to volume is supposed to be larger than current volume");
+            console.log(`fill to volume is supposed to be larger: curr volume: ${this.volume}, new volume: ${volume}`);
             return;
         }
         if (this.volume == 0 && this.flooded.length == 0 && this.shore.length == 0) {

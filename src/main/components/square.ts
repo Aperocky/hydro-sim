@@ -69,6 +69,21 @@ export class SquareUtil {
         return adjacents;
     }
 
+    // New way to do getAdjacentSquares/Locs
+    static getAdjacentMap(i: number, j: number, size: number): Map<number, {i:number, j:number}> {
+        let adjacents = SquareUtil.getAdjacentSquares(i, j, size);
+        let result: Map<number, {i: number, j: number}> = new Map();
+        adjacents.forEach((value, key) => {
+            result.set(key, {i: value[0], j: value[1]});
+        })
+        return result;
+    }
+
+    static getAdjacentMapFromSquare(square: Square, size: number): Map<number, {i:number, j:number}> {
+        let loc = JSON.parse(square.location);
+        return SquareUtil.getAdjacentMap(loc.i, loc.j, size);
+    }
+
     // Easy way, only works when location has been published
     static getInflowLocs(square: Square, size: number): {i: number, j: number}[] {
         let inFlowMap: Map<number, number> = square.flow.inFlows;
@@ -86,8 +101,17 @@ export class SquareUtil {
     }
 
     static getUpstreamSquares(square: Square, sim): Square[] {
-        let result: Square[] = [];
         let inflowLocs = SquareUtil.getInflowLocs(square, sim.size);
         return inflowLocs.map((loc) => sim.map[loc.i][loc.j]);
+    }
+
+    static getDownstreamSquare(square: Square, sim): Square | null {
+        let currLoc: {i: number, j: number} = JSON.parse(square.location);
+        let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(currLoc.i, currLoc.j, sim.size);
+        if (square.flow.flowDirection == 9 || square.flow.flowDirection == 0) {
+            return null;
+        }
+        let loc = adjacents.get(square.flow.flowDirection);
+        return sim.map[loc[0]][loc[1]];
     }
 }
