@@ -40,11 +40,13 @@ Main package is written in typescript - with eventual goal of placing the terrai
 
 :white_check_mark: *build static flow volume chart with first turn fill up*
 
-:black_square_button: *build logic to process overflowe events and superbasin creation*
+:white_check_mark: *build logic to process overflowe events and superbasin creation*
 
-:black_square_button: *build actual flow volume, and lake fill up turn based action*
+:white_check_mark: *build basin overflow, merge actions*
 
-:black_square_button: *build basin overflow, merge actions*
+:white_check_mark: *build actual flow volume, and lake fill up turn based action*
+
+![Lake Map](/images/lake.png)
 
 :black_square_button: *Visualization: Display rivers and lakes*
 

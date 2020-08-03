@@ -52,7 +52,6 @@ function findHold(sim: Sim): void {
             }
         })
         let loc = JSON.parse(minLoc);
-        sim.map[loc.i][loc.j].isHold = true;
         basinHold.holdMember = minLoc;
         basinHold.holdElevation = minimumHeight;
         let localSet = new Set(holdBasins);

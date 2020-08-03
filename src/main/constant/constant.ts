@@ -15,6 +15,18 @@ DIRECTIONS.set(7, [1, -1]);
 DIRECTIONS.set(8, [0, -1]);
 
 
+export const DIRECTION_DESCRIPTION: Map<number, string> = new Map();
+DIRECTION_DESCRIPTION.set(1, "Northwest");
+DIRECTION_DESCRIPTION.set(2, "West");
+DIRECTION_DESCRIPTION.set(3, "Southwest");
+DIRECTION_DESCRIPTION.set(4, "South");
+DIRECTION_DESCRIPTION.set(5, "Southeast");
+DIRECTION_DESCRIPTION.set(6, "East");
+DIRECTION_DESCRIPTION.set(7, "Northeast");
+DIRECTION_DESCRIPTION.set(8, "North");
+DIRECTION_DESCRIPTION.set(9, "Nowhere");
+
+
 export const REVERSE: Map<number, number> = new Map();
 REVERSE.set(1, 5);
 REVERSE.set(2, 6);

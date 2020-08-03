@@ -9,7 +9,6 @@ export type Square = {
     basin: string;
     edgeOf: Set<string>;
     location: string;
-    isHold: boolean;
     submerged: boolean;
     isShore: boolean;
 }
@@ -25,7 +24,6 @@ export class SquareUtil {
             basin: "",
             edgeOf: new Set(),
             location: "", // To be filled
-            isHold: false,
             submerged: false,
             isShore: false,
         };

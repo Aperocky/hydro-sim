@@ -40,7 +40,13 @@ function calculateRivers(sim: Sim): BasinFullEvent[] {
         if (basin.inflowProcessed) {
             return;
         }
+        // Also calculate precipitation received on the lake itself
+        let totalPrecip = 0;
+        for (let square of basin.lake.flooded.data) {
+            totalPrecip += square.precipitation * 1000;
+        }
         let inFlow = populateBasinRiver(basin, sim);
+        inFlow += totalPrecip;
         let fullEvent: BasinFullEvent | null = basin.processInflow(inFlow, sim);
         if (fullEvent != null) {
             fullEvents.push(fullEvent);

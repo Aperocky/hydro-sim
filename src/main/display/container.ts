@@ -70,8 +70,7 @@ export class MapContainer {
                 sprite.interactive = true;
                 sprite.
                     on('mouseover', () => {
-                        Console.displaySquare(square);
-                        Console.displayBasin(sim.basins.get(square.basin));
+                        Console.displaySquare(square, sim.superBasins.get(square.basin));
                     });
                 this.mapContainer.addChild(sprite);
                 let record: Component = {
@@ -112,9 +111,6 @@ export class MapContainer {
                 return SpriteUtil.getColor(square.precipitation, alphaConf);
             }
             case 'basin': {
-                if (square.isHold) {
-                    return [255, 255, 0];
-                }
                 if (square.edgeOf.size > 0) {
                     return [200, 0, 0];
                 } else if (square.edgeOf.size > 2) {

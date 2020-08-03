@@ -23,6 +23,6 @@ export class Sim extends SimBase {
     }
 
     run(): void {
-        runTurn(this);
+        timer("RUN TURN")(runTurn)(this);
     }
 }
