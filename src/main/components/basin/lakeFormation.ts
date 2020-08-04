@@ -37,7 +37,6 @@ export default class LakeFormation {
             sumVolume: number, surfaceElevation: number): void {
         this.anchor = anchor;
         this.shore = new TinyQueue(shore, squareCompare);
-        console.log(`initiated from superBasin: ${this.shore.length}`);
         this.flooded = new TinyQueue(flooded, (a, b) => -squareCompare(a, b));
         this.volume = sumVolume;
         this.surfaceElevation = surfaceElevation;

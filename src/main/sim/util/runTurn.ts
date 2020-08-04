@@ -22,10 +22,8 @@ function applyEvaporation(sim: Sim): void {
             return;
         }
         basin.evaporationProcessed = true;
-        if (!basin.isBaseBasin) {
-            if (basin.divideElevation > basin.lake.surfaceElevation - 2) {
-                basin.divideBasin(sim, basin.lake.surfaceElevation - 2);
-            }
+        if (!basin.isBaseBasin && basin.divideElevation > basin.lake.surfaceElevation - 2) {
+            basin.divideBasin(sim, basin.lake.surfaceElevation - 2);
         } else {
             let surfaceElevation = basin.lake.surfaceElevation;
             basin.lake.drainToElevation(sim, surfaceElevation - 2);
@@ -40,6 +38,7 @@ function calculateRivers(sim: Sim): BasinFullEvent[] {
         if (basin.inflowProcessed) {
             return;
         }
+        basin.inflowProcessed = true;
         // Also calculate precipitation received on the lake itself
         let totalPrecip = 0;
         for (let square of basin.lake.flooded.data) {
@@ -70,9 +69,13 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
         // Make sure event is still valid
         let newEvent: BasinFullEvent | null = processOverflowEvent(sim, currentEvent);
         if (newEvent != null) {
-            console.log(`New event as previous full basin flew through`);
+            console.log(`New event ${newEvent.anchor} from previous event: ${currentEvent.anchor}`);
             fullEventQueue.push(newEvent);
         }
     }
+    // Remove all current events from basins.
+    sim.superBasins.forEach((basin) => {
+        basin.basinFullEvent = null;
+    })
 }
 

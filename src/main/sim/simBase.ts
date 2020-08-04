@@ -14,9 +14,11 @@ export class SimBase {
     altitude: number[][];
     precip: number[][];
     basins: Map<string, Basin>;
+    turn: number;
 
     constructor(size) {
         this.size = size;
+        this.turn = 0;
     }
 
     // Create a map of squares based on numpy multivariate results

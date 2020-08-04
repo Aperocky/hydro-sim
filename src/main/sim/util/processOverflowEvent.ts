@@ -21,15 +21,17 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
         let totalOverflow = event.overflowVolume;
         let otherEvent = nextBasin.basinFullEvent;
         if (otherEvent != null) {
-            totalOverflow = otherEvent.overflowVolume;
+            totalOverflow += otherEvent.overflowVolume;
             otherEvent.valid = false;
             nextBasin.basinFullEvent = null;
         }
         thisBasin.basinFullEvent = null;
+        console.log(`superbasin fill event, fillVolume: ${totalOverflow}, elevation: ${superBasin.lake.surfaceElevation}`);
         let newEvent = superBasin.processInflow(totalOverflow, sim);
+        console.log(`new SUPERBASIN elevation: ${superBasin.lake.surfaceElevation}`);
         return newEvent;
     }
-    let outlet = identifyOutflow(sim, event.holdMember, event.holdBasins[0]);
+    let outlet = identifyOutflow(sim, event.holdMember, event.holdBasins[0], event.overflowVolume);
     let diffVolume = flow(outlet.square, event.overflowVolume, outlet.direction, sim);
 
     if (diffVolume < 0) {
@@ -43,7 +45,7 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
 }
 
 
-function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string): {square: Square, direction: number} {
+function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string, overflowVolume: number): {square: Square, direction: number} {
     let loc = JSON.parse(holdMember);
     let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
     let holdSquare = sim.map[loc.i][loc.j];
@@ -60,6 +62,11 @@ function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string): {sq
             }
         }
     })
+    if (flowDirection == holdSquare.flow.flowDirection) {
+        holdSquare.flow.flowVolume = overflowVolume;
+    } else {
+        holdSquare.submerged = true;
+    }
     if (!flowToSquare) {
         throw new Error("No square in target basin is lower than hold square");
     }
@@ -85,6 +92,9 @@ function flow(square: Square, volume: number, flowFrom: number, sim: Sim): numbe
     let effectivePrecipVolume = effectivePrecip * constants.UNITS.get('rainToVolume');
     updatedRawFlowVolume += effectivePrecipVolume;
     let nextSquare = SquareUtil.getDownstreamSquare(square, sim);
+    if (nextSquare == null) {
+        return updatedRawFlowVolume - square.flow.flowVolume
+    }
     let altDiff = square.altitude - nextSquare.altitude;
     let finalVolume = calculateSurfaceEvaporation(updatedRawFlowVolume, square.precipitation, altDiff)
     finalVolume = calculateDrain(finalVolume, square.precipitation);
@@ -99,5 +109,5 @@ function flow(square: Square, volume: number, flowFrom: number, sim: Sim): numbe
     if (nextSquare.submerged) {
         return diffVolume;
     }
-    return flow(nextSquare, finalVolume, nextFlowFrom, sim);
+    return flow(nextSquare, diffVolume, nextFlowFrom, sim);
 }

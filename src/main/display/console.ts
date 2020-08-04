@@ -35,16 +35,20 @@ export class Console {
         let texts: string[] = [];
         texts.push(`${square.location}`);
         if (square.submerged) {
-            texts.push(`Surface Elevation: ${basin.lake.surfaceElevation} m`);
+            texts.push(`Surface Elevation: ${basin.lake.surfaceElevation - 500} m`);
             texts.push(`Depth: ${basin.lake.surfaceElevation - square.altitude} m`);
         } else {
-            texts.push(`Altitude: ${square.altitude} m`);
+            texts.push(`Altitude: ${square.altitude - 500} m`);
         }
         texts.push(`Precipitation: ${square.precipitation} mm`);
         if (square.flow.flowVolume >= 1000 && !square.submerged) {
             texts.push(`------ FLOW INFORMATION ------`);
             let flowVal = Math.floor(square.flow.flowVolume/1000) * 1000;
-            texts.push(`Yearly discharge: ${flowVal} m^3`);
+            if (flowVal > 500000000) {
+                texts.push(`Yearly discharge: ${Math.floor(flowVal/10000000)/100} km^3`);
+            } else {
+                texts.push(`Yearly discharge: ${flowVal} m^3`);
+            }
             texts.push(`Flows ${constants.DIRECTION_DESCRIPTION.get(square.flow.flowDirection)}`);
         }
         texts.push(`------ BASIN INFORMATION -----`);

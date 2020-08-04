@@ -3,6 +3,7 @@ import PAGE from './elements';
 import { Sim } from '../sim/sim';
 import { Square, SquareUtil } from '../components/square';
 import { SpriteUtil } from './render/sprite';
+import { RiverManager } from './render/rivers';
 import { Console } from './console';
 import * as COLOR from '../constant/colors';
 import dataStore from './helper/dataStore';
@@ -24,6 +25,7 @@ export class MapContainer {
 
     mapContainer: PIXI.Container;
     mapComponents: Map<string, Component>;
+    riverManager: RiverManager;
 
     constructor() {
         let canvas = document.createElement('canvas');
@@ -33,13 +35,10 @@ export class MapContainer {
         });
         let mapContainer = new PIXI.Container();
         mapContainer.interactive = true;
-        mapContainer.on('mouseout', () => {
-            Console.clearText();
-            Console.displayGeneralInfo();
-        });
         app.stage.addChild(mapContainer);
         this.mapContainer = mapContainer;
         this.mapComponents = new Map();
+        this.riverManager = new RiverManager();
         Console.appendText("INITIATE MAPCONTAINER");
     }
 
@@ -48,7 +47,13 @@ export class MapContainer {
         let loop = () => {
             if (sim.initialized) {
                 this.initializeComponents(sim);
+                this.renderRivers(sim);
                 this.createColorMap();
+                this.mapContainer.on('mouseout', () => {
+                    Console.clearText();
+                    Console.displayGeneralInfo();
+                    Console.appendText(`TURN: ${sim.turn}`);
+                });
                 dataStore.setGeneralInfo(generalInfo(sim));
             } else {
                 console.log("Waiting 200ms for sim to initialize")
@@ -61,6 +66,7 @@ export class MapContainer {
     initializeComponents(sim: Sim): void {
         this.mapContainer.removeChildren();
         this.mapComponents.clear();
+        this.riverManager.clear();
         for (let i = 0; i < sim.size; i++) {
             for (let j = 0; j < sim.size; j++) {
                 let square: Square = sim.map[i][j];
@@ -84,7 +90,12 @@ export class MapContainer {
         console.log(`mapContainer has ${this.mapContainer.children.length} children`);
     }
 
-    createColorMap(mapType='base'): void {
+    renderRivers(sim: Sim): void {
+        this.riverManager.getRivers(sim);
+        this.riverManager.draw(this.mapContainer);
+    }
+
+    createColorMap(mapType='altitude'): void {
         this.mapComponents.forEach((val) => {
             let baseColor = this.getBaseTint(mapType, val.square);
             val.sprite.tint = SpriteUtil.getColorCode(baseColor[0], baseColor[1], baseColor[2]);

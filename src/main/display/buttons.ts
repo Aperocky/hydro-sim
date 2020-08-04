@@ -9,11 +9,9 @@ export function registerButtons(): void {
     let precipToggler = true;
     let basinToggler = true;
     buttons.loadButton.addEventListener('click', () => {
-        console.log("loadButton triggered");
         controller.reloadMap();
     })
     buttons.altButton.addEventListener('click', () => {
-        console.log("altButton triggered");
         if (baseToggler) {
             controller.changeBaseDisplayState(DisplayState.ALTITUDE);
         } else {
@@ -22,7 +20,6 @@ export function registerButtons(): void {
         baseToggler = !baseToggler;
     });
     buttons.precipButton.addEventListener('click', () => {
-        console.log("precipButton triggered");
         if (precipToggler) {
             controller.changeAlphaDisplayState(AlphaDisplayState.PRECIP);
         } else {
@@ -31,7 +28,6 @@ export function registerButtons(): void {
         precipToggler = !precipToggler;
     });
     buttons.basinButton.addEventListener('click', () => {
-        console.log("basinButton triggered");
         if (basinToggler) {
             controller.changeAlphaDisplayState(AlphaDisplayState.BASIN);
         } else {
@@ -40,7 +36,19 @@ export function registerButtons(): void {
         basinToggler = !basinToggler;
     });
     buttons.runButton.addEventListener('click', () => {
-        console.log("RUN TURN BUTTON TRIGGERED");
         controller.runTurn();
+    })
+    buttons.decadeButton.addEventListener('click', () => {
+        let turns = 0
+        let timer = () => {
+            turns++;
+            if (turns > 10) {
+                return;
+            } else {
+                controller.runTurn();
+                setTimeout(timer, 200);
+            }
+        }
+        timer();
     })
 }

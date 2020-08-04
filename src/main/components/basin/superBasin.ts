@@ -46,6 +46,7 @@ export default class SuperBasin extends Basin {
         let logs = [];
         logs.push(`Created superbasin: ${superBasin.anchor}`);
         logs.push(`From basins: ${basinA.anchor}, ${basinB.anchor}`);
+        logs.push(`Divide elevation: ${superBasin.divideElevation}`);
         console.log(logs.join('\n'));
         // Sanity logging
 
@@ -148,6 +149,8 @@ export default class SuperBasin extends Basin {
     rehabilitateMemberBasins(sim: Sim): void {
         this.originalBasinA.evaporationProcessed = true;
         this.originalBasinB.evaporationProcessed = true;
+        this.originalBasinA.basinFullEvent = null;
+        this.originalBasinB.basinFullEvent = null;
         for (let anchor of this.originalBasinA.memberBasins) {
             sim.superBasins.set(anchor, this.originalBasinA);
         }

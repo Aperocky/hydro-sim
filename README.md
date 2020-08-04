@@ -16,7 +16,7 @@ Main package is written in typescript - with eventual goal of placing the terrai
 
 ## Progress
 
-:white_check_mark: *Terrain Providing Flask(local) Backend.*
+:recycle: *Terrain Providing Flask(local) Backend. (Deprecating)*
 
 :white_check_mark: *Sim reading from the local Backend*
 
@@ -48,7 +48,9 @@ Main package is written in typescript - with eventual goal of placing the terrai
 
 ![Lake Map](/images/lake.png)
 
-:black_square_button: *Visualization: Display rivers and lakes*
+:white_check_mark: *Visualization: Display rivers and lakes*
+
+![River Map](/images/river.png)
 
 :black_square_button: *Clickable display of variables within browser page*
 

@@ -28,7 +28,7 @@ export class StateController {
     simAdapter: SimAdapter;
 
     constructor() {
-        this.displayState = DisplayState.BASE;
+        this.displayState = DisplayState.ALTITUDE;
         this.alphaDisplayState = AlphaDisplayState.NONE;
         this.mapContainer = new MapContainer();
         this.simAdapter = new SimAdapter()
@@ -63,6 +63,7 @@ export class StateController {
 
     runTurn() {
         this.simAdapter.sim.run();
+        this.mapContainer.renderRivers(this.simAdapter.sim);
         if (this.alphaDisplayState != AlphaDisplayState.NONE) {
             this.mapContainer.createAlphaColorMap(this.displayState, this.alphaDisplayState);
         } else {
