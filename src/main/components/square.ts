@@ -34,12 +34,7 @@ export class SquareUtil {
     }
 
     static precipAdjust(precip: number): number {
-        let factor: number = constants.UNITS.get('precipitation');
-        if (precip > 0) {
-            return factor * ( 1 + precip );
-        }
-        let scale: number = Math.exp(precip);
-        return factor * scale;
+        return precip * constants.UNITS.get('precipitation');
     }
 
     static stringRep(i: number, j: number): string {

@@ -2,7 +2,6 @@ import { Basin } from './basin';
 import LakeFormation from './lakeFormation';
 import { Square, SquareUtil } from '../square';
 import { BasinHold, HoldUtil } from './basinHold';
-import { v4 as uuid } from 'uuid';
 import { Sim } from '../../sim/sim';
 import * as constants from '../../constant/constant';
 
@@ -10,17 +9,10 @@ import * as constants from '../../constant/constant';
 
 export default class SuperBasin extends Basin {
 
-    // When water level drops below this number, the superbasin will be divided
     // into sub(Superbasins or basins)
-    superBasinId: string;
     // Upon division, the 2 separate basin member.
     originalBasinA: Basin;
     originalBasinB: Basin;
-
-    constructor() {
-        super(); // Placeholder, nothing is done in the base class constructor
-        this.superBasinId = uuid();
-    }
 
     static fromBasins(sim: Sim, basinA: Basin, basinB: Basin): SuperBasin {
 

@@ -9,7 +9,7 @@ import * as constants from '../../constant/constant';
 
 export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): BasinFullEvent | null {
     if (event.holdBasins.length != 1) {
-        throw new Error(`unanticipated basin direction: ${event.holdBasins}`);
+        console.log(`over 2 basin share hold: ${event.holdBasins}`);
     }
     let nextBasinAnchor = event.holdBasins[0];
     let thisBasin = sim.superBasins.get(event.anchor);
@@ -26,9 +26,7 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
             nextBasin.basinFullEvent = null;
         }
         thisBasin.basinFullEvent = null;
-        console.log(`superbasin fill event, fillVolume: ${totalOverflow}, elevation: ${superBasin.lake.surfaceElevation}`);
         let newEvent = superBasin.processInflow(totalOverflow, sim);
-        console.log(`new SUPERBASIN elevation: ${superBasin.lake.surfaceElevation}`);
         return newEvent;
     }
     let outlet = identifyOutflow(sim, event.holdMember, event.holdBasins[0], event.overflowVolume);

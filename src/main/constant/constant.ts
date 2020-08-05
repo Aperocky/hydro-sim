@@ -25,6 +25,7 @@ DIRECTION_DESCRIPTION.set(6, "East");
 DIRECTION_DESCRIPTION.set(7, "Northeast");
 DIRECTION_DESCRIPTION.set(8, "North");
 DIRECTION_DESCRIPTION.set(9, "Nowhere");
+DIRECTION_DESCRIPTION.set(0, "Nowhere");
 
 
 export const REVERSE: Map<number, number> = new Map();
@@ -40,9 +41,9 @@ REVERSE.set(8, 4);
 
 export const UNITS: Map<string, number> = new Map();
 // Altitude units are in meters.
-UNITS.set("altitude", 200);
+UNITS.set("altitude", 3000);
 // Precipitation units are in mm
-UNITS.set("precipitation", 500);
+UNITS.set("precipitation", 2000);
 // Volume rates are in m**3
 // This takes consideration of fact that precipitation is in mm and area is in km**2
 UNITS.set("rainToVolume", 1000);
@@ -50,3 +51,7 @@ UNITS.set("rainToVolume", 1000);
 UNITS.set("squareToVolume", 1000000);
 // Area placeholder, each square is 1 km**2
 UNITS.set('area', 1);
+
+
+export const MAP_SIZE = 200;
+export const SPRITE_SIZE = 4;

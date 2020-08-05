@@ -1,4 +1,5 @@
 import { Sim } from '../sim/sim';
+import * as constants from '../constant/constant';
 
 
 export class SimAdapter {
@@ -6,10 +7,10 @@ export class SimAdapter {
     sim: Sim;
 
     constructor() {
-        this.sim = new Sim(150);
+        this.sim = new Sim(constants.MAP_SIZE);
     }
 
     reloadSim() {
-        this.sim = new Sim(150);
+        this.sim = new Sim(constants.MAP_SIZE);
     }
 }

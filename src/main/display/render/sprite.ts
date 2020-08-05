@@ -1,12 +1,16 @@
 import * as PIXI from 'pixi.js';
 import * as COLOR from '../../constant/colors';
+import * as constants from '../../constant/constant';
 
+
+const SPRITE_SIZE = constants.SPRITE_SIZE;
+const SPRITE_SCALE = SPRITE_SIZE/16;
 
 export class SpriteUtil {
 
     static getBaseSprite(x: number, y: number): PIXI.Sprite {
         let sprite: PIXI.Sprite = new PIXI.Sprite(PIXI.Texture.WHITE);
-        sprite.scale.set(0.375);
+        sprite.scale.set(SPRITE_SCALE);
         sprite.x = x;
         sprite.y = y;
         return sprite;

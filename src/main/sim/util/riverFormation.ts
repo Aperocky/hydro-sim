@@ -14,6 +14,11 @@ export default function riverFormation(shoreSquare: Square, sim: Sim): number {
 
 
 function populateFlow(square: Square, sim: Sim): number {
+    let effectivePrecip = square.precipitation > 200 ? square.precipitation - 200 : 0;
+    let effectivePrecipVolume = effectivePrecip * constants.UNITS.get('rainToVolume');
+    if (square.flow.flowDirection == 0) {
+        return 0;
+    }
     let loc: {i: number, j: number} = JSON.parse(square.location);
     let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
     let inFlowAmount = 0;
@@ -25,8 +30,6 @@ function populateFlow(square: Square, sim: Sim): number {
         inFlowAmount += flowSourceAmount;
     })
     // Add precipitation.
-    let effectivePrecip = square.precipitation > 200 ? square.precipitation - 200 : 0;
-    let effectivePrecipVolume = effectivePrecip * constants.UNITS.get('rainToVolume');
     let outFlowRaw = effectivePrecipVolume + inFlowAmount;
     let flowToLoc = adjacents.get(square.flow.flowDirection);
     let flowToSquare = sim.map[flowToLoc[0]][flowToLoc[1]]

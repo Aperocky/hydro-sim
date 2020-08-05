@@ -1,5 +1,4 @@
 import { SquareUtil } from '../square';
-import { v4 as uuid } from 'uuid';
 import LakeFormation from './lakeFormation';
 import { BasinHold, HoldUtil } from './basinHold';
 

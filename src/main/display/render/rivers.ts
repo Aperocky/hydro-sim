@@ -2,14 +2,16 @@ import * as PIXI from 'pixi.js';
 import { Sim } from '../../sim/sim';
 import { MapContainer } from '../container';
 import { Square, SquareUtil } from '../../components/square';
+import * as constants from '../../constant/constant';
 
 
+const SPRITE_SIZE = constants.SPRITE_SIZE;
 const VOLUME_START = 30000000; // 30 million cubic meters, 1m^3/sec
 const VOLUME_MAP: Map<number, number> = new Map();
 VOLUME_MAP.set(1, 30000000);
-VOLUME_MAP.set(2, 100000000);
+VOLUME_MAP.set(2, 300000000);
 VOLUME_MAP.set(3, 1000000000);
-VOLUME_MAP.set(4, 5000000000);
+VOLUME_MAP.set(4, 3000000000);
 
 
 type RiverLine = {
@@ -99,16 +101,16 @@ export class RiverManager {
                     river.line.lineStyle(river.width, 0x10a5f5);
                     let startloc = JSON.parse(river.loc);
                     let endloc = JSON.parse(river.flowTo);
-                    river.line.moveTo(startloc.i * 6 + 3, startloc.j * 6 + 3);
-                    river.line.lineTo(endloc.i * 6 + 3, endloc.j * 6 + 3);
+                    river.line.moveTo(startloc.i * SPRITE_SIZE + SPRITE_SIZE/2, startloc.j * SPRITE_SIZE + SPRITE_SIZE/2);
+                    river.line.lineTo(endloc.i * SPRITE_SIZE + SPRITE_SIZE/2, endloc.j * SPRITE_SIZE + SPRITE_SIZE/2);
                     mapContainer.addChild(river.line);
                 } else {
                     river.line.clear()
                     river.line.lineStyle(river.width, 0x10a5f5);
                     let startloc = JSON.parse(river.loc);
                     let endloc = JSON.parse(river.flowTo);
-                    river.line.moveTo(startloc.i * 6 + 3, startloc.j * 6 + 3);
-                    river.line.lineTo(endloc.i * 6 + 3, endloc.j * 6 + 3);
+                    river.line.moveTo(startloc.i * SPRITE_SIZE + SPRITE_SIZE/2, startloc.j * SPRITE_SIZE + SPRITE_SIZE/2);
+                    river.line.lineTo(endloc.i * SPRITE_SIZE + SPRITE_SIZE/2, endloc.j * SPRITE_SIZE + SPRITE_SIZE/2);
                 }
             }
             if (!river.current) {

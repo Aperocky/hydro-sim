@@ -4,6 +4,8 @@ import { SimBase } from './simBase';
 import { Basin } from '../components/basin/basin';
 import timer from './util/timer';
 import runTurn from './util/runTurn';
+import generator from '../async/simplexGenerator';
+import * as constants from '../constant/constant';
 
 
 export class Sim extends SimBase {
@@ -12,14 +14,21 @@ export class Sim extends SimBase {
 
     constructor(size) {
         super(size);
-        let promise = getData(size)
-        promise.then((data) => {
-            this.altitude = data['altitude'];
-            this.precip = data['precip'];
-            this.superBasins = new Map();
-            this.createMap();
-            this.initialized = true;
-        });
+//        let promise = getData(size)
+//        promise.then((data) => {
+//            this.altitude = data['altitude'];
+//            this.precip = data['precip'];
+//            this.superBasins = new Map();
+//            this.createMap();
+//            this.initialized = true;
+//        });
+        let altitudeMap = generator(size, 'altitude');
+        let precipMap = generator(size, 'precip')
+        this.altitude = altitudeMap;
+        this.precip = precipMap;
+        this.superBasins = new Map();
+        this.createMap();
+        this.initialized = true;
     }
 
     run(): void {

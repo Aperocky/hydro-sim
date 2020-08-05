@@ -8,10 +8,11 @@ import { Console } from './console';
 import * as COLOR from '../constant/colors';
 import dataStore from './helper/dataStore';
 import generalInfo from '../sim/read/generalInfo';
+import * as constants from '../constant/constant';
 
 
-const SPRITE_SIZE = 6
-const MAP_SIZE = 900
+const SPRITE_SIZE = constants.SPRITE_SIZE;
+const MAP_PIXEL_SIZE = constants.MAP_SIZE * SPRITE_SIZE;
 
 
 type Component = {
@@ -31,7 +32,7 @@ export class MapContainer {
         let canvas = document.createElement('canvas');
         PAGE.mapSpace.appendChild(canvas);
         let app = new PIXI.Application({
-            width: 900, height: 900, view: canvas
+            width: MAP_PIXEL_SIZE, height: MAP_PIXEL_SIZE, view: canvas
         });
         let mapContainer = new PIXI.Container();
         mapContainer.interactive = true;
