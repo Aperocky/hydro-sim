@@ -4,15 +4,15 @@ import SimplexNoise from 'simplex-noise';
 
 const ALTITUDE_OCTAVES = {
     bands: [
-        [0.5, 1],
+        [0.4, 2],
         [1, 1],
-        [2, 2],
+        [2, 1],
         [4, 0.5],
         [8, 0.2],
-        [16, 0.1],
-        [24, 0.05],
+        [16, 0.05],
+        [24, 0.02],
     ],
-    exponent: 4,
+    exponent: 3.5,
 }
 
 const PRECIPITATION_OCTAVES = {

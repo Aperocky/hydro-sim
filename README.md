@@ -4,15 +4,9 @@ I used to spend countless day at the beach (especially those with water coming f
 
 I haven't been able to spend much time on the beach with flowing water, but what I do have is a computer. And I'm going to write a simulator that will grow those features, change climate and carry virtual sediments in a browser. So I can have (MY KIND OF) beach experience at my laptop.
 
-## Design.
+Preliminary peek:
 
-*Server*:
-
-A python package to return a randomly generated terrain by multi-variate normal distributions, precipitation is also generated from the same package. The eventual goal is to put it on Lambda. It's just way too difficult to find the appropriate scientific computing package and functions for javascript, so it make sense to have a small self contained backend service.
-
-*Main*:
-
-Main package is written in typescript - with eventual goal of placing the terrain in pixi containers, with turn by turn erosion/sedimentation. Might add in climate change for fun.
+http://aperocky.com/hydrosim
 
 ## Progress
 
@@ -51,8 +45,6 @@ Main package is written in typescript - with eventual goal of placing the terrai
 :white_check_mark: *Visualization: Display rivers and lakes*
 
 ![River Map](/images/river.png)
-
-:black_square_button: *Clickable display of variables within browser page*
 
 :black_square_button: *Add sedimentation and erosion*
 

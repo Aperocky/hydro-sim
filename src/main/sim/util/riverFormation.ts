@@ -1,7 +1,7 @@
 import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
-import { calculateDrain, calculateSurfaceEvaporation } from './riverUtil';
+import { calculateDrain, calculateSurfaceEvaporation, getEffectivePrecipVolume } from './riverUtil';
 import * as constants from '../../constant/constant';
 
 
@@ -14,8 +14,7 @@ export default function riverFormation(shoreSquare: Square, sim: Sim): number {
 
 
 function populateFlow(square: Square, sim: Sim): number {
-    let effectivePrecip = square.precipitation > 200 ? square.precipitation - 200 : 0;
-    let effectivePrecipVolume = effectivePrecip * constants.UNITS.get('rainToVolume');
+    let effectivePrecipVolume = getEffectivePrecipVolume(square);
     if (square.flow.flowDirection == 0) {
         return 0;
     }
@@ -32,8 +31,7 @@ function populateFlow(square: Square, sim: Sim): number {
     // Add precipitation.
     let outFlowRaw = effectivePrecipVolume + inFlowAmount;
     let flowToLoc = adjacents.get(square.flow.flowDirection);
-    let flowToSquare = sim.map[flowToLoc[0]][flowToLoc[1]]
-    let altDiff = square.altitude - flowToSquare.altitude;
+    let altDiff = square.flow.heightDiff;
     // Let evaporation takes its toll
     // Surface evaporation.
     // Percentage based on volume, larger the volume, the less percentage it losses.

@@ -1,5 +1,6 @@
 import { Basin, BasinFullEvent } from '../../components/basin/basin';
 import { Sim } from '../sim';
+import { FlowUtil } from '../../components/flow';
 import populateBasinRiver from './populateBasinRiver';
 import processOverflowEvent from './processOverflowEvent';
 import TinyQueue from 'tinyqueue';
@@ -11,9 +12,18 @@ import TinyQueue from 'tinyqueue';
 // 3. process any overfilling basin and basin mergers
 
 export default function runTurn(sim: Sim): void {
+    clearRelic(sim);
     applyEvaporation(sim);
     let fullEvents: BasinFullEvent[] = calculateRivers(sim);
     processOverflows(sim, fullEvents);
+}
+
+function clearRelic(sim: Sim): void {
+    for (let i = 0; i < sim.size; i++) {
+        for (let j = 0; j < sim.size; j++) {
+            FlowUtil.clearFlow(sim.map[i][j].flow);
+        }
+    }
 }
 
 function applyEvaporation(sim: Sim): void {
@@ -69,7 +79,6 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
         // Make sure event is still valid
         let newEvent: BasinFullEvent | null = processOverflowEvent(sim, currentEvent);
         if (newEvent != null) {
-            console.log(`New event ${newEvent.anchor} from previous event: ${currentEvent.anchor}`);
             fullEventQueue.push(newEvent);
         }
     }

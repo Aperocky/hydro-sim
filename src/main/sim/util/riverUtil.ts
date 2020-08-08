@@ -1,3 +1,5 @@
+import { Square } from '../../components/square';
+
 const RAIN_TO_VOLUME = 1000;
 const BASE_AMOUNT = 1000000; // start to lessen from here; the amount is 30L/sec
 const BASE_EVAPORATION = 0.2;
@@ -25,4 +27,15 @@ export function calculateSurfaceEvaporation(volume: number, precipitation: numbe
     let width = cubicMeterPerSecond / riverSpeed / rawDepth;
     if (width * 2000 > volume) { return 0 }
     return volume - width * 2000;
+}
+
+
+export function getEffectivePrecipVolume(square: Square): number {
+    let effectivePrecip = square.precipitation > 200 ? square.precipitation - 200 : 0;
+    let effectivePrecipVolume = effectivePrecip * 1000;
+    if (square.altitude > 1000) {
+        // Mountain Dew
+        effectivePrecipVolume += 100 * square.altitude;
+    }
+    return effectivePrecipVolume;
 }

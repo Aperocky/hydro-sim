@@ -73,7 +73,7 @@ export class Basin {
                     anchor: this.anchor,
                     holdMember: this.basinHold.holdMember,
                     holdElevation: this.basinHold.holdElevation,
-                    holdBasins: this.basinHold.holdBasins,
+                    holdBasins: [...this.basinHold.holdBasins],
                     overflowVolume: outFlowAmount,
                     valid: true,
                 }

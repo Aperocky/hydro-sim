@@ -3,7 +3,7 @@ import SuperBasin from '../../components/basin/superBasin';
 import { Square, SquareUtil } from '../../components/square';
 import { FlowUtil } from '../../components/flow';
 import { Sim } from '../sim';
-import { calculateDrain, calculateSurfaceEvaporation } from './riverUtil';
+import { calculateDrain, calculateSurfaceEvaporation, getEffectivePrecipVolume } from './riverUtil';
 import * as constants from '../../constant/constant';
 
 
@@ -11,9 +11,19 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
     if (event.holdBasins.length != 1) {
         console.log(`over 2 basin share hold: ${event.holdBasins}`);
     }
-    let nextBasinAnchor = event.holdBasins[0];
     let thisBasin = sim.superBasins.get(event.anchor);
-    let nextBasin = sim.superBasins.get(nextBasinAnchor);
+    let nextBasinAnchor: string;
+    let nextBasin: Basin;
+    while (true) {
+        nextBasinAnchor = event.holdBasins.pop();
+        if (nextBasinAnchor === undefined) {
+            throw new Error("All subbasin pertains to current superbasin");
+        }
+        nextBasin = sim.superBasins.get(nextBasinAnchor);
+        if (thisBasin != nextBasin) {
+            break;
+        }
+    }
     let shareHold = thisBasin.basinHold.holdMember == nextBasin.basinHold.holdMember;
     if (nextBasin.isFull && shareHold) {
         let superBasin = SuperBasin.fromBasins(sim, thisBasin, nextBasin);
@@ -29,7 +39,7 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
         let newEvent = superBasin.processInflow(totalOverflow, sim);
         return newEvent;
     }
-    let outlet = identifyOutflow(sim, event.holdMember, event.holdBasins[0], event.overflowVolume);
+    let outlet = identifyOutflow(sim, event.holdMember, nextBasinAnchor, event.overflowVolume);
     let diffVolume = flow(outlet.square, event.overflowVolume, outlet.direction, sim);
 
     if (diffVolume < 0) {
@@ -86,9 +96,7 @@ function flow(square: Square, volume: number, flowFrom: number, sim: Sim): numbe
         updatedRawFlowVolume += val;
     })
     // Recalibrate cellular water flow
-    let effectivePrecip = square.precipitation > 200 ? square.precipitation - 200 : 0;
-    let effectivePrecipVolume = effectivePrecip * constants.UNITS.get('rainToVolume');
-    updatedRawFlowVolume += effectivePrecipVolume;
+    updatedRawFlowVolume += getEffectivePrecipVolume(square);
     let nextSquare = SquareUtil.getDownstreamSquare(square, sim);
     if (nextSquare == null) {
         return updatedRawFlowVolume - square.flow.flowVolume
