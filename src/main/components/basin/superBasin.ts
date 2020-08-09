@@ -142,6 +142,8 @@ export default class SuperBasin extends Basin {
         this.originalBasinB.evaporationProcessed = true;
         this.originalBasinA.basinFullEvent = null;
         this.originalBasinB.basinFullEvent = null;
+        this.originalBasinA.isFull = false;
+        this.originalBasinB.isFull = false;
         for (let anchor of this.originalBasinA.memberBasins) {
             sim.superBasins.set(anchor, this.originalBasinA);
         }

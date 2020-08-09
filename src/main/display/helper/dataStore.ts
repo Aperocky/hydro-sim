@@ -11,6 +11,12 @@ class DataStore {
     getGeneralInfo() {
         return this.generalInfo;
     }
+
+    updatePrecip(ratio) {
+        this.generalInfo.avgPrecip *= ratio;
+        this.generalInfo.maxPrecip *= ratio;
+        this.generalInfo.minPrecip *= ratio;
+    }
 }
 
 const store = new DataStore();

@@ -33,10 +33,27 @@ export class Console {
         })
     }
 
+    static displayFlora(square: Square): string {
+        if (square.submerged) {
+            return "Lake";
+        }
+        let num = Math.log(square.flow.aquiferDrain/10000);
+        if (num < 1) {
+            return "Desert";
+        } else if (num < 3) {
+            return "Steppe";
+        } else if (num < 4) {
+            return "Coniferous Forest";
+        } else {
+            return "Forest";
+        }
+    }
+
     static displaySquare(square: Square, basin: Basin): void {
         Console.clearText();
         let texts: string[] = [];
         texts.push(`${square.location}`);
+        texts.push(`BIOME: ${Console.displayFlora(square)}`);
         if (square.submerged) {
             texts.push(`Surface Elevation: ${basin.lake.surfaceElevation} m`);
             texts.push(`Depth: ${basin.lake.surfaceElevation - square.altitude} m`);

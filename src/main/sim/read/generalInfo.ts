@@ -25,6 +25,7 @@ export default function generalInfo(sim: Sim) {
     let avgPrecip = totalPrecip / (sim.size * sim.size);
     let format = (n: number): number => Math.floor(n*100)/100;
     return {
+        year: sim.turn,
         avgHeight: format(avgHeight),
         maxHeight: format(maxHeight),
         avgPrecip: format(avgPrecip),

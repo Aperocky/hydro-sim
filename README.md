@@ -4,7 +4,7 @@ I used to spend countless day at the beach (especially those with water coming f
 
 I haven't been able to spend much time on the beach with flowing water, but what I do have is a computer. And I'm going to write a simulator that will grow those features, change climate and carry virtual sediments in a browser. So I can have (MY KIND OF) beach experience at my laptop.
 
-Preliminary peek:
+Preliminary available at:
 
 http://aperocky.com/hydrosim
 
@@ -48,7 +48,11 @@ http://aperocky.com/hydrosim
 
 :black_square_button: *Add sedimentation and erosion*
 
-:black_square_button: *Climate change on whims*
+:white_check_mark: *Climate change on whims*
+
+:white_check_mark: *Add vegetation to display*
+
+[!Flora map](/images/flora.png)
 
 :white_check_mark: *Park a domain*
 

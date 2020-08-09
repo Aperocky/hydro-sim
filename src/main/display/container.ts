@@ -104,6 +104,15 @@ export class MapContainer {
                 }
                 return SpriteUtil.getColor(square.altitude, baseConf);
             }
+            case 'flora': {
+                let aquiferDrain = square.flow.aquiferDrain;
+                if (square.submerged) {
+                    return COLOR.LAKE_BLUE;
+                }
+                let aquiferDrainScalar = Math.log(aquiferDrain/10000);
+                aquiferDrainScalar = aquiferDrainScalar < 0 ? 0 : aquiferDrainScalar;
+                return SpriteUtil.getColor(aquiferDrainScalar, baseConf);
+            }
         }
     }
 
@@ -129,6 +138,15 @@ export class MapContainer {
                 let aquiferPercentFull = square.flow.aquifer/square.flow.aquiferMax;
                 return SpriteUtil.getColor(aquiferPercentFull, alphaConf);
             }
+            case 'flora': {
+                let aquiferDrain = square.flow.aquiferDrain;
+                if (square.submerged) {
+                    return COLOR.LAKE_BLUE;
+                }
+                let aquiferDrainScalar = Math.log(aquiferDrain/10000);
+                aquiferDrainScalar = aquiferDrainScalar < 0 ? 0 : aquiferDrainScalar;
+                return SpriteUtil.getColor(aquiferDrainScalar, alphaConf);
+            }
             default: {
                 return [255, 255, 255]
             }
@@ -136,11 +154,15 @@ export class MapContainer {
     }
 
     createAlphaColorMap(baseMapType: string, alphaMapType: string): void {
+        let alpha = COLOR.OVERLAY_ALPHA;
+        if (alphaMapType === 'flora') {
+            alpha = 0.7;
+        }
         this.mapComponents.forEach((val) => {
             let altitude = val.square.altitude;
             let baseColor = this.getBaseTint(baseMapType, val.square);
             let alphaColor = this.getAlphaTint(alphaMapType, val.square);
-            let tint = SpriteUtil.alphaBlend(alphaColor, baseColor, COLOR.OVERLAY_ALPHA);
+            let tint = SpriteUtil.alphaBlend(alphaColor, baseColor, alpha);
             val.sprite.tint = tint;
         })
     }

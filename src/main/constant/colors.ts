@@ -3,9 +3,10 @@
 export const OVERLAY_ALPHA: number = 0.2;
 export const LAKE_BLUE = [16, 165, 245];
 
-export const VEG_COLOR_MAP = {
-
-}
+const FLORA_COLOR_MAP: Map<number, number[]> = new Map();
+FLORA_COLOR_MAP.set(0, [225, 190, 145]); // Desert
+FLORA_COLOR_MAP.set(1, [160, 230, 100]); // Steppe/Grassland
+FLORA_COLOR_MAP.set(2, [15, 120, 50]); // Rainforest
 
 const BASE_COLOR_MAP: Map<number, number[]> = new Map();
 BASE_COLOR_MAP.set(0, [80, 140, 80]);
@@ -34,6 +35,7 @@ export const COLOR_MAPS = {
     precip: PRECIP_COLOR_MAP,
     aquifer: AQUIFER_COLOR_MAP,
     base: BASE_COLOR_MAP,
+    flora: FLORA_COLOR_MAP,
 }
 
 export type MapConfig = {
@@ -73,5 +75,11 @@ export const MAP_CONFIG = {
         stepSize: 0.45,
         subStep: 5,
         alpha: true,
+    },
+    flora: {
+        name: 'flora',
+        stepSize: 2,
+        subStep: 2,
+        alpha: false,
     }
 }

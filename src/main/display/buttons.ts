@@ -9,6 +9,7 @@ export function registerButtons(): void {
     let precipToggler = true;
     let basinToggler = true;
     let aquiferToggler = true;
+    let floraToggler = true;
     buttons.loadButton.addEventListener('click', () => {
         controller.reloadMap();
     })
@@ -59,5 +60,28 @@ export function registerButtons(): void {
             controller.changeAlphaDisplayState(AlphaDisplayState.NONE);
         }
         aquiferToggler = !aquiferToggler;
+    });
+    buttons.floraButton.addEventListener('click', () => {
+        if (floraToggler) {
+            controller.changeBaseDisplayState(DisplayState.FLORA);
+        } else {
+            let displayState = baseToggler ? DisplayState.BASE : DisplayState.ALTITUDE;
+            controller.changeBaseDisplayState(displayState);
+        }
+        floraToggler = !floraToggler;
+    });
+    buttons.floraAlpha.addEventListener('click', () => {
+        if (floraToggler) {
+            controller.changeAlphaDisplayState(AlphaDisplayState.FLORA);
+        } else {
+            controller.changeAlphaDisplayState(AlphaDisplayState.NONE);
+        }
+        floraToggler = !floraToggler;
+    });
+    buttons.dryButton.addEventListener('click', () => {
+        controller.changePrecipitation(0.8);
+    });
+    buttons.wetButton.addEventListener('click', () => {
+        controller.changePrecipitation(1.2);
     });
 }

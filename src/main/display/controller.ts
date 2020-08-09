@@ -12,6 +12,7 @@ import { SimAdapter } from './simAdapter';
 export enum DisplayState {
     BASE = "base",
     ALTITUDE = "altitude",
+    FLORA = "flora",
 }
 
 export enum AlphaDisplayState {
@@ -19,6 +20,7 @@ export enum AlphaDisplayState {
     PRECIP = "precip",
     BASIN = "basin",
     AQUIFER = "aquifer",
+    FLORA = "flora",
 }
 
 export class StateController {
@@ -62,8 +64,12 @@ export class StateController {
         this.alphaDisplayState = alphaDisplayState;
     }
 
+    changePrecipitation(ratio: number): void {
+        this.simAdapter.changePrecipitation(ratio);
+    }
+
     runTurn() {
-        this.simAdapter.sim.run();
+        this.simAdapter.run();
         this.mapContainer.renderRivers(this.simAdapter.sim);
         if (this.alphaDisplayState != AlphaDisplayState.NONE) {
             this.mapContainer.createAlphaColorMap(this.displayState, this.alphaDisplayState);
@@ -71,4 +77,5 @@ export class StateController {
             this.mapContainer.createColorMap(this.displayState);
         }
     }
+
 }

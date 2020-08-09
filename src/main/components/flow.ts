@@ -64,7 +64,9 @@ export class FlowUtil {
 
     static evaporateAquifer(flow: Flow): void {
         let fillPercentage = flow.aquifer/flow.aquiferMax;
-        let aquiferDrainVolume = flow.aquifer * (fillPercentage) ** 2 * 0.1;
+        let aquiferMaxFraction = 10000000/flow.aquiferMax;
+        let aquiferDrainVolume = flow.aquifer *
+                (fillPercentage) ** 2 * aquiferMaxFraction ** 0.5 * 0.1;
         flow.aquiferDrain = aquiferDrainVolume;
         flow.aquifer -= aquiferDrainVolume;
     }
