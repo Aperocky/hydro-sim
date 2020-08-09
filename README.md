@@ -28,8 +28,6 @@ http://aperocky.com/hydrosim
 
 :white_check_mark: *Visualization: Display precipitation, basins and watershed*
 
-![Precipitation Map](/images/precip_map.png)
-
 ![Basin Map](/images/basin_map.png)
 
 :white_check_mark: *build static flow volume chart with first turn fill up*
@@ -40,11 +38,7 @@ http://aperocky.com/hydrosim
 
 :white_check_mark: *build actual flow volume, and lake fill up turn based action*
 
-![Lake Map](/images/lake.png)
-
 :white_check_mark: *Visualization: Display rivers and lakes*
-
-![River Map](/images/river.png)
 
 :black_square_button: *Add sedimentation and erosion*
 
