@@ -52,7 +52,7 @@ http://aperocky.com/hydrosim
 
 :white_check_mark: *Add vegetation to display*
 
-[!Flora map](/images/flora.png)
+![Flora map](/images/flora.png)
 
 :white_check_mark: *Park a domain*
 

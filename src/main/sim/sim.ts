@@ -1,5 +1,4 @@
 import { Square, SquareUtil } from '../components/square';
-import { getData } from '../async/loader';
 import { SimBase } from './simBase';
 import { Basin } from '../components/basin/basin';
 import timer from './util/timer';
@@ -14,14 +13,6 @@ export class Sim extends SimBase {
 
     constructor(size) {
         super(size);
-//        let promise = getData(size)
-//        promise.then((data) => {
-//            this.altitude = data['altitude'];
-//            this.precip = data['precip'];
-//            this.superBasins = new Map();
-//            this.createMap();
-//            this.initialized = true;
-//        });
         let altitudeMap = generator(size, 'altitude');
         let precipMap = generator(size, 'precip')
         this.altitude = altitudeMap;
