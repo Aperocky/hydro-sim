@@ -1,7 +1,7 @@
 import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
-import { calculateDrain, calculateSurfaceEvaporation, getEffectivePrecipVolume } from './riverUtil';
+import { calculateDrain, getEffectivePrecipVolume } from './riverUtil';
 import * as constants from '../../constant/constant';
 
 
@@ -35,8 +35,7 @@ function populateFlow(square: Square, sim: Sim): number {
     // Let evaporation takes its toll
     // Surface evaporation.
     // Percentage based on volume, larger the volume, the less percentage it losses.
-    let evaporatedFlow = calculateSurfaceEvaporation(outFlowRaw, square.precipitation, altDiff);
-    let finalOutFlow = calculateDrain(evaporatedFlow, square.precipitation);
+    let finalOutFlow = calculateDrain(outFlowRaw, square);
     square.flow.flowVolume = finalOutFlow;
     return finalOutFlow;
 }

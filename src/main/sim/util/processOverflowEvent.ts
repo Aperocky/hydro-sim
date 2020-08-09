@@ -3,7 +3,7 @@ import SuperBasin from '../../components/basin/superBasin';
 import { Square, SquareUtil } from '../../components/square';
 import { FlowUtil } from '../../components/flow';
 import { Sim } from '../sim';
-import { calculateDrain, calculateSurfaceEvaporation, getEffectivePrecipVolume } from './riverUtil';
+import { calculateDrain, getEffectivePrecipVolume } from './riverUtil';
 import * as constants from '../../constant/constant';
 
 
@@ -102,8 +102,7 @@ function flow(square: Square, volume: number, flowFrom: number, sim: Sim): numbe
         return updatedRawFlowVolume - square.flow.flowVolume
     }
     let altDiff = square.altitude - nextSquare.altitude;
-    let finalVolume = calculateSurfaceEvaporation(updatedRawFlowVolume, square.precipitation, altDiff)
-    finalVolume = calculateDrain(finalVolume, square.precipitation);
+    let finalVolume = calculateDrain(updatedRawFlowVolume, square);
 
     // Find the difference in flow at mouth
     let originalFlowVolume = square.flow.flowVolume;

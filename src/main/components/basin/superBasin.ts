@@ -17,7 +17,6 @@ export default class SuperBasin extends Basin {
     static fromBasins(sim: Sim, basinA: Basin, basinB: Basin): SuperBasin {
 
         if (basinA.basinHold.holdElevation != basinB.basinHold.holdElevation) {
-            console.log("Merged basin does not have same holdElevation, must be wrong");
             throw new Error("Merged basin does not have same holdElevation");
         }
 
@@ -35,11 +34,11 @@ export default class SuperBasin extends Basin {
         superBasin.originalBasinB = basinB;
 
         // Sanity logging
-        let logs = [];
-        logs.push(`Created superbasin: ${superBasin.anchor}`);
-        logs.push(`From basins: ${basinA.anchor}, ${basinB.anchor}`);
-        logs.push(`Divide elevation: ${superBasin.divideElevation}`);
-        console.log(logs.join('\n'));
+        //let logs = [];
+        //logs.push(`Created superbasin: ${superBasin.anchor}`);
+        //logs.push(`From basins: ${basinA.anchor}, ${basinB.anchor}`);
+        //logs.push(`Divide elevation: ${superBasin.divideElevation}`);
+        //console.log(logs.join('\n'));
         // Sanity logging
 
         return superBasin;
@@ -131,7 +130,7 @@ export default class SuperBasin extends Basin {
     }
 
     divideBasin(sim: Sim, newElevation: number): void {
-        console.log(`dividing superbasin into subbasins: ${this.anchor}, ${newElevation}`)
+        // console.log(`dividing superbasin into subbasins: ${this.anchor}, ${newElevation}`)
         this.lake.drainToElevation(sim, this.divideElevation);
         this.rehabilitateMemberBasins(sim);
         this.originalBasinA.lake.drainToElevation(sim, newElevation);

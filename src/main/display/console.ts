@@ -6,6 +6,9 @@ import * as constants from '../constant/constant';
 
 
 const LOOK = PAGE.console;
+let roundTo = (n: number, round: number): number => {
+    return Math.floor(n/round) * round;
+};
 
 
 export class Console {
@@ -43,7 +46,7 @@ export class Console {
         texts.push(`Precipitation: ${square.precipitation} mm`);
         if (square.flow.flowVolume >= 1000 && !square.submerged) {
             texts.push(`------ FLOW INFORMATION ------`);
-            let flowVal = Math.floor(square.flow.flowVolume/1000) * 1000;
+            let flowVal = roundTo(square.flow.flowVolume, 1000);
             if (flowVal > 1000000) {
                 texts.push(`Yearly discharge: ${Math.floor(flowVal/10000)/100} M m^3`);
             } else {
@@ -51,6 +54,10 @@ export class Console {
             }
             texts.push(`Flows ${constants.DIRECTION_DESCRIPTION.get(square.flow.flowDirection)}`);
         }
+        texts.push(`------ AQUIFER INFORMATION ------`);
+        texts.push(`Aquifer Volume: ${roundTo(square.flow.aquifer, 1000)} m^3`);
+        texts.push(`Aquifer MAX Volume: ${roundTo(square.flow.aquiferMax, 1000)} m^3`);
+        texts.push(`Aquifer loss: ${roundTo(square.flow.aquiferDrain, 1000)} m^3`);
         texts.push(`------ BASIN INFORMATION -----`);
         texts = texts.concat(Console.displayBasin(basin));
         Console.appendTexts(texts);

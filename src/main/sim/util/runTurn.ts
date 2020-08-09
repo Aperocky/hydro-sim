@@ -3,6 +3,7 @@ import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
 import populateBasinRiver from './populateBasinRiver';
 import processOverflowEvent from './processOverflowEvent';
+import { aquiferFlow } from './riverUtil';
 import TinyQueue from 'tinyqueue';
 
 
@@ -40,6 +41,15 @@ function applyEvaporation(sim: Sim): void {
         }
     })
     sim.superBasins.forEach((basin) => { basin.evaporationProcessed = false });
+    // Apply evaporation for aquifers
+    for (let i = 0; i < sim.size; i++) {
+        for (let j = 0; j < sim.size; j++) {
+            if (!sim.map[i][j].submerged) {
+                // aquiferFlow(sim.map[i][j], sim); // Cost way too much
+                FlowUtil.evaporateAquifer(sim.map[i][j].flow);
+            }
+        }
+    }
 }
 
 function calculateRivers(sim: Sim): BasinFullEvent[] {
@@ -67,7 +77,8 @@ function calculateRivers(sim: Sim): BasinFullEvent[] {
 
 function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
     let fullEventComparator = (a, b) => b.holdElevation - a.holdElevation;
-    console.log(`FOUND ${basinFullEvents.length} BASIN FULL EVENTS`);
+    let processCount = 0;
+    // console.log(`FOUND ${basinFullEvents.length} BASIN FULL EVENTS`);
     // Queue to make sure we're not going upstream and might come back again.
     // Start from the highest pond
     let fullEventQueue = new TinyQueue(basinFullEvents, fullEventComparator);
@@ -78,10 +89,12 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
         }
         // Make sure event is still valid
         let newEvent: BasinFullEvent | null = processOverflowEvent(sim, currentEvent);
+        processCount += 1;
         if (newEvent != null) {
             fullEventQueue.push(newEvent);
         }
     }
+    console.log(`Processed ${processCount} BasinFullEvents`);
     // Remove all current events from basins.
     sim.superBasins.forEach((basin) => {
         basin.basinFullEvent = null;

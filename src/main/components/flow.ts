@@ -13,6 +13,7 @@ export type Flow = {
     // Aquifer
     aquifer: number;
     aquiferMax: number;
+    aquiferDrain: number;
 }
 
 
@@ -25,19 +26,47 @@ export class FlowUtil {
             flowVolume: 0,
             inFlows: new Map(),
             aquifer: 0,
+            aquiferDrain: 0,
             aquiferMax: 0,
         };
     }
 
     static fillAquifer(flow: Flow, volume: number): number {
         let fillPercentage = flow.aquifer/flow.aquiferMax;
-        let aquiferFillVolume = flow.aquiferMax * (1 - fillPercentage) ** 2 * 0.2;
-        if (aquiferFillVolume > volume * 0.4) {
-            flow.aquifer += volume * 0.4;
-            return volume * 0.6
+        let aquiferFillVolume = flow.aquiferMax * (1 - fillPercentage) * 0.4;
+        // If aquifer is over 90% full, it seeps out.
+        let seepage = 0
+        if (flow.aquifer > flow.aquiferMax * 0.9) {
+            seepage = (flow.aquifer - (flow.aquiferMax * 0.9)) * 0.4;
+            flow.aquifer -= seepage;
+        }
+        if (aquiferFillVolume > volume * 0.2) {
+            flow.aquifer += volume * 0.2;
+            return volume * 0.8 + seepage;
         }
         flow.aquifer += aquiferFillVolume;
-        return volume - aquiferFillVolume;
+        return volume - aquiferFillVolume + seepage;
+    }
+
+    static fillUnderwaterAquifer(flow: Flow, volume: number): number {
+        let fillPercentage = flow.aquifer/flow.aquiferMax;
+        let aquiferFillVolume = flow.aquiferMax * (1 - fillPercentage) * 0.5;
+        if (aquiferFillVolume < volume) {
+            flow.aquifer += aquiferFillVolume;
+            flow.aquiferDrain = 0;
+            return volume - aquiferFillVolume;
+        } else {
+            flow.aquifer += volume;
+            flow.aquiferDrain = 0;
+            return 0;
+        }
+    }
+
+    static evaporateAquifer(flow: Flow): void {
+        let fillPercentage = flow.aquifer/flow.aquiferMax;
+        let aquiferDrainVolume = flow.aquifer * (fillPercentage) ** 2 * 0.1;
+        flow.aquiferDrain = aquiferDrainVolume;
+        flow.aquifer -= aquiferDrainVolume;
     }
 
     static populateFlowDirection(flow: Flow, direction: number, heightDiff: number): void {

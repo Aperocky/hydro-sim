@@ -21,7 +21,7 @@ const PRECIPITATION_OCTAVES = {
         [2, 0.4],
         [4, 0.1],
     ],
-    exponent: 2,
+    exponent: 2.5,
 }
 
 const TYPE_MAP = {

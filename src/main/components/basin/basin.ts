@@ -1,4 +1,5 @@
 import { SquareUtil } from '../square';
+import { FlowUtil } from '../flow';
 import LakeFormation from './lakeFormation';
 import { BasinHold, HoldUtil } from './basinHold';
 
@@ -63,6 +64,13 @@ export class Basin {
     }
 
     processInflow(volume: number, sim): BasinFullEvent | null {
+        // Fills aquifer first.
+        for (let square of [...this.lake.flooded.data]) {
+            volume = FlowUtil.fillUnderwaterAquifer(square.flow, volume);
+            if (volume === 0) {
+                return null;
+            }
+        }
         let currVolume = this.lake.getVolume();
         if (currVolume + volume > this.basinHold.holdCapacity) {
             if (this.basinFullEvent == null) {

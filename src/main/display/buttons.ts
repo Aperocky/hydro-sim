@@ -8,6 +8,7 @@ export function registerButtons(): void {
     let baseToggler = true;
     let precipToggler = true;
     let basinToggler = true;
+    let aquiferToggler = true;
     buttons.loadButton.addEventListener('click', () => {
         controller.reloadMap();
     })
@@ -37,7 +38,7 @@ export function registerButtons(): void {
     });
     buttons.runButton.addEventListener('click', () => {
         controller.runTurn();
-    })
+    });
     buttons.decadeButton.addEventListener('click', () => {
         let turns = 0
         let timer = () => {
@@ -50,5 +51,13 @@ export function registerButtons(): void {
             }
         }
         timer();
-    })
+    });
+    buttons.aquiferButton.addEventListener('click', () => {
+        if (aquiferToggler) {
+            controller.changeAlphaDisplayState(AlphaDisplayState.AQUIFER);
+        } else {
+            controller.changeAlphaDisplayState(AlphaDisplayState.NONE);
+        }
+        aquiferToggler = !aquiferToggler;
+    });
 }

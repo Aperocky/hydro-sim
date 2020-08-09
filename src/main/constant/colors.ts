@@ -3,6 +3,10 @@
 export const OVERLAY_ALPHA: number = 0.2;
 export const LAKE_BLUE = [16, 165, 245];
 
+export const VEG_COLOR_MAP = {
+
+}
+
 const BASE_COLOR_MAP: Map<number, number[]> = new Map();
 BASE_COLOR_MAP.set(0, [80, 140, 80]);
 BASE_COLOR_MAP.set(1, [210, 240, 210]);
@@ -20,9 +24,15 @@ PRECIP_COLOR_MAP.set(1, [175, 215, 230]); // Light blue
 PRECIP_COLOR_MAP.set(2, [20, 30, 240]); // Blue
 PRECIP_COLOR_MAP.set(3, [0, 0, 130]); // Navy
 
+const AQUIFER_COLOR_MAP: Map<number, number[]> = new Map();
+AQUIFER_COLOR_MAP.set(0, [215, 215, 215]); // Light grey
+AQUIFER_COLOR_MAP.set(1, [20, 30, 240]); // Blue
+AQUIFER_COLOR_MAP.set(2, [0, 0, 130]); // Navy
+
 export const COLOR_MAPS = {
     altitude: ALT_COLOR_MAP,
     precip: PRECIP_COLOR_MAP,
+    aquifer: AQUIFER_COLOR_MAP,
     base: BASE_COLOR_MAP,
 }
 
@@ -55,6 +65,12 @@ export const MAP_CONFIG = {
     basin: {
         name: 'basin',
         stepSize: 500, // Not applicable, just here for type sake
+        subStep: 5,
+        alpha: true,
+    },
+    aquifer: {
+        name: 'aquifer',
+        stepSize: 0.45,
         subStep: 5,
         alpha: true,
     }

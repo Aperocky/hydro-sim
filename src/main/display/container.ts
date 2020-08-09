@@ -45,23 +45,14 @@ export class MapContainer {
 
     initialize(sim: Sim): void {
         // Wait for sim to initialize itself
-        let loop = () => {
-            if (sim.initialized) {
-                this.initializeComponents(sim);
-                this.renderRivers(sim);
-                this.createColorMap();
-                this.mapContainer.on('mouseout', () => {
-                    Console.clearText();
-                    Console.displayGeneralInfo();
-                    Console.appendText(`TURN: ${sim.turn}`);
-                });
-                dataStore.setGeneralInfo(generalInfo(sim));
-            } else {
-                console.log("Waiting 200ms for sim to initialize")
-                setTimeout(loop, 200);
-            }
-        }
-        loop();
+        this.initializeComponents(sim);
+        this.renderRivers(sim);
+        this.createColorMap();
+        this.mapContainer.on('mouseout', () => {
+            Console.clearText();
+            Console.displayGeneralInfo();
+        });
+        dataStore.setGeneralInfo(generalInfo(sim));
     }
 
     initializeComponents(sim: Sim): void {
@@ -130,6 +121,13 @@ export class MapContainer {
                 } else {
                     return [100, 100, 100];
                 }
+            }
+            case 'aquifer': {
+                if (square.submerged) {
+                    return [255, 255, 255];
+                }
+                let aquiferPercentFull = square.flow.aquifer/square.flow.aquiferMax;
+                return SpriteUtil.getColor(aquiferPercentFull, alphaConf);
             }
             default: {
                 return [255, 255, 255]

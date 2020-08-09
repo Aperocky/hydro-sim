@@ -18,6 +18,7 @@ export enum AlphaDisplayState {
     NONE = "none",
     PRECIP = "precip",
     BASIN = "basin",
+    AQUIFER = "aquifer",
 }
 
 export class StateController {
