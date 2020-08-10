@@ -110,6 +110,9 @@ export class MapContainer {
                     return COLOR.LAKE_BLUE;
                 }
                 let aquiferDrainScalar = Math.log(aquiferDrain/10000);
+                if (aquiferDrainScalar >= 1 && aquiferDrainScalar < 2) {
+                    aquiferDrainScalar = 2;
+                }
                 aquiferDrainScalar = aquiferDrainScalar < 0 ? 0 : aquiferDrainScalar;
                 return SpriteUtil.getColor(aquiferDrainScalar, baseConf);
             }
@@ -145,6 +148,9 @@ export class MapContainer {
                 }
                 let aquiferDrainScalar = Math.log(aquiferDrain/10000);
                 aquiferDrainScalar = aquiferDrainScalar < 0 ? 0 : aquiferDrainScalar;
+                if (aquiferDrainScalar >= 1 && aquiferDrainScalar < 2) {
+                    aquiferDrainScalar = 2;
+                }
                 return SpriteUtil.getColor(aquiferDrainScalar, alphaConf);
             }
             default: {
@@ -156,7 +162,7 @@ export class MapContainer {
     createAlphaColorMap(baseMapType: string, alphaMapType: string): void {
         let alpha = COLOR.OVERLAY_ALPHA;
         if (alphaMapType === 'flora') {
-            alpha = 0.7;
+            alpha = 0.4;
         }
         this.mapComponents.forEach((val) => {
             let altitude = val.square.altitude;

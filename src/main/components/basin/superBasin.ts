@@ -133,8 +133,20 @@ export default class SuperBasin extends Basin {
         // console.log(`dividing superbasin into subbasins: ${this.anchor}, ${newElevation}`)
         this.lake.drainToElevation(sim, this.divideElevation);
         this.rehabilitateMemberBasins(sim);
-        this.originalBasinA.lake.drainToElevation(sim, newElevation);
-        this.originalBasinB.lake.drainToElevation(sim, newElevation);
+        this.drainSubSuperBasins(sim, this.originalBasinA, newElevation);
+        this.drainSubSuperBasins(sim, this.originalBasinB, newElevation);
+    }
+
+    drainSubSuperBasins(sim: Sim, basin: Basin, newElevation: number): void {
+        if (basin.isBaseBasin) {
+            basin.lake.drainToElevation(sim, newElevation);
+        } else {
+            if (basin.divideElevation > newElevation) {
+                basin.divideBasin(sim, newElevation);
+            } else {
+                basin.lake.drainToElevation(sim, newElevation);
+            }
+        }
     }
 
     rehabilitateMemberBasins(sim: Sim): void {

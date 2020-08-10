@@ -8,10 +8,10 @@ import * as constants from '../../constant/constant';
 const SPRITE_SIZE = constants.SPRITE_SIZE;
 const VOLUME_START = 30000000; // 30 million cubic meters, 1m^3/sec
 const VOLUME_MAP: Map<number, number> = new Map();
-VOLUME_MAP.set(1, 30000000);
-VOLUME_MAP.set(2, 300000000);
-VOLUME_MAP.set(3, 1000000000);
-VOLUME_MAP.set(4, 3000000000);
+VOLUME_MAP.set(1, 20000000);
+VOLUME_MAP.set(2, 100000000);
+VOLUME_MAP.set(3, 300000000);
+VOLUME_MAP.set(4, 1000000000);
 
 
 type RiverLine = {
