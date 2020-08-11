@@ -2,6 +2,7 @@ import { Sim } from '../sim/sim';
 import * as constants from '../constant/constant';
 import dataStore from './helper/dataStore';
 import generalInfo from '../sim/read/generalInfo';
+import shiftPrecipitation from '../sim/util/precipitationShift';
 import { Console } from './console';
 
 
@@ -24,6 +25,13 @@ export class SimAdapter {
             }
         }
         dataStore.updatePrecip(ratio);
+    }
+
+    shiftPrecipitation(): void {
+        shiftPrecipitation(this.sim);
+        dataStore.setGeneralInfo(generalInfo(this.sim));
+        Console.clearText();
+        Console.displayGeneralInfo();
     }
 
     run() {

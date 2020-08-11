@@ -68,6 +68,10 @@ export class StateController {
         this.simAdapter.changePrecipitation(ratio);
     }
 
+    shiftPrecipitation(): void {
+        this.simAdapter.shiftPrecipitation();
+    }
+
     runTurn() {
         this.simAdapter.run();
         this.mapContainer.renderRivers(this.simAdapter.sim);

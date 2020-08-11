@@ -12,7 +12,7 @@ const ALTITUDE_OCTAVES = {
         [16, 0.05],
         [24, 0.02],
     ],
-    exponent: 3.5,
+    exponent: 3.0,
 }
 
 const PRECIPITATION_OCTAVES = {

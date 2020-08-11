@@ -84,4 +84,7 @@ export function registerButtons(): void {
     buttons.wetButton.addEventListener('click', () => {
         controller.changePrecipitation(1.2);
     });
+    buttons.shiftButton.addEventListener('click', () => {
+        controller.shiftPrecipitation();
+    });
 }

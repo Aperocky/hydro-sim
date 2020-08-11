@@ -13,6 +13,7 @@ let precipButton = document.getElementById("show_precip");
 let basinButton = document.getElementById("show_basin");
 let wetSpell = document.getElementById("wet_spell");
 let drySpell = document.getElementById("dry_spell");
+let shiftSpell = document.getElementById("shift_spell");
 
 let elements = {
     mapSpace: mapspace,
@@ -29,6 +30,7 @@ let elements = {
         basinButton: basinButton,
         wetButton: wetSpell,
         dryButton: drySpell,
+        shiftButton: shiftSpell,
     },
 }
 export default elements;
