@@ -100,14 +100,14 @@ export class MapContainer {
             case 'base':
             case 'altitude': {
                 if (square.submerged) {
-                    return COLOR.LAKE_BLUE;
+                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
                 }
                 return SpriteUtil.getColor(square.altitude, baseConf);
             }
             case 'flora': {
                 let aquiferDrain = square.flow.aquiferDrain;
                 if (square.submerged) {
-                    return COLOR.LAKE_BLUE;
+                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
                 }
                 let aquiferDrainScalar = Math.log(aquiferDrain/10000);
                 if (aquiferDrainScalar >= 1 && aquiferDrainScalar < 2) {

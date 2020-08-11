@@ -56,7 +56,7 @@ export class Console {
         texts.push(`BIOME: ${Console.displayFlora(square)}`);
         if (square.submerged) {
             texts.push(`Surface Elevation: ${basin.lake.surfaceElevation} m`);
-            texts.push(`Depth: ${basin.lake.surfaceElevation - square.altitude} m`);
+            texts.push(`Depth: ${square.depth} m`);
         } else {
             texts.push(`Altitude: ${square.altitude} m`);
         }

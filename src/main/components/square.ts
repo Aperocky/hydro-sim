@@ -11,6 +11,7 @@ export type Square = {
     location: string;
     submerged: boolean;
     isShore: boolean;
+    depth: number;
 }
 
 
@@ -26,6 +27,7 @@ export class SquareUtil {
             location: "", // To be filled
             submerged: false,
             isShore: false,
+            depth: 0,
         };
     }
 

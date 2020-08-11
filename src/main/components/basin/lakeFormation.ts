@@ -117,6 +117,7 @@ export default class LakeFormation {
                 allShores.delete(notShore);
                 notShore.isShore = false;
                 notShore.submerged = false;
+                notShore.depth = 0;
             }
             allShores.forEach((shore) => this.shore.push(shore));
         }
@@ -145,10 +146,12 @@ export default class LakeFormation {
         for (let square of this.flooded.data) {
             square.submerged = false;
             square.isShore = false;
+            square.depth = 0;
         }
         for (let square of this.shore.data) {
             square.submerged = false;
             square.isShore = false;
+            square.depth = 0;
         }
     }
 
@@ -156,10 +159,12 @@ export default class LakeFormation {
         for (let square of this.flooded.data) {
             square.submerged = true;
             square.isShore = false;
+            square.depth = this.surfaceElevation - square.altitude;
         }
         for (let square of this.shore.data) {
             square.submerged = false;
             square.isShore = true;
+            square.depth = 0;
         }
     }
 

@@ -3,7 +3,7 @@ import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
 import populateBasinRiver from './populateBasinRiver';
 import processOverflowEvent from './processOverflowEvent';
-import { aquiferFlow } from './riverUtil';
+import { aquiferFlow, fillAquiferWithEffectivePrecip } from './riverUtil';
 import TinyQueue from 'tinyqueue';
 
 
@@ -47,6 +47,7 @@ function applyEvaporation(sim: Sim): void {
             if (!sim.map[i][j].submerged) {
                 // aquiferFlow(sim.map[i][j], sim); // Cost way too much
                 FlowUtil.evaporateAquifer(sim.map[i][j].flow);
+                fillAquiferWithEffectivePrecip(sim.map[i][j]);
             }
         }
     }
