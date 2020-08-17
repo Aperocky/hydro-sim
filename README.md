@@ -8,6 +8,10 @@ Preliminary available at:
 
 http://aperocky.com/hydrosim
 
+![What it looks like](/images/features.png)
+
+![What it looks like](/images/moar.png)
+
 ## Progress
 
 :recycle: *Terrain Providing Flask(local) Backend. (Deprecating)*
@@ -24,11 +28,7 @@ http://aperocky.com/hydrosim
 
 :white_check_mark: *Visualization: Display Altitude map*
 
-![Altitude Map](/images/alt_map.png)
-
 :white_check_mark: *Visualization: Display precipitation, basins and watershed*
-
-![Basin Map](/images/basin_map.png)
 
 :white_check_mark: *build static flow volume chart with first turn fill up*
 
@@ -45,8 +45,6 @@ http://aperocky.com/hydrosim
 :white_check_mark: *Climate change on whims*
 
 :white_check_mark: *Add vegetation to display*
-
-![Flora map](/images/flora.png)
 
 :white_check_mark: *Park a domain*
 

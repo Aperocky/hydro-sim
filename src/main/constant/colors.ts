@@ -89,7 +89,7 @@ export const MAP_CONFIG = {
     },
     lake: {
         name: 'lake',
-        stepSize: 400,
+        stepSize: 300,
         subStep: 100,
         alpha: false,
     }
