@@ -92,7 +92,6 @@ export class FlowUtil {
         if (flow.inFlows.has(direction)) {
             flow.inFlows.set(direction, volume);
         } else {
-            console.log(`Adding flow to no existing direction: ${Array.from(flow.inFlows.keys())}, ${direction}`);
             flow.inFlows.set(direction, volume);
         }
     }

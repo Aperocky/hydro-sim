@@ -33,5 +33,4 @@ export default function populateFlowDirection(sim: Sim): void {
             }
         }
     }
-    console.log(`No flow count ${noflowCount}`);
 }

@@ -7,12 +7,15 @@
     "pixi.js": "^5.2.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^14.0.23",
     "assert": "^2.0.0",
     "esbuild": "^0.27.3",
+    "jest": "^29.7.0",
     "node-fetch": "^2.6.0",
     "simplex-noise": "^2.4.0",
     "tinyqueue": "^2.0.3",
+    "ts-jest": "^29.4.6",
     "xhr2": "^0.2.0"
   },
   "scripts": {

@@ -9,7 +9,6 @@ import * as constants from '../../constant/constant';
 
 export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): BasinFullEvent | null {
     if (event.holdBasins.length != 1) {
-        console.log(`over 2 basin share hold: ${event.holdBasins}`);
     }
     let thisBasin = sim.superBasins.get(event.anchor);
     let nextBasinAnchor: string;

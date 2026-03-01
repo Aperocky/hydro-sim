@@ -95,7 +95,6 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
             fullEventQueue.push(newEvent);
         }
     }
-    console.log(`Processed ${processCount} BasinFullEvents`);
     // Remove all current events from basins.
     sim.superBasins.forEach((basin) => {
         basin.basinFullEvent = null;

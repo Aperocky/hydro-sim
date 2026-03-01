@@ -63,7 +63,6 @@ export default class LakeFormation {
     // This also assume that volume will be more than current volume
     fillToVolume(sim: Sim, volume: number): void {
         if (volume <= this.volume) {
-            console.log(`fill to volume is supposed to be larger: curr volume: ${this.volume}, new volume: ${volume}`);
             return;
         }
         if (this.volume == 0 && this.flooded.length == 0 && this.shore.length == 0) {
