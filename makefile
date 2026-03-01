@@ -1,8 +1,6 @@
 tsc:
-	@tsc src/main/display/main.ts --target es5 --esModuleInterop
-	@tsc src/test/testSim.ts --target es5 --esModuleInterop
-	@browserify src/main/display/main.js -o src/out/script.js
-	@uglifyjs src/out/script.js > src/out/script.min.js
+	@npx esbuild src/main/display/main.ts --bundle --minify --outfile=output/script.js
 
 test:
-	@node src/test/testSim.js
+	@npx esbuild src/test/testSim.ts --bundle --platform=node --outfile=output/testSim.js
+	@node output/testSim.js

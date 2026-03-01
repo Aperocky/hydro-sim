@@ -8,3 +8,5 @@ asset/
 conf/
 server/
 src/main/async/loader.ts
+output/script.js
+output/testSim.js
