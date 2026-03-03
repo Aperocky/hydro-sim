@@ -103,8 +103,14 @@ export class SimBase {
             }
         }
         let fullEvents: BasinFullEvent[] = [];
+        let processedBasins: Set<Basin> = new Set();
         (this as any).superBasins.forEach((basin: Basin, anchor: string) => {
-            let volume = basinWater.get(anchor) || 0;
+            if (processedBasins.has(basin)) return;
+            processedBasins.add(basin);
+            let volume = 0;
+            for (let memberAnchor of basin.memberBasins) {
+                volume += basinWater.get(memberAnchor) || 0;
+            }
             if (volume > 0) {
                 let event = basin.processInflow(volume, this as any);
                 if (event != null) {

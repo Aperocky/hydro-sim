@@ -151,6 +151,31 @@ function erodeOutlets(sim: Sim): void {
         let current: Square = holdSquare;
         let sediment = 0;
         let steps = 0;
+
+        // If hold has no flow direction, find the outlet target and
+        // apply its erosion to the hold so the lake mouth can erode down
+        if (holdSquare.flow.flowDirection === 0 && holdSquare.depth <= 0) {
+            let holdBasins = new Set(basin.basinHold.holdBasins);
+            let adjacents = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
+            let lowestAlt = Number.MAX_SAFE_INTEGER;
+            let outletTarget: Square | null = null;
+            adjacents.forEach((value) => {
+                let adj = sim.map[value[0]][value[1]];
+                if (holdBasins.has(adj.basin) && adj.altitude < lowestAlt) {
+                    lowestAlt = adj.altitude;
+                    outletTarget = adj;
+                }
+            });
+            if (outletTarget) {
+                // Apply outlet target's gradient erosion to the hold
+                let savedHeightDiff = holdSquare.flow.heightDiff;
+                holdSquare.flow.heightDiff = outletTarget.flow.heightDiff;
+                sediment = processErosionAtSquare(holdSquare, 0, overflowVolume);
+                holdSquare.flow.heightDiff = savedHeightDiff;
+                current = outletTarget;
+            }
+        }
+
         while (current && !current.submerged && steps < sim.size * 2) {
             sediment = processErosionAtSquare(current, sediment, overflowVolume);
             let next = SquareUtil.getDownstreamSquare(current, sim);
