@@ -10,7 +10,6 @@ export type Square = {
     edgeOf: Set<string>;
     location: string;
     submerged: boolean;
-    isShore: boolean;
     depth: number;
 }
 
@@ -26,7 +25,6 @@ export class SquareUtil {
             edgeOf: new Set(),
             location: "", // To be filled
             submerged: false,
-            isShore: false,
             depth: 0,
         };
     }
@@ -49,6 +47,15 @@ export class SquareUtil {
     static getAdjacentLocs(square: Square, size: number): Map<number, number[]> {
         let loc: {i:number, j:number} = JSON.parse(square.location);
         return SquareUtil.getAdjacentSquares(loc.i, loc.j, size);
+    }
+
+    // Reset square state for basin recomputation. Preserves altitude, precipitation, location, and flow aquifer state.
+    static resetForRecompute(square: Square): void {
+        square.basin = "";
+        square.edgeOf = new Set();
+        square.submerged = false;
+        square.depth = 0;
+        FlowUtil.resetForRecompute(square.flow);
     }
 
     static getAdjacentSquares(i: number, j: number, size: number): Map<number, number[]> {

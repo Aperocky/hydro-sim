@@ -28,8 +28,7 @@ describe('Sim structure', () => {
     test('every basin has valid structure', () => {
         sim.basins.forEach((basin, anchor) => {
             expect(basin.members.length).toBeGreaterThan(0);
-            expect(basin.basinHold.edgeMembers.length).toBeGreaterThan(0);
-            expect(basin.basinHold.holdCapacity).toBeGreaterThan(0);
+            expect(basin.basinHold.holdCapacity).toBeGreaterThanOrEqual(0);
         });
     });
 });

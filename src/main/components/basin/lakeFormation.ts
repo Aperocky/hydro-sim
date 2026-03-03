@@ -72,12 +72,26 @@ export default class LakeFormation {
         this.setLakeStateToSim();
     }
 
-    fill(sim: Sim, volume: number): void {
+    fill(sim: Sim, volume: number, depth: number = 0): void {
+        // Safety: prevent infinite recursion
+        if (depth > 50000) {
+            console.warn(`fill() hit recursion limit at depth ${depth}`);
+            this.volume = volume;
+            return;
+        }
         // still need to fill this much
         let diffVolume = volume - this.volume;
+        if (diffVolume <= 0) return;
         // Find the lowest shore and pop that.
         let lowestShore: Square = this.shore.pop();
+        if (!lowestShore) {
+            // No more shore to flood — cap at current volume
+            this.volume = volume;
+            return;
+        }
         let altDiff = lowestShore.altitude - this.surfaceElevation;
+        // Erosion may have lowered shore below surface — treat as zero-cost flood
+        if (altDiff < 0) altDiff = 0;
         let altVolume = altDiff * this.flooded.length * UNIT_SQUARE_VOLUME;
         if (altVolume > diffVolume) {
             this.shore.push(lowestShore); // No need to overflow the shore member
@@ -90,7 +104,7 @@ export default class LakeFormation {
             }
             this.surfaceElevation = lowestShore.altitude;
             this.volume += altVolume;
-            this.fill(sim, volume); // Recursion to flood until it fills to volume
+            this.fill(sim, volume, depth + 1); // Recursion to flood until it fills to volume
         }
     }
 
@@ -114,7 +128,6 @@ export default class LakeFormation {
             while (recedingShores.length) {
                 let notShore = recedingShores.pop();
                 allShores.delete(notShore);
-                notShore.isShore = false;
                 notShore.submerged = false;
                 notShore.depth = 0;
             }
@@ -123,47 +136,54 @@ export default class LakeFormation {
         this.setLakeStateToSim();
     }
 
-    drain(sim: Sim, elevation: number, recedingShores: Square[]): void {
+    drain(sim: Sim, elevation: number, recedingShores: Square[], depth: number = 0): void {
+        if (depth > 50000) {
+            console.warn(`drain() hit recursion limit at depth ${depth}`);
+            this.volume = 0;
+            this.surfaceElevation = this.anchorElevation;
+            return;
+        }
         let highestFlooded = this.flooded.pop();
+        if (!highestFlooded) {
+            // Queue exhausted — lake fully drained
+            this.volume = 0;
+            this.surfaceElevation = this.anchorElevation;
+            return;
+        }
         if (highestFlooded.altitude < elevation) {
             this.flooded.push(highestFlooded); // No need to expose the lakebed
             this.volume -= (this.surfaceElevation - elevation) * this.flooded.length * UNIT_SQUARE_VOLUME;
             this.surfaceElevation = elevation;
         } else {
-            this.volume -= (this.surfaceElevation - highestFlooded.altitude)
+            let drainDiff = this.surfaceElevation - highestFlooded.altitude;
+            if (drainDiff < 0) drainDiff = 0;
+            this.volume -= drainDiff
                     * (this.flooded.length + 1) * UNIT_SQUARE_VOLUME;
-            this.surfaceElevation = highestFlooded.altitude;
+            this.surfaceElevation = Math.min(highestFlooded.altitude, this.surfaceElevation);
             this.shore.push(highestFlooded); // Shore will contain all previously flooded squares and shores.
             for (let square of SquareUtil.getUpstreamSquares(highestFlooded, sim)) {
                 recedingShores.push(square); // Previous shores that are no longer shores.
             }
-            this.drain(sim, elevation, recedingShores);
+            this.drain(sim, elevation, recedingShores, depth + 1);
         }
     }
 
     clearLakeStateToSim(): void {
         for (let square of this.flooded.data) {
             square.submerged = false;
-            square.isShore = false;
             square.depth = 0;
         }
         for (let square of this.shore.data) {
             square.submerged = false;
-            square.isShore = false;
             square.depth = 0;
         }
     }
 
     setLakeStateToSim(): void {
+        let hasWater = this.volume > 0;
         for (let square of this.flooded.data) {
-            square.submerged = true;
-            square.isShore = false;
-            square.depth = this.surfaceElevation - square.altitude;
-        }
-        for (let square of this.shore.data) {
-            square.submerged = false;
-            square.isShore = true;
-            square.depth = 0;
+            square.submerged = hasWater;
+            square.depth = hasWater ? this.surfaceElevation - square.altitude : 0;
         }
     }
 

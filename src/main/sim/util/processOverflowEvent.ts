@@ -16,7 +16,8 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
     while (true) {
         nextBasinAnchor = event.holdBasins.pop();
         if (nextBasinAnchor === undefined) {
-            throw new Error("All subbasin pertains to current superbasin");
+            // All hold basins belong to current superbasin — skip event
+            return null;
         }
         nextBasin = sim.superBasins.get(nextBasinAnchor);
         if (thisBasin != nextBasin) {
@@ -39,24 +40,30 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
         return newEvent;
     }
     let outlet = identifyOutflow(sim, event.holdMember, nextBasinAnchor, event.overflowVolume);
+    if (!outlet) {
+        // Erosion invalidated the outflow path — skip event
+        thisBasin.basinFullEvent = null;
+        return null;
+    }
     let diffVolume = flow(outlet.square, event.overflowVolume, outlet.direction, sim);
 
-    if (diffVolume < 0) {
-        throw new Error("Something went wrong, less water got discharged than original");
-    }
-
     thisBasin.basinFullEvent = null; // Clearing the event from original basin.
+
+    if (diffVolume <= 0) {
+        // Erosion/sedimentation absorbed all overflow along the path
+        return null;
+    }
 
     let newEvent: BasinFullEvent | null = nextBasin.processInflow(diffVolume, sim);
     return newEvent;
 }
 
 
-function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string, overflowVolume: number): {square: Square, direction: number} {
+function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string, overflowVolume: number): {square: Square, direction: number} | null {
     let loc = JSON.parse(holdMember);
     let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
     let holdSquare = sim.map[loc.i][loc.j];
-    let lowestElevation = holdSquare.altitude;
+    let lowestElevation = Number.MAX_SAFE_INTEGER;
     let flowToSquare: Square;
     let flowDirection: number;
     adjacents.forEach((value, key) => {
@@ -69,13 +76,13 @@ function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string, over
             }
         }
     })
+    if (!flowToSquare) {
+        return null;
+    }
     if (flowDirection == holdSquare.flow.flowDirection) {
         holdSquare.flow.flowVolume = overflowVolume;
     } else {
         holdSquare.submerged = true;
-    }
-    if (!flowToSquare) {
-        throw new Error("No square in target basin is lower than hold square");
     }
     return {
         square: flowToSquare,

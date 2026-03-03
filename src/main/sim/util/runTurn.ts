@@ -1,22 +1,44 @@
 import { Basin, BasinFullEvent } from '../../components/basin/basin';
+import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
 import populateBasinRiver from './populateBasinRiver';
 import processOverflowEvent from './processOverflowEvent';
+import { processErosionAtSquare, dumpSedimentAtMouth } from './erosion';
 import { aquiferFlow, fillAquiferWithEffectivePrecip } from './riverUtil';
+import * as constant from '../../constant/constant';
 import TinyQueue from 'tinyqueue';
 
 
-// Turn consist of several phases
-// 1. apply evaporation to lakes.
-// 2. calculate river flows and process basin inflow.
-// 3. process any overfilling basin and basin mergers
+// Turn phases:
+// 1. apply pending erosion deltas from last turn
+// 2. recompute topography (rebuild directions/basins from post-erosion terrain)
+// 3. apply evaporation to lakes
+// 4. calculate river flows + erosion/sedimentation (stores pending deltas)
+// 5. process any overfilling basin and basin mergers
+// 6. erode basin outlet channels (stores pending deltas)
 
 export default function runTurn(sim: Sim): void {
+    applyPendingErosion(sim);
+    sim.recomputeTopography();
     clearRelic(sim);
     applyEvaporation(sim);
     let fullEvents: BasinFullEvent[] = calculateRivers(sim);
     processOverflows(sim, fullEvents);
+    erodeOutlets(sim);
+}
+
+// Apply pending altitude deltas from last turn's erosion/sedimentation.
+function applyPendingErosion(sim: Sim): void {
+    for (let i = 0; i < sim.size; i++) {
+        for (let j = 0; j < sim.size; j++) {
+            let flow = sim.map[i][j].flow;
+            if (flow.pendingErosion !== 0) {
+                sim.map[i][j].altitude += flow.pendingErosion;
+                flow.pendingErosion = 0;
+            }
+        }
+    }
 }
 
 function clearRelic(sim: Sim): void {
@@ -33,11 +55,11 @@ function applyEvaporation(sim: Sim): void {
             return;
         }
         basin.evaporationProcessed = true;
-        if (!basin.isBaseBasin && basin.divideElevation > basin.lake.surfaceElevation - 2) {
-            basin.divideBasin(sim, basin.lake.surfaceElevation - 2);
+        if (!basin.isBaseBasin && basin.divideElevation > basin.lake.surfaceElevation - constant.EVAPORATION_METERS) {
+            basin.divideBasin(sim, basin.lake.surfaceElevation - constant.EVAPORATION_METERS);
         } else {
             let surfaceElevation = basin.lake.surfaceElevation;
-            basin.lake.drainToElevation(sim, surfaceElevation - 2);
+            basin.lake.drainToElevation(sim, surfaceElevation - constant.EVAPORATION_METERS);
         }
     })
     sim.superBasins.forEach((basin) => { basin.evaporationProcessed = false });
@@ -79,18 +101,19 @@ function calculateRivers(sim: Sim): BasinFullEvent[] {
 function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
     let fullEventComparator = (a, b) => b.holdElevation - a.holdElevation;
     let processCount = 0;
-    // console.log(`FOUND ${basinFullEvents.length} BASIN FULL EVENTS`);
-    // Queue to make sure we're not going upstream and might come back again.
-    // Start from the highest pond
+    let maxEvents = sim.size * sim.size;
     let fullEventQueue = new TinyQueue(basinFullEvents, fullEventComparator);
     while (fullEventQueue.length) {
         let currentEvent = fullEventQueue.pop();
         if (!currentEvent.valid) {
             continue;
         }
-        // Make sure event is still valid
         let newEvent: BasinFullEvent | null = processOverflowEvent(sim, currentEvent);
         processCount += 1;
+        if (processCount > maxEvents) {
+            console.warn(`processOverflows hit limit at ${processCount} events, breaking`);
+            break;
+        }
         if (newEvent != null) {
             fullEventQueue.push(newEvent);
         }
@@ -99,5 +122,46 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
     sim.superBasins.forEach((basin) => {
         basin.basinFullEvent = null;
     })
+}
+
+// Erode outlet channels of full basins.
+// Traces from hold member downstream, applying erosion based on overflow volume.
+function erodeOutlets(sim: Sim): void {
+    let visited = new Set<string>();
+    sim.superBasins.forEach((basin) => {
+        if (visited.has(basin.anchor)) return;
+        visited.add(basin.anchor);
+        if (!basin.isFull) return;
+
+        let holdLoc = basin.basinHold.holdMember;
+        if (!holdLoc) return;
+        let loc = JSON.parse(holdLoc);
+        let holdSquare: Square = sim.map[loc.i][loc.j];
+
+        // Use the basin's overflow volume as the flow for erosion
+        // Estimate from lake volume at capacity
+        let overflowVolume = holdSquare.flow.flowVolume;
+        if (overflowVolume <= 0) {
+            // Estimate from basin inflow
+            overflowVolume = basin.lake.getVolume() * 0.01;
+        }
+        if (overflowVolume <= 0) return;
+
+        // Trace downstream from hold member, eroding each square
+        let current: Square = holdSquare;
+        let sediment = 0;
+        let steps = 0;
+        while (current && !current.submerged && steps < sim.size * 2) {
+            sediment = processErosionAtSquare(current, sediment, overflowVolume);
+            let next = SquareUtil.getDownstreamSquare(current, sim);
+            if (!next || next === current) break;
+            if (next.submerged) {
+                dumpSedimentAtMouth(next, sediment, sim);
+                break;
+            }
+            current = next;
+            steps++;
+        }
+    });
 }
 

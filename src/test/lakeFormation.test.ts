@@ -14,14 +14,12 @@ function selectLargestBasin(sim: Sim): Basin {
     return selected;
 }
 
-function countAreas(sim: Sim): { submerged: number, shore: number } {
+function countAreas(sim: Sim): { submerged: number } {
     let submerged = 0;
-    let shore = 0;
     sim.map.forEach(arr => arr.forEach(square => {
         if (square.submerged) submerged++;
-        if (square.isShore) shore++;
     }));
-    return { submerged, shore };
+    return { submerged };
 }
 
 describe('Lake formation', () => {
@@ -43,9 +41,8 @@ describe('Lake formation', () => {
         const testCapacity = basin.basinHold.holdCapacity / 2;
         lake.fillToVolume(sim, testCapacity);
         expect(lake.volume).toBe(testCapacity);
-        const { submerged, shore } = countAreas(sim);
+        const { submerged } = countAreas(sim);
         expect(submerged).toBeGreaterThanOrEqual(lake.flooded.length);
-        expect(shore).toBeGreaterThanOrEqual(lake.shore.length);
     });
 
     test('drain to mid-elevation reduces surface', () => {
@@ -54,9 +51,8 @@ describe('Lake formation', () => {
         const midElevation = (lake.surfaceElevation - lake.anchorElevation) / 2 + lake.anchorElevation;
         lake.drainToElevation(sim, midElevation);
         expect(lake.surfaceElevation).toBe(midElevation);
-        const { submerged, shore } = countAreas(sim);
+        const { submerged } = countAreas(sim);
         expect(submerged).toBeGreaterThanOrEqual(lake.flooded.length);
-        expect(shore).toBeGreaterThanOrEqual(lake.shore.length);
     });
 
     test('full fill reaches hold elevation', () => {

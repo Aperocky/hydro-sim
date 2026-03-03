@@ -28,6 +28,8 @@ export class SpriteUtil {
 
     static getColorMapColor(mapType: string, n: number, stepSize: number, subSteps=100): number[] {
         let colorMap = COLOR.COLOR_MAPS[mapType]
+        if (!colorMap) return [128, 128, 128];
+        if (n < 0 || !isFinite(n)) n = 0;
         let mapSize: number = colorMap.size - 1;
         let base: number = Math.floor(n/stepSize);
         if (base >= mapSize) {

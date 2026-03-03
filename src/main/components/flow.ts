@@ -14,6 +14,13 @@ export type Flow = {
     aquifer: number;
     aquiferMax: number;
     aquiferDrain: number;
+    // Sediment carried by flow (m^3)
+    sediment: number;
+    // Erosion/sedimentation tracking for display
+    erosion: number;       // m^3 eroded from this square this turn
+    sedimentation: number; // m^3 deposited on this square this turn
+    // Pending altitude delta (meters) to apply next turn
+    pendingErosion: number;
 }
 
 
@@ -28,10 +35,19 @@ export class FlowUtil {
             aquifer: 0,
             aquiferDrain: 0,
             aquiferMax: 0,
+            sediment: 0,
+            erosion: 0,
+            sedimentation: 0,
+            pendingErosion: 0,
         };
     }
 
     static fillAquifer(flow: Flow, volume: number): number {
+        if (flow.aquiferMax <= 0) return volume;
+        // Reset corrupted or overfilled aquifer
+        if (!isFinite(flow.aquifer) || flow.aquifer > flow.aquiferMax) {
+            flow.aquifer = flow.aquiferMax;
+        }
         let fillPercentage = flow.aquifer/flow.aquiferMax;
         let aquiferFillVolume = flow.aquiferMax * (1 - fillPercentage) * 0.4;
         // If aquifer is over 90% full, it seeps out.
@@ -49,6 +65,7 @@ export class FlowUtil {
     }
 
     static fillUnderwaterAquifer(flow: Flow, volume: number): number {
+        if (flow.aquiferMax <= 0) return volume;
         let fillPercentage = flow.aquifer/flow.aquiferMax;
         let aquiferFillVolume = flow.aquiferMax * (1 - fillPercentage) * 0.5;
         if (aquiferFillVolume < volume) {
@@ -63,6 +80,10 @@ export class FlowUtil {
     }
 
     static evaporateAquifer(flow: Flow): void {
+        if (flow.aquiferMax <= 0) { flow.aquiferDrain = 0; return; }
+        if (!isFinite(flow.aquifer) || flow.aquifer > flow.aquiferMax) {
+            flow.aquifer = flow.aquiferMax;
+        }
         let fillPercentage = flow.aquifer/flow.aquiferMax;
         let aquiferMaxFraction = 10000000/flow.aquiferMax;
         let aquiferDrainVolume = flow.aquifer *
@@ -76,7 +97,7 @@ export class FlowUtil {
         flow.heightDiff = heightDiff;
         flow.aquiferMax = heightDiff > 10 ?
             10 * 1000 * (10/heightDiff) * 1000 * 0.5 :
-            (20 - heightDiff) * 1000 * 1000 * 0.5 ;
+            Math.max((20 - heightDiff), 1) * 1000 * 1000 * 0.5 ;
     }
 
     static populateFlowVolume(flow: Flow, volume: number): void {
@@ -101,5 +122,13 @@ export class FlowUtil {
             flow.inFlows.set(key, 0);
         });
         flow.flowVolume = 0;
+    }
+
+    // Reset flow direction and inflow structure for basin recomputation.
+    // Preserves aquifer state and flowVolume (needed for river display).
+    static resetForRecompute(flow: Flow): void {
+        flow.flowDirection = 0;
+        flow.heightDiff = 0;
+        flow.inFlows = new Map();
     }
 }

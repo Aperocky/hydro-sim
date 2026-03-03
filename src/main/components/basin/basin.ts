@@ -64,10 +64,11 @@ export class Basin {
     }
 
     processInflow(volume: number, sim): BasinFullEvent | null {
+        if (!isFinite(volume) || volume <= 0) return null;
         // Fills aquifer first.
         for (let square of [...this.lake.flooded.data]) {
             volume = FlowUtil.fillUnderwaterAquifer(square.flow, volume);
-            if (volume === 0) {
+            if (volume <= 0) {
                 return null;
             }
         }

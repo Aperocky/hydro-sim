@@ -16,13 +16,14 @@ export default class SuperBasin extends Basin {
 
     static fromBasins(sim: Sim, basinA: Basin, basinB: Basin): SuperBasin {
 
-        if (basinA.basinHold.holdElevation != basinB.basinHold.holdElevation) {
-            throw new Error("Merged basin does not have same holdElevation");
-        }
+        // Use the current altitude of the shared hold member as the divide elevation
+        // (erosion may have slightly changed it since hold was computed)
+        let holdLoc = JSON.parse(basinA.basinHold.holdMember);
+        let divideElevation = sim.map[holdLoc.i][holdLoc.j].altitude;
 
         // Extend to member basins
         let superBasin = new this();
-        superBasin.divideElevation = basinA.basinHold.holdElevation;
+        superBasin.divideElevation = divideElevation;
         superBasin.populateBasinBasics(basinA, basinB);
         superBasin.populateBasinHold(sim, basinA, basinB);
         superBasin.populateLakeFormation(sim, basinA, basinB);

@@ -52,6 +52,7 @@ UNITS.set("squareToVolume", 1000000);
 // Area placeholder, each square is 1 km**2
 UNITS.set('area', 1);
 
-
+// Evaporation: meters of lake surface evaporated away per year
+export const EVAPORATION_METERS = 2;
 export const MAP_SIZE = 200;
 export const SPRITE_SIZE = 4;

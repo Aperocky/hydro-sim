@@ -41,6 +41,7 @@ function findHold(sim: Sim): void {
         let minLoc: string;
         let holdBasins: Set<string>;
         let basinHold: BasinHold = basin.basinHold;
+        if (basinHold.edgeMembers.length === 0) return;
         let minimumHeight = Number.MAX_SAFE_INTEGER;
         basinHold.edgeMembers.forEach((locStr) => {
             let loc: {i: number, j: number} = JSON.parse(locStr);

@@ -69,7 +69,21 @@ export class Console {
             } else {
                 texts.push(`Yearly discharge: ${flowVal} m^3`);
             }
-            texts.push(`Flows ${constants.DIRECTION_DESCRIPTION.get(square.flow.flowDirection)}`);
+            texts.push(`Flows ${constants.DIRECTION_DESCRIPTION.get(square.flow.flowDirection)}, Gradient: ${Math.round(square.flow.heightDiff * 100) / 100} m`);
+            if (square.flow.sediment > 0) {
+                let sedVal = Math.floor(square.flow.sediment);
+                if (sedVal > 1000000) {
+                    texts.push(`Sediment discharge: ${Math.floor(sedVal/10000)/100} M m^3`);
+                } else {
+                    texts.push(`Sediment discharge: ${sedVal} m^3`);
+                }
+            }
+            if (square.flow.erosion > 0) {
+                texts.push(`Erosion: ${Math.floor(square.flow.erosion)} m^3 (${Math.floor(square.flow.erosion/10000)/100} m)`);
+            }
+            if (square.flow.sedimentation > 0) {
+                texts.push(`Sedimentation: ${Math.floor(square.flow.sedimentation)} m^3 (${Math.floor(square.flow.sedimentation/10000)/100} m)`);
+            }
         }
         texts.push(`------ AQUIFER INFORMATION ------`);
         texts.push(`Aquifer Volume: ${roundTo(square.flow.aquifer, 1000)} m^3`);
