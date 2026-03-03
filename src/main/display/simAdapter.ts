@@ -3,6 +3,7 @@ import * as constants from '../constant/constant';
 import dataStore from './helper/dataStore';
 import generalInfo from '../sim/read/generalInfo';
 import shiftPrecipitation from '../sim/util/precipitationShift';
+import earthquake from '../sim/util/earthquake';
 import { Console } from './console';
 
 
@@ -32,6 +33,10 @@ export class SimAdapter {
         dataStore.setGeneralInfo(generalInfo(this.sim));
         Console.clearText();
         Console.displayGeneralInfo();
+    }
+
+    earthquake(): void {
+        earthquake(this.sim);
     }
 
     run() {

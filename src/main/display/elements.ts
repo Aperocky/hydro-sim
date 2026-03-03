@@ -32,6 +32,7 @@ let elements = {
         wetButton: wetSpell,
         dryButton: drySpell,
         shiftButton: shiftSpell,
+        earthquakeButton: document.getElementById("earthquake"),
         flatnessButton: flatnessButton,
     },
 }

@@ -87,6 +87,9 @@ export function registerButtons(): void {
     buttons.shiftButton.addEventListener('click', () => {
         controller.shiftPrecipitation();
     });
+    buttons.earthquakeButton.addEventListener('click', () => {
+        controller.earthquake();
+    });
     let flatnessToggler = true;
     buttons.flatnessButton.addEventListener('click', () => {
         if (flatnessToggler) {

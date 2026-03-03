@@ -65,12 +65,27 @@ export class StateController {
         this.alphaDisplayState = alphaDisplayState;
     }
 
+    private refreshDisplay(): void {
+        if (this.alphaDisplayState != AlphaDisplayState.NONE) {
+            this.mapContainer.createAlphaColorMap(this.displayState, this.alphaDisplayState);
+        } else {
+            this.mapContainer.createColorMap(this.displayState);
+        }
+    }
+
     changePrecipitation(ratio: number): void {
         this.simAdapter.changePrecipitation(ratio);
+        this.refreshDisplay();
     }
 
     shiftPrecipitation(): void {
         this.simAdapter.shiftPrecipitation();
+        this.refreshDisplay();
+    }
+
+    earthquake(): void {
+        this.simAdapter.earthquake();
+        this.refreshDisplay();
     }
 
     runTurn() {
