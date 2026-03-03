@@ -13,6 +13,7 @@ export enum DisplayState {
     BASE = "base",
     ALTITUDE = "altitude",
     FLORA = "flora",
+    FLATNESS = "flatness",
 }
 
 export enum AlphaDisplayState {

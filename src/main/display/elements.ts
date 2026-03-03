@@ -14,6 +14,7 @@ let basinButton = document.getElementById("show_basin");
 let wetSpell = document.getElementById("wet_spell");
 let drySpell = document.getElementById("dry_spell");
 let shiftSpell = document.getElementById("shift_spell");
+let flatnessButton = document.getElementById("show_flatness");
 
 let elements = {
     mapSpace: mapspace,
@@ -31,6 +32,7 @@ let elements = {
         wetButton: wetSpell,
         dryButton: drySpell,
         shiftButton: shiftSpell,
+        flatnessButton: flatnessButton,
     },
 }
 export default elements;

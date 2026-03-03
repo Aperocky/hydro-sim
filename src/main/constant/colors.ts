@@ -34,6 +34,12 @@ AQUIFER_COLOR_MAP.set(0, [215, 215, 215]); // Light grey
 AQUIFER_COLOR_MAP.set(1, [20, 30, 240]); // Blue
 AQUIFER_COLOR_MAP.set(2, [0, 0, 130]); // Navy
 
+const FLAT_COLOR_MAP: Map<number, number[]> = new Map();
+FLAT_COLOR_MAP.set(0, [80, 180, 80]);   // Flat — green
+FLAT_COLOR_MAP.set(1, [230, 160, 50]);  // Moderate — orange
+FLAT_COLOR_MAP.set(2, [120, 70, 30]);   // Steep — brown
+FLAT_COLOR_MAP.set(3, [200, 40, 30]);   // Cliff — red
+
 export const COLOR_MAPS = {
     altitude: ALT_COLOR_MAP,
     precip: PRECIP_COLOR_MAP,
@@ -41,6 +47,7 @@ export const COLOR_MAPS = {
     base: BASE_COLOR_MAP,
     flora: FLORA_COLOR_MAP,
     lake: LAKE_COLOR_MAP,
+    flatness: FLAT_COLOR_MAP,
 }
 
 export type MapConfig = {
@@ -90,6 +97,12 @@ export const MAP_CONFIG = {
     lake: {
         name: 'lake',
         stepSize: 300,
+        subStep: 100,
+        alpha: false,
+    },
+    flatness: {
+        name: 'flatness',
+        stepSize: 50,
         subStep: 100,
         alpha: false,
     }

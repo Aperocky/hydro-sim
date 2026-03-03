@@ -87,4 +87,14 @@ export function registerButtons(): void {
     buttons.shiftButton.addEventListener('click', () => {
         controller.shiftPrecipitation();
     });
+    let flatnessToggler = true;
+    buttons.flatnessButton.addEventListener('click', () => {
+        if (flatnessToggler) {
+            controller.changeBaseDisplayState(DisplayState.FLATNESS);
+        } else {
+            let displayState = baseToggler ? DisplayState.BASE : DisplayState.ALTITUDE;
+            controller.changeBaseDisplayState(displayState);
+        }
+        flatnessToggler = !flatnessToggler;
+    });
 }

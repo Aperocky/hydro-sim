@@ -27,6 +27,8 @@ export class MapContainer {
     mapContainer: PIXI.Container;
     mapComponents: Map<string, Component>;
     riverManager: RiverManager;
+    simMap: Square[][];
+    simSize: number;
 
     constructor() {
         let canvas = document.createElement('canvas');
@@ -44,7 +46,8 @@ export class MapContainer {
     }
 
     initialize(sim: Sim): void {
-        // Wait for sim to initialize itself
+        this.simMap = sim.map;
+        this.simSize = sim.size;
         this.initializeComponents(sim);
         this.renderRivers(sim);
         this.createColorMap();
@@ -115,6 +118,31 @@ export class MapContainer {
                 }
                 aquiferDrainScalar = aquiferDrainScalar < 0 ? 0 : aquiferDrainScalar;
                 return SpriteUtil.getColor(aquiferDrainScalar, baseConf);
+            }
+            case 'flatness': {
+                if (square.submerged) {
+                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
+                }
+                let loc: {i: number, j: number} = JSON.parse(square.location);
+                let adjacents = SquareUtil.getAdjacentSquares(loc.i, loc.j, this.simSize);
+                let maxDiff = 0;
+                adjacents.forEach((coords) => {
+                    let adj = this.simMap[coords[0]][coords[1]];
+                    let diff = Math.abs(square.altitude - adj.altitude);
+                    if (diff > maxDiff) maxDiff = diff;
+                });
+                // Remap: 0-1 -> 0 (green), 1-10 -> 0-1 (green->orange), 10-50 -> 1-2 (orange->brown), 50-200 -> 2-3 (brown->red)
+                let scaled: number;
+                if (maxDiff <= 1) {
+                    scaled = 0;
+                } else if (maxDiff <= 10) {
+                    scaled = (maxDiff - 1) / 9;
+                } else if (maxDiff <= 50) {
+                    scaled = 1 + (maxDiff - 10) / 40;
+                } else {
+                    scaled = 2 + (maxDiff - 50) / 150;
+                }
+                return SpriteUtil.getColorMapColor('flatness', scaled, 1, 100);
             }
         }
     }
