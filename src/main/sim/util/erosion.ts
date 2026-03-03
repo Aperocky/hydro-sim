@@ -15,8 +15,8 @@ const UNIT_SQUARE_VOLUME = constants.UNITS.get('squareToVolume');
 // erosion = EROSION_COEFFICIENT * flowVolume^EROSION_FLOW_EXPONENT * (EROSION_BASE_GRADIENT + gradient)^EROSION_GRADIENT_EXPONENT
 // Result is in m^3 of sediment picked up
 export const EROSION_COEFFICIENT = 0.05;
-export const EROSION_GRADIENT_EXPONENT = 2.0;  // Quadratic with gradient
-export const EROSION_FLOW_EXPONENT = 0.5;      // Sqrt of flow
+export const EROSION_GRADIENT_EXPONENT = 1.5;  // Between linear and quadratic
+export const EROSION_FLOW_EXPONENT = 0.75;     // Exponent for flow.
 export const EROSION_BASE_GRADIENT = 0.5;      // Baseline gradient (meters) so flat terrain still erodes
 export const EROSION_MAX_PER_SQUARE = 5000000; // Max 5m altitude change per square per turn
 
@@ -26,9 +26,7 @@ export const SEDIMENT_BASE_DEPOSIT = 0.05;
 // How strongly sediment load ratio affects deposition (quadratic)
 export const SEDIMENT_LOAD_EXPONENT = 2.0;
 // How strongly low gradient increases deposition
-export const SEDIMENT_GRADIENT_DECAY = 5.0;    // gradient reference point in meters
-// Volume dampening - more water = less % deposited (linear dampening)
-export const SEDIMENT_VOLUME_REF = 100000000;  // 100M m^3 reference volume
+export const SEDIMENT_GRADIENT_DECAY = 2.0;   // gradient reference point in meters
 
 // Altitude change conversion: sediment volume to altitude change
 // 1 m^3 sediment over 1 km^2 = 0.000001 m altitude change
