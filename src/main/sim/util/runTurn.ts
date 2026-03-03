@@ -20,12 +20,33 @@ import TinyQueue from 'tinyqueue';
 
 export default function runTurn(sim: Sim): void {
     applyPendingErosion(sim);
+    applyFlatnessJitter(sim);
     sim.recomputeTopography();
     clearRelic(sim);
     applyEvaporation(sim);
     let fullEvents: BasinFullEvent[] = calculateRivers(sim);
     processOverflows(sim, fullEvents);
     erodeOutlets(sim);
+}
+
+// For any square that shares an exact altitude with at least one of its 8 neighbors,
+// add a tiny random jitter so flow direction can be determined unambiguously.
+function applyFlatnessJitter(sim: Sim): void {
+    for (let i = 0; i < sim.size; i++) {
+        for (let j = 0; j < sim.size; j++) {
+            const square = sim.map[i][j];
+            const adj = SquareUtil.getAdjacentSquares(i, j, sim.size);
+            let hasMatch = false;
+            adj.forEach((value) => {
+                if (sim.map[value[0]][value[1]].altitude === square.altitude) {
+                    hasMatch = true;
+                }
+            });
+            if (hasMatch) {
+                square.altitude += Math.random() * 0.01;
+            }
+        }
+    }
 }
 
 // Apply pending altitude deltas from last turn's erosion/sedimentation.
