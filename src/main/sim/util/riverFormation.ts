@@ -41,7 +41,7 @@ function populateFlow(square: Square, sim: Sim): FlowResult {
     square.flow.flowVolume = finalOutFlow;
 
     // Erosion/sedimentation — stores deltas in pendingErosion, no altitude change now
-    let sedimentOut = processErosionAtSquare(square, inSediment, finalOutFlow);
+    let sedimentOut = processErosionAtSquare(square, inSediment, finalOutFlow, sim);
 
     // Dump sediment at river-lake boundary
     let downstreamSquare = SquareUtil.getDownstreamSquare(square, sim);

@@ -191,14 +191,14 @@ function erodeOutlets(sim: Sim): void {
                 // Apply outlet target's gradient erosion to the hold
                 let savedHeightDiff = holdSquare.flow.heightDiff;
                 holdSquare.flow.heightDiff = outletTarget.flow.heightDiff;
-                sediment = processErosionAtSquare(holdSquare, 0, overflowVolume);
+                sediment = processErosionAtSquare(holdSquare, 0, overflowVolume, sim);
                 holdSquare.flow.heightDiff = savedHeightDiff;
                 current = outletTarget;
             }
         }
 
         while (current && !current.submerged && steps < sim.size * 2) {
-            sediment = processErosionAtSquare(current, sediment, overflowVolume);
+            sediment = processErosionAtSquare(current, sediment, overflowVolume, sim);
             let next = SquareUtil.getDownstreamSquare(current, sim);
             if (!next || next === current) break;
             if (next.submerged) {

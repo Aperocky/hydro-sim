@@ -91,7 +91,11 @@ function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string, over
 }
 
 
-function flow(square: Square, volume: number, flowFrom: number, sim: Sim): number {
+function flow(square: Square, volume: number, flowFrom: number, sim: Sim, depth: number = 0): number {
+    if (depth > 50000) {
+        console.warn(`flow() hit recursion limit at depth ${depth} at square ${square.location}`);
+        return 0;
+    }
     let flowFromOriginalValue = 0;
     if (square.flow.inFlows.has(flowFrom)) {
         flowFromOriginalValue = square.flow.inFlows.get(flowFrom)
@@ -120,5 +124,5 @@ function flow(square: Square, volume: number, flowFrom: number, sim: Sim): numbe
     if (nextSquare.submerged) {
         return diffVolume;
     }
-    return flow(nextSquare, diffVolume, nextFlowFrom, sim);
+    return flow(nextSquare, diffVolume, nextFlowFrom, sim, depth + 1);
 }
