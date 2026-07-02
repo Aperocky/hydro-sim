@@ -4,8 +4,9 @@ import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
 import populateBasinRiver from './populateBasinRiver';
 import processOverflowEvent from './processOverflowEvent';
-import { processErosionAtSquare, dumpSedimentAtMouth } from './erosion';
+import { processErosionAtSquare } from './erosion';
 import { aquiferFlow, fillAquiferWithEffectivePrecip } from './riverUtil';
+import { settleOrRouteSediment } from './sedimentRouting';
 import * as constant from '../../constant/constant';
 import TinyQueue from 'tinyqueue';
 
@@ -202,7 +203,7 @@ function erodeOutlets(sim: Sim): void {
             let next = SquareUtil.getDownstreamSquare(current, sim);
             if (!next || next === current) break;
             if (next.submerged) {
-                dumpSedimentAtMouth(next, sediment, sim);
+                settleOrRouteSediment(next, sediment, sim);
                 break;
             }
             current = next;
@@ -210,4 +211,3 @@ function erodeOutlets(sim: Sim): void {
         }
     });
 }
-

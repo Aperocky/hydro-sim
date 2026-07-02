@@ -2,8 +2,8 @@ import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
 import { calculateDrain, getEffectivePrecipVolume } from './riverUtil';
-import { processErosionAtSquare, dumpSedimentAtMouth } from './erosion';
-import { depositAtDryAnchor } from './dryDeposit';
+import { processErosionAtSquare } from './erosion';
+import { settleOrRouteSediment } from './sedimentRouting';
 
 
 // Form rivers based on shores - all shores will be calculated as a separate catchment
@@ -45,12 +45,8 @@ function populateFlow(square: Square, sim: Sim): FlowResult {
 
     // Dump sediment at river-lake boundary
     let downstreamSquare = SquareUtil.getDownstreamSquare(square, sim);
-    if (downstreamSquare && downstreamSquare.submerged) {
-        dumpSedimentAtMouth(downstreamSquare, sedimentOut, sim);
-        sedimentOut = 0;
-    } else if (downstreamSquare && downstreamSquare.flow.flowDirection === 0 && !downstreamSquare.submerged) {
-        // Dry basin anchor — smudge sediment outward
-        depositAtDryAnchor(downstreamSquare, sedimentOut, sim);
+    if (downstreamSquare && (downstreamSquare.submerged || downstreamSquare.flow.flowDirection === 0)) {
+        settleOrRouteSediment(downstreamSquare, sedimentOut, sim);
         sedimentOut = 0;
     }
 

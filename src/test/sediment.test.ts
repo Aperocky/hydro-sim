@@ -1,6 +1,6 @@
 import { SquareUtil, Square } from '../main/components/square';
 import { FlowUtil } from '../main/components/flow';
-import { processErosionAtSquare } from '../main/sim/util/erosion';
+import { processErosionAtSquare, dumpSedimentAtMouth } from '../main/sim/util/erosion';
 
 // Build a minimal 2x2 grid:
 //  A(0,0)  B(0,1)
@@ -88,5 +88,21 @@ describe('Sediment carrying downstream', () => {
         // Each downstream square should carry more sediment than upstream
         expect(sedB).toBeGreaterThan(sedA);
         expect(sedC).toBeGreaterThan(sedB);
+    });
+
+    test('lake mouth deposition returns excess sediment after flooded capacity is full', () => {
+        let lake = makeSquare(10, 0, 0);
+        lake.submerged = true;
+        lake.depth = 1;
+
+        let sim = {
+            size: 1,
+            map: [[lake]],
+        } as any;
+
+        let remaining = dumpSedimentAtMouth(lake, 1500000, sim);
+
+        expect(lake.flow.pendingErosion).toBeCloseTo(1, 5);
+        expect(remaining).toBeCloseTo(500000, -2);
     });
 });

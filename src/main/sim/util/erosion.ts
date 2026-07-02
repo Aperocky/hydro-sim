@@ -172,8 +172,8 @@ export function dumpSedimentAtMouth(
     square: Square,
     sediment: number,
     sim: Sim
-): void {
-    if (sediment <= 0 || !isFinite(sediment)) return;
+): number {
+    if (sediment <= 0 || !isFinite(sediment)) return 0;
 
     let queue: Square[] = [square];
     let visited: Set<string> = new Set([square.location]);
@@ -202,5 +202,5 @@ export function dumpSedimentAtMouth(
             });
         }
     }
-    // Excess sediment stays suspended in lake water — discard
+    return remaining;
 }

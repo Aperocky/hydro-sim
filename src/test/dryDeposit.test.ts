@@ -4,7 +4,7 @@ import populateFlowDirection from '../main/sim/util/populateFlowDirection';
 import { depositAtDryAnchor } from '../main/sim/util/dryDeposit';
 import * as constant from '../main/constant/constant';
 
-const UNIT_SQUARE_VOLUME = constant.UNITS.get('squareToVolume'); // 1,000,000
+const UNIT_SQUARE_VOLUME = constant.UNITS.get('squareToVolume');
 
 function buildGrid(altitudes: number[][]): SimBase {
     const size = altitudes.length;
@@ -48,125 +48,102 @@ function totalPendingVolume(sim: SimBase): number {
     return total;
 }
 
+function attachBasin(sim: SimBase, anchor: Square, members: Square[], holdElevation: number): void {
+    let anchorId = 'basin';
+    for (let sq of members) {
+        sq.basin = anchorId;
+    }
+    (sim as any).superBasins.set(anchorId, {
+        anchor: anchor.location,
+        members: members.map((sq) => sq.location),
+        memberBasins: [anchorId],
+        basinHold: {
+            edgeMembers: [],
+            holdElevation,
+            holdCapacity: 0,
+            holdMember: '',
+            holdBasins: [],
+        },
+    });
+}
+
 describe('dryDeposit', () => {
 
-    test('zero sediment does nothing', () => {
+    test('zero sediment does nothing and returns zero remainder', () => {
         let sim = buildGrid([[12,12,12],[12,10,12],[12,12,12]]);
-        depositAtDryAnchor(sim.map[1][1], 0, sim as any);
-        for (let i = 0; i < 3; i++)
-            for (let j = 0; j < 3; j++)
-                expect(sim.map[i][j].flow.pendingErosion).toBe(0);
+        attachBasin(sim, sim.map[1][1], [sim.map[1][1]], 12);
+
+        let remaining = depositAtDryAnchor(sim.map[1][1], 0, sim as any);
+
+        expect(remaining).toBe(0);
+        expect(totalPendingVolume(sim)).toBe(0);
     });
 
-    test('tiny sediment only raises anchor', () => {
+    test('fills dry basin up to hold elevation before passing sediment through', () => {
         let sim = buildGrid([[12,12,12],[12,10,12],[12,12,12]]);
-        depositAtDryAnchor(sim.map[1][1], 10000, sim as any); // 0.01m
-        expect(effAlt(sim.map[1][1])).toBeCloseTo(10.01, 2);
-        for (let i = 0; i < 3; i++)
-            for (let j = 0; j < 3; j++) {
-                if (i === 1 && j === 1) continue;
-                expect(sim.map[i][j].flow.pendingErosion).toBe(0);
-            }
+        attachBasin(sim, sim.map[1][1], [sim.map[1][1]], 12);
+
+        let remaining = depositAtDryAnchor(sim.map[1][1], 3000000, sim as any);
+
+        expect(effAlt(sim.map[1][1])).toBeCloseTo(12, 5);
+        expect(remaining).toBeCloseTo(1000000, -2);
+        expect(totalPendingVolume(sim)).toBeCloseTo(2000000, -2);
     });
 
-    test('anchor fills to margin above lowest neighbor', () => {
-        // Anchor 10m, neighbors 12m. Should fill to 12.1m = 2.1m rise = 2,100,000 m³
+    test('partial fill keeps all sediment in the basin', () => {
         let sim = buildGrid([[12,12,12],[12,10,12],[12,12,12]]);
-        depositAtDryAnchor(sim.map[1][1], 2100000, sim as any);
-        expect(effAlt(sim.map[1][1])).toBeCloseTo(12.1, 1);
+        attachBasin(sim, sim.map[1][1], [sim.map[1][1]], 12);
+
+        let remaining = depositAtDryAnchor(sim.map[1][1], 500000, sim as any);
+
+        expect(remaining).toBe(0);
+        expect(effAlt(sim.map[1][1])).toBeCloseTo(10.5, 5);
     });
 
-    test('asymmetric — anchor fills to margin above LOWEST neighbor', () => {
-        // Anchor 10m, one neighbor at 11m, rest at 15m
-        // Should fill to 11.1m (lowest neighbor + 0.1)
-        let sim = buildGrid([[15,15,15],[11,10,15],[15,15,15]]);
-        depositAtDryAnchor(sim.map[1][1], 1100000, sim as any);
-        expect(effAlt(sim.map[1][1])).toBeCloseTo(11.1, 1);
-        expect(sim.map[1][0].flow.pendingErosion).toBe(0); // not enough to reach ring
+    test('fills multi-square basin from low members upward', () => {
+        let sim = buildGrid([[12,12,12],[12,10,11],[12,12,12]]);
+        let anchor = sim.map[1][1];
+        let shelf = sim.map[1][2];
+        attachBasin(sim, anchor, [anchor, shelf], 12);
+
+        let remaining = depositAtDryAnchor(anchor, 2500000, sim as any);
+
+        expect(remaining).toBe(0);
+        expect(effAlt(anchor)).toBeCloseTo(11.75, 5);
+        expect(effAlt(shelf)).toBeCloseTo(11.75, 5);
     });
 
-    test('ring squares get deposit even when already higher', () => {
-        // Anchor 10m, neighbors 20m. Fill anchor to 20.1, then ring gets SMUDGE_MARGIN
-        let sim = buildGrid([[20,20,20],[20,10,20],[20,20,20]]);
-        // Anchor fill: 10.1m * 1M = 10,100,000. Ring fill (8 sq * 0.1m): 800,000.
-        // All-raise (9 sq * 0.1m): 900,000. Total ~11,800,000
-        depositAtDryAnchor(sim.map[1][1], 12000000, sim as any);
-        for (let i = 0; i < 3; i++)
-            for (let j = 0; j < 3; j++) {
-                if (i === 1 && j === 1) continue;
-                expect(sim.map[i][j].flow.pendingErosion).toBeGreaterThan(0);
-            }
-    });
-
-    test('all-raise includes anchor — anchor rises with each ring', () => {
+    test('returns all sediment when real basin has no capacity', () => {
         let sim = buildGrid([[12,12,12],[12,10,12],[12,12,12]]);
-        // Give enough to fill anchor + ring + all-raise
-        depositAtDryAnchor(sim.map[1][1], 5000000, sim as any);
-        // Anchor should be higher than 12.1 (initial fill) due to all-raise
-        expect(effAlt(sim.map[1][1])).toBeGreaterThan(12.1);
+        attachBasin(sim, sim.map[1][1], [sim.map[1][1]], 10);
+
+        let remaining = depositAtDryAnchor(sim.map[1][1], 1000000, sim as any);
+
+        expect(remaining).toBe(1000000);
+        expect(totalPendingVolume(sim)).toBe(0);
     });
 
-    test('sediment conservation — no sediment lost on large grid', () => {
-        // 7x7 grid with deep depression — plenty of room to absorb
-        let alts: number[][] = [];
-        for (let i = 0; i < 7; i++) {
-            alts.push([]);
-            for (let j = 0; j < 7; j++) {
-                if (i === 3 && j === 3) alts[i][j] = 0;
-                else alts[i][j] = 100;
-            }
-        }
-        let sim = buildGrid(alts);
-        let input = 10000000; // 10M m³
-        depositAtDryAnchor(sim.map[3][3], input, sim as any);
-        let deposited = totalPendingVolume(sim);
-        expect(deposited).toBeCloseTo(input, -2);
-    });
-
-    test('5x5 grid — sediment reaches outer ring', () => {
-        let alts: number[][] = [];
-        for (let i = 0; i < 5; i++) {
-            alts.push([]);
-            for (let j = 0; j < 5; j++) {
-                if (i === 2 && j === 2) alts[i][j] = 10;
-                else if (i >= 1 && i <= 3 && j >= 1 && j <= 3) alts[i][j] = 12;
-                else alts[i][j] = 15;
-            }
-        }
-        let sim = buildGrid(alts);
-        depositAtDryAnchor(sim.map[2][2], 50000000, sim as any);
-        // Outer ring should have deposits
-        expect(sim.map[0][0].flow.pendingErosion).toBeGreaterThan(0);
-        expect(sim.map[4][4].flow.pendingErosion).toBeGreaterThan(0);
-    });
-
-    test('no NaN or negative values', () => {
-        let sim = buildGrid([[12,12,12],[12,10,12],[12,12,12]]);
-        depositAtDryAnchor(sim.map[1][1], 100000000, sim as any);
-        for (let i = 0; i < 3; i++)
-            for (let j = 0; j < 3; j++) {
-                expect(isFinite(sim.map[i][j].flow.pendingErosion)).toBe(true);
-                expect(sim.map[i][j].flow.pendingErosion).toBeGreaterThanOrEqual(0);
-            }
-    });
-
-    test('flat terrain — all same altitude', () => {
+    test('standalone closed-basin fallback conserves sediment', () => {
         let sim = buildGrid([[10,10,10],[10,10,10],[10,10,10]]);
-        depositAtDryAnchor(sim.map[1][1], 5000000, sim as any);
-        // Anchor should rise
-        expect(effAlt(sim.map[1][1])).toBeGreaterThan(10);
-        // No NaN
-        for (let i = 0; i < 3; i++)
-            for (let j = 0; j < 3; j++)
-                expect(isFinite(sim.map[i][j].flow.pendingErosion)).toBe(true);
+
+        let remaining = depositAtDryAnchor(sim.map[1][1], 5000000, sim as any);
+
+        expect(remaining).toBe(0);
+        expect(totalPendingVolume(sim)).toBeCloseTo(5000000, -2);
+        expect(isFinite(sim.map[1][1].flow.pendingErosion)).toBe(true);
+        expect(sim.map[1][1].flow.pendingErosion).toBeGreaterThan(0);
     });
 
-    test('multiple deposits accumulate', () => {
+    test('multiple deposits accumulate against effective altitude', () => {
         let sim = buildGrid([[12,12,12],[12,10,12],[12,12,12]]);
-        depositAtDryAnchor(sim.map[1][1], 1000000, sim as any);
+        attachBasin(sim, sim.map[1][1], [sim.map[1][1]], 12);
+
+        depositAtDryAnchor(sim.map[1][1], 500000, sim as any);
         let alt1 = effAlt(sim.map[1][1]);
-        depositAtDryAnchor(sim.map[1][1], 1000000, sim as any);
+        depositAtDryAnchor(sim.map[1][1], 500000, sim as any);
         let alt2 = effAlt(sim.map[1][1]);
+
         expect(alt2).toBeGreaterThan(alt1);
+        expect(alt2).toBeCloseTo(11, 5);
     });
 });
