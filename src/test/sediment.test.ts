@@ -1,6 +1,10 @@
 import { SquareUtil, Square } from '../main/components/square';
 import { FlowUtil } from '../main/components/flow';
-import { processErosionAtSquare, dumpSedimentAtMouth } from '../main/sim/util/erosion';
+import {
+    processErosionAtSquare,
+    dumpSedimentAtMouth,
+    SLOPE_PRESERVE_FRACTION,
+} from '../main/sim/util/erosion';
 
 // Build a minimal 2x2 grid:
 //  A(0,0)  B(0,1)
@@ -104,5 +108,24 @@ describe('Sediment carrying downstream', () => {
 
         expect(lake.flow.pendingErosion).toBeCloseTo(1, 5);
         expect(remaining).toBeCloseTo(500000, -2);
+    });
+
+    test('erosion and deposition caps cannot flatten an active slope edge', () => {
+        let up = makeSquare(10, 0, 0);
+        let down = makeSquare(8, 0, 1);
+
+        up.flow.heightDiff = 2;
+        down.flow.heightDiff = 2;
+
+        // Force each operation past its cap so the cap value is the behavior under test.
+        processErosionAtSquare(up, 0, Number.MAX_SAFE_INTEGER);
+        processErosionAtSquare(down, Number.MAX_SAFE_INTEGER, 1);
+
+        let upAfter = up.altitude + up.flow.pendingErosion;
+        let downAfter = down.altitude + down.flow.pendingErosion;
+        let expectedGap = 2 * (1 - 2 * SLOPE_PRESERVE_FRACTION);
+
+        expect(upAfter - downAfter).toBeGreaterThanOrEqual(expectedGap);
+        expect(upAfter).toBeGreaterThan(downAfter);
     });
 });
