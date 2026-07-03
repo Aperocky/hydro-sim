@@ -7,6 +7,7 @@ import processOverflowEvent from './processOverflowEvent';
 import { processErosionAtSquare } from './erosion';
 import { aquiferFlow, fillAquiferWithEffectivePrecip } from './riverUtil';
 import { settleOrRouteSediment } from './sedimentRouting';
+import lakebedSmudge from './lakebedSmudge';
 import * as constant from '../../constant/constant';
 import TinyQueue from 'tinyqueue';
 
@@ -18,6 +19,7 @@ import TinyQueue from 'tinyqueue';
 // 4. calculate river flows + erosion/sedimentation (stores pending deltas)
 // 5. process any overfilling basin and basin mergers
 // 6. erode basin outlet channels (stores pending deltas)
+// 7. smooth submerged lakebeds (stores pending deltas)
 
 export default function runTurn(sim: Sim): void {
     applyPendingErosion(sim);
@@ -28,6 +30,7 @@ export default function runTurn(sim: Sim): void {
     let fullEvents: BasinFullEvent[] = calculateRivers(sim);
     processOverflows(sim, fullEvents);
     erodeOutlets(sim);
+    lakebedSmudge(sim);
 }
 
 // For any square that shares an exact altitude with at least one of its 8 neighbors,
