@@ -13,6 +13,10 @@ export type BasinFullEvent = {
     valid: boolean;
 }
 
+export type ProcessInflowOptions = {
+    fillAquifer?: boolean;
+}
+
 // A basin consist of a lowest point and all
 // Squares which flowDirection eventually converges to that lowest point
 // def lowest point: A square where all other squares adjacent to it are higher than it.
@@ -63,13 +67,15 @@ export class Basin {
         return basin;
     }
 
-    processInflow(volume: number, sim): BasinFullEvent | null {
+    processInflow(volume: number, sim, options: ProcessInflowOptions = {}): BasinFullEvent | null {
         if (!isFinite(volume) || volume <= 0) return null;
-        // Fills aquifer first.
-        for (let square of [...this.lake.flooded.data]) {
-            volume = FlowUtil.fillUnderwaterAquifer(square.flow, volume);
-            if (volume <= 0) {
-                return null;
+        if (options.fillAquifer !== false) {
+            // Fills aquifer first.
+            for (let square of [...this.lake.flooded.data]) {
+                volume = FlowUtil.fillUnderwaterAquifer(square.flow, volume);
+                if (volume <= 0) {
+                    return null;
+                }
             }
         }
         let currVolume = this.lake.getVolume();

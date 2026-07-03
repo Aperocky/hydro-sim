@@ -7,7 +7,15 @@ import { calculateDrain, getEffectivePrecipVolume } from './riverUtil';
 import * as constants from '../../constant/constant';
 
 
-export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): BasinFullEvent | null {
+type ProcessOverflowOptions = {
+    includePrecipitation?: boolean;
+    routeFlow?: boolean;
+    fillAquifer?: boolean;
+}
+
+export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, options: ProcessOverflowOptions = {}): BasinFullEvent | null {
+    let includePrecipitation = options.includePrecipitation !== false;
+    let routeFlow = options.routeFlow !== false;
     if (event.holdBasins.length != 1) {
     }
     let thisBasin = sim.superBasins.get(event.anchor);
@@ -36,16 +44,19 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
             nextBasin.basinFullEvent = null;
         }
         thisBasin.basinFullEvent = null;
-        let newEvent = superBasin.processInflow(totalOverflow, sim);
+        let newEvent = superBasin.processInflow(totalOverflow, sim, {fillAquifer: options.fillAquifer});
         return newEvent;
     }
-    let outlet = identifyOutflow(sim, event.holdMember, nextBasinAnchor, event.overflowVolume);
-    if (!outlet) {
-        // Erosion invalidated the outflow path — skip event
-        thisBasin.basinFullEvent = null;
-        return null;
+    let diffVolume = event.overflowVolume;
+    if (routeFlow) {
+        let outlet = identifyOutflow(sim, event.holdMember, nextBasinAnchor, event.overflowVolume);
+        if (!outlet) {
+            // Erosion invalidated the outflow path — skip event
+            thisBasin.basinFullEvent = null;
+            return null;
+        }
+        diffVolume = flow(outlet.square, event.overflowVolume, outlet.direction, sim, includePrecipitation);
     }
-    let diffVolume = flow(outlet.square, event.overflowVolume, outlet.direction, sim);
 
     thisBasin.basinFullEvent = null; // Clearing the event from original basin.
 
@@ -54,7 +65,7 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent): B
         return null;
     }
 
-    let newEvent: BasinFullEvent | null = nextBasin.processInflow(diffVolume, sim);
+    let newEvent: BasinFullEvent | null = nextBasin.processInflow(diffVolume, sim, {fillAquifer: options.fillAquifer});
     return newEvent;
 }
 
@@ -91,7 +102,7 @@ function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string, over
 }
 
 
-function flow(square: Square, volume: number, flowFrom: number, sim: Sim, depth: number = 0): number {
+function flow(square: Square, volume: number, flowFrom: number, sim: Sim, includePrecipitation: boolean, depth: number = 0): number {
     if (depth > 50000) {
         console.warn(`flow() hit recursion limit at depth ${depth} at square ${square.location}`);
         return 0;
@@ -105,8 +116,10 @@ function flow(square: Square, volume: number, flowFrom: number, sim: Sim, depth:
     square.flow.inFlows.forEach((val) => {
         updatedRawFlowVolume += val;
     })
-    // Recalibrate cellular water flow
-    updatedRawFlowVolume += getEffectivePrecipVolume(square);
+    // Recalibrate cellular water flow.
+    if (includePrecipitation) {
+        updatedRawFlowVolume += getEffectivePrecipVolume(square);
+    }
     let nextSquare = SquareUtil.getDownstreamSquare(square, sim);
     if (nextSquare == null) {
         return updatedRawFlowVolume - square.flow.flowVolume
@@ -124,5 +137,5 @@ function flow(square: Square, volume: number, flowFrom: number, sim: Sim, depth:
     if (nextSquare.submerged) {
         return diffVolume;
     }
-    return flow(nextSquare, diffVolume, nextFlowFrom, sim, depth + 1);
+    return flow(nextSquare, diffVolume, nextFlowFrom, sim, includePrecipitation, depth + 1);
 }

@@ -136,6 +136,27 @@ export default class LakeFormation {
         this.setLakeStateToSim();
     }
 
+    drainToVolume(sim: Sim, volume: number): void {
+        if (volume >= this.volume) return;
+        if (volume <= 0) {
+            this.clearLakeStateToSim();
+            this.shore = new TinyQueue([], squareCompare);
+            this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
+            this.surfaceElevation = this.anchorElevation;
+            this.volume = 0;
+            this.initiateQueue(sim);
+            return;
+        }
+
+        this.clearLakeStateToSim();
+        this.shore = new TinyQueue([], squareCompare);
+        this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
+        this.surfaceElevation = this.anchorElevation;
+        this.volume = 0;
+        this.initiateQueue(sim);
+        this.fillToVolume(sim, volume);
+    }
+
     drain(sim: Sim, elevation: number, recedingShores: Square[], depth: number = 0): void {
         if (depth > 50000) {
             console.warn(`drain() hit recursion limit at depth ${depth}`);
