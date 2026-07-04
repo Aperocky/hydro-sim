@@ -13,7 +13,7 @@ export enum Biome {
 }
 
 export const MARSH_SUBMERGENCE_TURNS = 10;
-export const SALT_PAN_SUBMERGENCE_TURNS = 20;
+export const SALT_PAN_SUBMERGENCE_TURNS = 100;
 export const SALT_PAN_MOISTURE_THRESHOLD = 2;
 export const FLAT_WETLAND_GRADIENT = 1;
 export const CLIFF_GRADIENT = 100;
@@ -38,7 +38,7 @@ export function getBiome(square: Square, localGradient: number = square.flow.hei
     let moisture = getMoistureIndex(square);
     if (
         moisture < SALT_PAN_MOISTURE_THRESHOLD &&
-        wasRecentlySubmerged(square, SALT_PAN_SUBMERGENCE_TURNS) &&
+        wasSubmergedAtMost(square, SALT_PAN_SUBMERGENCE_TURNS) &&
         localGradient < FLAT_WETLAND_GRADIENT
     ) {
         return Biome.SaltPan;
@@ -76,4 +76,8 @@ export function getNetSedimentationDepth(square: Square): number {
 
 function wasRecentlySubmerged(square: Square, turns: number): boolean {
     return square.previously_submerged > 0 && square.previously_submerged < turns;
+}
+
+function wasSubmergedAtMost(square: Square, turns: number): boolean {
+    return square.previously_submerged > 0 && square.previously_submerged <= turns;
 }

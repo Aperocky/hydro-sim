@@ -12,7 +12,7 @@ import * as constant from '../../constant/constant';
 import TinyQueue from 'tinyqueue';
 
 
-export const SUBMERGENCE_MEMORY_TURNS = 20;
+export const SUBMERGENCE_MEMORY_TURNS = 100;
 
 // Turn phases:
 // 1. apply pending erosion deltas from last turn
