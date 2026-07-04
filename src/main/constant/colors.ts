@@ -7,10 +7,17 @@ const LAKE_COLOR_MAP: Map<number, number[]> = new Map();
 LAKE_COLOR_MAP.set(0, [16, 165, 245]);
 LAKE_COLOR_MAP.set(1, [0, 0, 130]);
 
-const FLORA_COLOR_MAP: Map<number, number[]> = new Map();
-FLORA_COLOR_MAP.set(0, [225, 190, 145]); // Desert
-FLORA_COLOR_MAP.set(1, [160, 230, 100]); // Steppe/Grassland
-FLORA_COLOR_MAP.set(2, [15, 120, 50]); // Rainforest
+export const BIOME_COLORS = {
+    water: LAKE_BLUE,
+    marsh: [105, 185, 205],
+    saltPan: [238, 235, 222],
+    cliff: [135, 130, 118],
+    desert: [225, 190, 145],
+    grassland: [160, 230, 100],
+    woodland: [105, 175, 80],
+    forest: [55, 140, 65],
+    rainforest: [30, 120, 60],
+}
 
 const BASE_COLOR_MAP: Map<number, number[]> = new Map();
 BASE_COLOR_MAP.set(0, [80, 140, 80]);
@@ -45,7 +52,6 @@ export const COLOR_MAPS = {
     precip: PRECIP_COLOR_MAP,
     aquifer: AQUIFER_COLOR_MAP,
     base: BASE_COLOR_MAP,
-    flora: FLORA_COLOR_MAP,
     lake: LAKE_COLOR_MAP,
     flatness: FLAT_COLOR_MAP,
 }
@@ -87,12 +93,6 @@ export const MAP_CONFIG = {
         stepSize: 0.45,
         subStep: 5,
         alpha: true,
-    },
-    flora: {
-        name: 'flora',
-        stepSize: 2,
-        subStep: 2,
-        alpha: false,
     },
     lake: {
         name: 'lake',

@@ -161,6 +161,8 @@ export function processErosionAtSquare(
     }
     
     square.flow.sedimentation = deposited;
+    square.flow.totalErosion += eroded;
+    square.flow.totalSedimentation += deposited;
 
     // Store net altitude delta for next turn (don't apply now)
     square.flow.pendingErosion += (deposited - eroded) / UNIT_SQUARE_VOLUME;
@@ -197,6 +199,7 @@ export function dumpSedimentAtMouth(
 
         let capacity = effectiveDepth * UNIT_SQUARE_VOLUME;
         let deposit = Math.min(remaining, capacity);
+        current.flow.totalSedimentation += deposit;
         current.flow.pendingErosion += deposit / UNIT_SQUARE_VOLUME;
         remaining -= deposit;
 

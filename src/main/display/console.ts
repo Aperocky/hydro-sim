@@ -3,6 +3,7 @@ import { Square } from '../components/square';
 import { Basin } from '../components/basin/basin';
 import dataStore from './helper/dataStore';
 import * as constants from '../constant/constant';
+import { Biome, getBiome } from '../sim/util/biome';
 
 
 const LOOK = PAGE.console;
@@ -34,18 +35,25 @@ export class Console {
     }
 
     static displayFlora(square: Square): string {
-        if (square.submerged) {
-            return "Lake";
-        }
-        let num = Math.log(square.flow.aquiferDrain/10000);
-        if (num < 1) {
-            return "Desert";
-        } else if (num < 3) {
-            return "Steppe";
-        } else if (num < 4) {
-            return "Coniferous Forest";
-        } else {
-            return "Forest";
+        switch (getBiome(square)) {
+            case Biome.Water:
+                return "Lake";
+            case Biome.Marsh:
+                return "Marsh";
+            case Biome.SaltPan:
+                return "Salt Pan";
+            case Biome.Cliff:
+                return "Cliff";
+            case Biome.Desert:
+                return "Desert";
+            case Biome.Grassland:
+                return "Grassland";
+            case Biome.Woodland:
+                return "Woodland";
+            case Biome.Forest:
+                return "Forest";
+            case Biome.Rainforest:
+                return "Rainforest";
         }
     }
 
@@ -61,6 +69,7 @@ export class Console {
             texts.push(`Altitude: ${square.altitude} m`);
         }
         texts.push(`Precipitation: ${square.precipitation} mm`);
+        texts.push(`Previously submerged: ${square.previously_submerged}`);
         if (square.flow.flowVolume >= 1000 && !square.submerged) {
             texts.push(`------ FLOW INFORMATION ------`);
             let flowVal = roundTo(square.flow.flowVolume, 1000);
@@ -84,6 +93,11 @@ export class Console {
             if (square.flow.sedimentation > 0) {
                 texts.push(`Sedimentation: ${Math.floor(square.flow.sedimentation)} m^3 (${Math.floor(square.flow.sedimentation/10000)/100} m)`);
             }
+        }
+        if (square.flow.totalErosion > 0 || square.flow.totalSedimentation > 0) {
+            texts.push(`------ CUMULATIVE TERRAIN CHANGE ------`);
+            texts.push(`Total erosion: ${Math.floor(square.flow.totalErosion)} m^3 (${Math.floor(square.flow.totalErosion/10000)/100} m)`);
+            texts.push(`Total sedimentation: ${Math.floor(square.flow.totalSedimentation)} m^3 (${Math.floor(square.flow.totalSedimentation/10000)/100} m)`);
         }
         texts.push(`------ AQUIFER INFORMATION ------`);
         texts.push(`Aquifer Volume: ${roundTo(square.flow.aquifer, 1000)} m^3`);

@@ -10,6 +10,7 @@ export type Square = {
     edgeOf: Set<string>;
     location: string;
     submerged: boolean;
+    previously_submerged: number;
     depth: number;
 }
 
@@ -25,6 +26,7 @@ export class SquareUtil {
             edgeOf: new Set(),
             location: "", // To be filled
             submerged: false,
+            previously_submerged: 0,
             depth: 0,
         };
     }

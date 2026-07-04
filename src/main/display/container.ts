@@ -8,6 +8,7 @@ import { Console } from './console';
 import * as COLOR from '../constant/colors';
 import dataStore from './helper/dataStore';
 import generalInfo from '../sim/read/generalInfo';
+import { getBiome } from '../sim/util/biome';
 import * as constants from '../constant/constant';
 
 
@@ -108,29 +109,16 @@ export class MapContainer {
                 return SpriteUtil.getColor(square.altitude, baseConf);
             }
             case 'flora': {
-                let aquiferDrain = square.flow.aquiferDrain;
                 if (square.submerged) {
                     return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
                 }
-                let aquiferDrainScalar = Math.log(aquiferDrain/10000);
-                if (aquiferDrainScalar >= 1 && aquiferDrainScalar < 2) {
-                    aquiferDrainScalar = 2;
-                }
-                aquiferDrainScalar = aquiferDrainScalar < 0 ? 0 : aquiferDrainScalar;
-                return SpriteUtil.getColor(aquiferDrainScalar, baseConf);
+                return COLOR.BIOME_COLORS[getBiome(square, this.getLocalGradient(square))];
             }
             case 'flatness': {
                 if (square.submerged) {
                     return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
                 }
-                let loc: {i: number, j: number} = JSON.parse(square.location);
-                let adjacents = SquareUtil.getAdjacentSquares(loc.i, loc.j, this.simSize);
-                let maxDiff = 0;
-                adjacents.forEach((coords) => {
-                    let adj = this.simMap[coords[0]][coords[1]];
-                    let diff = Math.abs(square.altitude - adj.altitude);
-                    if (diff > maxDiff) maxDiff = diff;
-                });
+                let maxDiff = this.getLocalGradient(square);
                 // Remap: 0-1 -> 0 (green), 1-10 -> 0-1 (green->orange), 10-50 -> 1-2 (orange->brown), 50-200 -> 2-3 (brown->red)
                 let scaled: number;
                 if (maxDiff <= 1) {
@@ -170,16 +158,7 @@ export class MapContainer {
                 return SpriteUtil.getColor(aquiferPercentFull, alphaConf);
             }
             case 'flora': {
-                let aquiferDrain = square.flow.aquiferDrain;
-                if (square.submerged) {
-                    return COLOR.LAKE_BLUE;
-                }
-                let aquiferDrainScalar = Math.log(aquiferDrain/10000);
-                aquiferDrainScalar = aquiferDrainScalar < 0 ? 0 : aquiferDrainScalar;
-                if (aquiferDrainScalar >= 1 && aquiferDrainScalar < 2) {
-                    aquiferDrainScalar = 2;
-                }
-                return SpriteUtil.getColor(aquiferDrainScalar, alphaConf);
+                return COLOR.BIOME_COLORS[getBiome(square, this.getLocalGradient(square))];
             }
             default: {
                 return [255, 255, 255]
@@ -199,5 +178,17 @@ export class MapContainer {
             let tint = SpriteUtil.alphaBlend(alphaColor, baseColor, alpha);
             val.sprite.tint = tint;
         })
+    }
+
+    getLocalGradient(square: Square): number {
+        let loc: {i: number, j: number} = JSON.parse(square.location);
+        let adjacents = SquareUtil.getAdjacentSquares(loc.i, loc.j, this.simSize);
+        let maxDiff = 0;
+        adjacents.forEach((coords) => {
+            let adj = this.simMap[coords[0]][coords[1]];
+            let diff = Math.abs(square.altitude - adj.altitude);
+            if (diff > maxDiff) maxDiff = diff;
+        });
+        return maxDiff;
     }
 }

@@ -22,6 +22,7 @@ function makeSquare(alt: number, i: number, j: number): Square {
         edgeOf: new Set(),
         location: JSON.stringify({i, j}),
         submerged: false,
+        previously_submerged: 0,
         depth: 0,
     };
     return sq;
@@ -67,12 +68,28 @@ describe('Sediment carrying downstream', () => {
 
         // D's outgoing sediment should be stored on flow
         expect(D.flow.sediment).toBeCloseTo(sedD, 5);
+        expect(D.flow.totalErosion).toBeCloseTo(D.flow.erosion, 5);
+        expect(D.flow.totalSedimentation).toBeCloseTo(D.flow.sedimentation, 5);
 
         // Sediment is conserved: total eroded everywhere = total deposited + total still carried
         let totalEroded = A.flow.erosion + B.flow.erosion + C.flow.erosion + D.flow.erosion;
         let totalDeposited = A.flow.sedimentation + B.flow.sedimentation + C.flow.sedimentation + D.flow.sedimentation;
         let totalCarried = sedD; // only D has outgoing sediment leaving the system
         expect(totalEroded).toBeCloseTo(totalDeposited + totalCarried, 5);
+    });
+
+    test('erosion and sedimentation totals accumulate over multiple passes', () => {
+        let square = makeSquare(100, 0, 0);
+        square.flow.heightDiff = 10;
+
+        processErosionAtSquare(square, 0, 1000000);
+        let firstErosion = square.flow.erosion;
+        let firstSedimentation = square.flow.sedimentation;
+
+        processErosionAtSquare(square, 0, 1000000);
+
+        expect(square.flow.totalErosion).toBeCloseTo(firstErosion + square.flow.erosion, 5);
+        expect(square.flow.totalSedimentation).toBeCloseTo(firstSedimentation + square.flow.sedimentation, 5);
     });
 
     test('sediment increases downstream as tributaries merge', () => {
@@ -110,6 +127,8 @@ describe('Sediment carrying downstream', () => {
         let remaining = dumpSedimentAtMouth(lake, 1500000, sim);
 
         expect(lake.flow.pendingErosion).toBeCloseTo(1, 5);
+        expect(lake.flow.sedimentation).toBeCloseTo(0, 5);
+        expect(lake.flow.totalSedimentation).toBeCloseTo(1000000, 5);
         expect(remaining).toBeCloseTo(500000, -2);
     });
 

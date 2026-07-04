@@ -12,6 +12,8 @@ import * as constant from '../../constant/constant';
 import TinyQueue from 'tinyqueue';
 
 
+export const SUBMERGENCE_MEMORY_TURNS = 20;
+
 // Turn phases:
 // 1. apply pending erosion deltas from last turn
 // 2. recompute topography (rebuild directions/basins from post-erosion terrain)
@@ -20,6 +22,7 @@ import TinyQueue from 'tinyqueue';
 // 5. process any overfilling basin and basin mergers
 // 6. erode basin outlet channels (stores pending deltas)
 // 7. smooth submerged lakebeds (stores pending deltas)
+// 8. update submergence history from final water state
 
 export default function runTurn(sim: Sim): void {
     applyPendingErosion(sim);
@@ -31,6 +34,7 @@ export default function runTurn(sim: Sim): void {
     processOverflows(sim, fullEvents);
     erodeOutlets(sim);
     lakebedSmudge(sim);
+    updateSubmergenceHistory(sim);
 }
 
 // For any square that shares an exact altitude with at least one of its 8 neighbors,
@@ -70,6 +74,23 @@ function clearRelic(sim: Sim): void {
     for (let i = 0; i < sim.size; i++) {
         for (let j = 0; j < sim.size; j++) {
             FlowUtil.clearFlow(sim.map[i][j].flow);
+        }
+    }
+}
+
+export function updateSubmergenceHistory(sim: Sim): void {
+    for (let i = 0; i < sim.size; i++) {
+        for (let j = 0; j < sim.size; j++) {
+            let square = sim.map[i][j];
+            if (square.submerged) {
+                square.previously_submerged = -1;
+            } else if (square.previously_submerged === -1) {
+                square.previously_submerged = 1;
+            } else if (square.previously_submerged > 0 && square.previously_submerged < SUBMERGENCE_MEMORY_TURNS) {
+                square.previously_submerged += 1;
+            } else {
+                square.previously_submerged = 0;
+            }
         }
     }
 }
