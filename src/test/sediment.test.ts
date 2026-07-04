@@ -1,9 +1,12 @@
 import { SquareUtil, Square } from '../main/components/square';
 import { FlowUtil } from '../main/components/flow';
 import {
+    calculateErosion,
     processErosionAtSquare,
     dumpSedimentAtMouth,
-    SLOPE_PRESERVE_FRACTION,
+    EROSION_SLOPE_FRACTION,
+    MIN_SLOPE_CAP_DISTANCE,
+    SEDIMENTATION_SLOPE_FRACTION,
 } from '../main/sim/util/erosion';
 
 // Build a minimal 2x2 grid:
@@ -123,9 +126,31 @@ describe('Sediment carrying downstream', () => {
 
         let upAfter = up.altitude + up.flow.pendingErosion;
         let downAfter = down.altitude + down.flow.pendingErosion;
-        let expectedGap = 2 * (1 - 2 * SLOPE_PRESERVE_FRACTION);
+        let expectedGap = 2 * (1 - EROSION_SLOPE_FRACTION - SEDIMENTATION_SLOPE_FRACTION);
 
         expect(upAfter - downAfter).toBeGreaterThanOrEqual(expectedGap);
         expect(upAfter).toBeGreaterThan(downAfter);
+    });
+
+    test('sub-meter slopes use minimum erosion and sedimentation cap distances', () => {
+        let eroding = makeSquare(10, 0, 0);
+        eroding.flow.heightDiff = 0.1;
+
+        let eroded = calculateErosion(eroding, Number.MAX_SAFE_INTEGER);
+
+        expect(eroded).toBeCloseTo(
+            MIN_SLOPE_CAP_DISTANCE * EROSION_SLOPE_FRACTION * 1000000,
+            5
+        );
+
+        let depositing = makeSquare(10, 0, 1);
+        depositing.flow.heightDiff = 0.1;
+
+        processErosionAtSquare(depositing, Number.MAX_SAFE_INTEGER, 1);
+
+        expect(depositing.flow.pendingErosion).toBeCloseTo(
+            MIN_SLOPE_CAP_DISTANCE * SEDIMENTATION_SLOPE_FRACTION,
+            5
+        );
     });
 });

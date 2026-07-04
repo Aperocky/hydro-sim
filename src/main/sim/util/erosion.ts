@@ -27,9 +27,11 @@ export const SEDIMENT_BASE_DEPOSIT = 0.05;
 export const SEDIMENT_LOAD_EXPONENT = 3.0;
 // How strongly low gradient increases deposition
 export const SEDIMENT_GRADIENT_DECAY = 1.0;   // gradient reference point in meters
-// Keep erosion/deposition from meeting exactly halfway across a flow edge.
-// This preserves a small downstream slope and avoids creating tiny channel basins.
-export const SLOPE_PRESERVE_FRACTION = 0.45;
+// Keep erosion/deposition from removing the active flow edge.
+// Erosion is conservative, while sedimentation can fill more of the available headroom.
+export const EROSION_SLOPE_FRACTION = 0.2;
+export const SEDIMENTATION_SLOPE_FRACTION = 0.75;
+export const MIN_SLOPE_CAP_DISTANCE = 1;
 
 // Altitude change conversion: sediment volume to altitude change
 // 1 m^3 sediment over 1 km^2 = 0.000001 m altitude change
@@ -76,8 +78,10 @@ export function calculateErosion(square: Square, flowVolume: number, sim?: any):
         * Math.pow(flowVolume, EROSION_FLOW_EXPONENT)
         * Math.pow(EROSION_BASE_GRADIENT + gradient, EROSION_GRADIENT_EXPONENT);
 
-    // Cap erosion below half distance to downstream so flow edges do not flatten.
-    let cap = (g ? g.downDist : gradient) * SLOPE_PRESERVE_FRACTION * UNIT_SQUARE_VOLUME;
+    // Cap erosion below the downstream distance so flow edges do not flatten.
+    // Very flat edges get a minimum allowance so erosion/sedimentation can still act.
+    let capDistance = Math.max(g ? g.downDist : gradient, MIN_SLOPE_CAP_DISTANCE);
+    let cap = capDistance * EROSION_SLOPE_FRACTION * UNIT_SQUARE_VOLUME;
     return Math.min(erosion, cap);
 }
 
@@ -138,16 +142,18 @@ export function processErosionAtSquare(
     let deposited = totalSediment * depositFraction;
     
     // Directional metastable caps:
-    // Sedimentation (rising) and erosion (dropping) are capped below half
-    // the adjacent elevation distance so active flow edges do not flatten.
+    // Sedimentation (rising) and erosion (dropping) use separate directional caps
+    // so active flow edges do not flatten.
     let netChange = deposited - eroded;
     if (netChange > 0) {
-        let maxRise = (g ? g.upDist : gradient) * SLOPE_PRESERVE_FRACTION * UNIT_SQUARE_VOLUME;
+        let riseDistance = Math.max(g ? g.upDist : gradient, MIN_SLOPE_CAP_DISTANCE);
+        let maxRise = riseDistance * SEDIMENTATION_SLOPE_FRACTION * UNIT_SQUARE_VOLUME;
         if (netChange > maxRise) {
             deposited = eroded + maxRise;
         }
     } else if (netChange < 0) {
-        let maxDrop = (g ? g.downDist : gradient) * SLOPE_PRESERVE_FRACTION * UNIT_SQUARE_VOLUME;
+        let dropDistance = Math.max(g ? g.downDist : gradient, MIN_SLOPE_CAP_DISTANCE);
+        let maxDrop = dropDistance * EROSION_SLOPE_FRACTION * UNIT_SQUARE_VOLUME;
         if (-netChange > maxDrop) {
             eroded = deposited + maxDrop;
             square.flow.erosion = eroded;
