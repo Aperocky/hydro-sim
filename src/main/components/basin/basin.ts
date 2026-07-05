@@ -82,7 +82,11 @@ export class Basin {
         if (currVolume + volume > this.basinHold.holdCapacity) {
             if (this.basinFullEvent == null) {
                 let outFlowAmount = currVolume + volume - this.basinHold.holdCapacity;
-                this.lake.fillToVolume(sim, this.basinHold.holdCapacity);
+                if (currVolume > this.basinHold.holdCapacity) {
+                    this.lake.drainToVolume(sim, this.basinHold.holdCapacity);
+                } else {
+                    this.lake.fillToVolume(sim, this.basinHold.holdCapacity);
+                }
                 this.isFull = true;
                 this.basinFullEvent = {
                     anchor: this.anchor,

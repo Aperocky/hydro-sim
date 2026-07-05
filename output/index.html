@@ -36,16 +36,98 @@
             display: inline-block;
             margin: 10px;
         }
+        #controlPanel {
+            max-height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .info-panel-row {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
         #console {
-            font-family: monospace;
-            color: #eee;
-            padding: 20px;
+            color: #edf2f7;
+            padding: 14px;
             width: 100%;
-            height: 450px;
-            background: #222;
-            border-radius: 40px;
-            border: 10px solid #555;
+            height: 100%;
+            min-height: 180px;
+            background: #1f242a;
+            border-radius: 8px;
+            border: 1px solid #3b4652;
             overflow-y: auto;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-content: start;
+            gap: 10px;
+        }
+        .info-title {
+            grid-column: 1 / -1;
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.2;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+        .info-section {
+            padding: 9px;
+            border: 1px solid #39424c;
+            border-radius: 6px;
+            min-width: 0;
+        }
+        .info-section-title {
+            margin: 0 0 8px;
+            color: #aebccc;
+            font-size: 12px;
+            line-height: 1.2;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+        .info-rows {
+            display: grid;
+            gap: 5px;
+        }
+        .info-row {
+            display: grid;
+            grid-template-columns: minmax(104px, 48%) minmax(0, 1fr);
+            gap: 8px;
+            align-items: start;
+            font-size: 12px;
+            line-height: 1.25;
+        }
+        .info-label {
+            color: #94a3b8;
+        }
+        .info-value {
+            color: #f8fafc;
+            overflow-wrap: anywhere;
+            text-align: right;
+        }
+        .info-line {
+            color: #edf2f7;
+            margin: 0;
+            font-size: 13px;
+        }
+        @media (max-width: 767px) {
+            #controlPanel {
+                max-height: none;
+                overflow: visible;
+            }
+            #console {
+                height: 42vh;
+                min-height: 260px;
+                margin-top: 8px;
+                grid-template-columns: 1fr;
+            }
+            .info-row {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+            .info-value {
+                text-align: left;
+            }
         }
     </style>
 </head>
@@ -88,7 +170,7 @@
             <div class="row">
                 <p class='text-muted'>Information Panel</p>
             </div>
-            <div class="row">
+            <div class="row info-panel-row">
                 <div id='console'>
                 </div>
             </div>
