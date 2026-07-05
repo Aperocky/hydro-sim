@@ -23,9 +23,9 @@ const ALTITUDE_OCTAVES = {
 
 const PRECIPITATION_OCTAVES = {
     bands: [
-        [1, 1],
-        [2, 0.4],
-        [4, 0.1],
+        [0.5, 1],
+        [1, 0.7],
+        [2, 0.25],
     ],
     exponent: 2.5,
     localBands: [],
