@@ -68,72 +68,62 @@ export class Console {
     static displaySquare(square: Square, basin: Basin): void {
         Console.clearText();
         Console.appendTitle('Square');
+        let loc: {i: number, j: number} = JSON.parse(square.location);
 
         let terrainRows: InfoRow[] = [
-            {label: 'Location', value: square.location},
+            {label: 'X    Y', value: `${loc.i}    ${loc.j}`},
             {label: 'Biome', value: Console.displayFlora(square)},
             {label: 'Rain', value: `${trimNumber(square.precipitation)} mm`},
-            {label: 'Last submerged', value: `${square.previously_submerged}`},
         ];
 
         if (square.submerged && basin) {
             terrainRows.push(
+                {label: 'Altitude', value: `${trimNumber(square.altitude)} m`},
                 {label: 'Surface', value: `${trimNumber(basin.lake.surfaceElevation)} m`},
                 {label: 'Depth', value: `${trimNumber(square.depth)} m`},
             );
         } else {
-            terrainRows.push({label: 'Altitude', value: `${trimNumber(square.altitude)} m`});
+            terrainRows.push(
+                {label: 'Altitude', value: `${trimNumber(square.altitude)} m`},
+                {label: 'Surface', value: '—'},
+                {label: 'Depth', value: '—'},
+            );
         }
         Console.appendSection('Terrain', terrainRows);
 
-        if (square.flow.flowVolume >= 1000 && !square.submerged) {
-            let flowRows: InfoRow[] = [];
-            let flowVal = roundTo(square.flow.flowVolume, 1000);
-            flowRows.push({label: 'Water discharge', value: Console.displayVolume(flowVal)});
-            flowRows.push({
-                label: 'Direction',
-                value: constants.DIRECTION_DESCRIPTION.get(square.flow.flowDirection),
-            });
-            flowRows.push({label: 'Gradient', value: `${trimNumber(square.flow.heightDiff)} m`});
-            if (square.flow.sediment > 0) {
-                flowRows.push({label: 'Sediment', value: Console.displayVolume(square.flow.sediment)});
-            }
-            if (square.flow.erosion > 0) {
-                flowRows.push({label: 'Erode', value: Console.displaySedimentDepth(square.flow.erosion)});
-            }
-            if (square.flow.sedimentation > 0) {
-                flowRows.push({label: 'Deposit', value: Console.displaySedimentDepth(square.flow.sedimentation)});
-            }
-            Console.appendSection('Flow', flowRows);
-        }
+        let hasFlow = square.flow.flowVolume >= 1000 && !square.submerged;
+        let flowVal = roundTo(square.flow.flowVolume, 1000);
+        Console.appendSection('Flow', [
+            {label: 'Water', value: hasFlow ? Console.displayVolume(flowVal) : '—'},
+            {label: 'Direction', value: hasFlow ? constants.DIRECTION_DESCRIPTION.get(square.flow.flowDirection) : '—'},
+            {label: 'Gradient', value: hasFlow ? `${trimNumber(square.flow.heightDiff)} m` : '—'},
+            {label: 'Sediment', value: hasFlow && square.flow.sediment > 0 ? Console.displayVolume(square.flow.sediment) : '—'},
+            {label: 'Erosion', value: hasFlow && square.flow.erosion > 0 ? Console.displaySedimentDepth(square.flow.erosion) : '—'},
+            {label: 'Deposit', value: hasFlow && square.flow.sedimentation > 0 ? Console.displaySedimentDepth(square.flow.sedimentation) : '—'},
+        ]);
 
         let soilRows: InfoRow[] = [
             {label: 'Aquifer', value: Console.displayVolume(roundTo(square.flow.aquifer, 1000))},
             {label: 'Aq max', value: Console.displayVolume(roundTo(square.flow.aquiferMax, 1000))},
             {label: 'Aq loss', value: Console.displayVolume(roundTo(square.flow.aquiferDrain, 1000))},
+            {label: 'Erosion', value: Console.displaySedimentMeters(square.flow.totalErosion)},
+            {label: 'Sedimentation', value: Console.displaySedimentMeters(square.flow.totalSedimentation)},
         ];
-        if (square.flow.totalErosion > 0 || square.flow.totalSedimentation > 0) {
-            soilRows.push(
-                {label: 'Erosion', value: Console.displaySedimentMeters(square.flow.totalErosion)},
-                {label: 'Sedimentation', value: Console.displaySedimentMeters(square.flow.totalSedimentation)},
-            );
-        }
         Console.appendSection('Soil', soilRows);
 
-        if (basin) {
+        if (square.submerged && basin) {
             Console.appendSection('Basin', Console.displayBasin(basin));
         }
     }
 
     static displayBasin(basin: Basin): InfoRow[] {
         return [
-            {label: 'Basin', value: basin.anchor},
             {label: 'Bottom', value: `${trimNumber(basin.anchorAltitude)} m`},
             {label: 'Drain', value: `${trimNumber(basin.basinHold.holdElevation)} m`},
-            {label: 'Area', value: `${basin.members.length} km^2`},
+            {label: 'Catchment Area', value: `${basin.members.length} km²`},
             {label: 'Capacity', value: Console.displayVolume(basin.basinHold.holdCapacity)},
             {label: 'Volume', value: Console.displayVolume(basin.lake.volume)},
-            {label: 'Lake area', value: `${basin.lake.flooded.length} km^2`},
+            {label: 'Lake area', value: `${basin.lake.flooded.length} km²`},
         ];
     }
 
@@ -176,10 +166,10 @@ export class Console {
         section.appendChild(h);
 
         let table = document.createElement('div');
-        table.className = 'info-rows';
+        table.className = 'info-metrics';
         rows.forEach((row) => {
             let wrapper = document.createElement('div');
-            wrapper.className = 'info-row';
+            wrapper.className = 'info-metric';
 
             let label = document.createElement('span');
             label.className = 'info-label';
@@ -200,16 +190,16 @@ export class Console {
 
     static displayVolume(volume: number): string {
         if (volume > 1000000000) {
-            return `${trimNumber(volume/1000000000)} km^3`;
+            return `${trimNumber(volume/1000000000)} km³`;
         }
         if (volume > 1000000) {
-            return `${trimNumber(volume/1000000)} M m^3`;
+            return `${trimNumber(volume/1000000)} M m³`;
         }
-        return `${Math.floor(volume)} m^3`;
+        return `${Math.floor(volume)} m³`;
     }
 
     static displaySedimentDepth(volume: number): string {
-        return `${Math.floor(volume)} m^3 (${Math.floor(volume/10000)/100} m)`;
+        return `${Math.floor(volume)} m³ (${Math.floor(volume/10000)/100} m)`;
     }
 
     static displaySedimentMeters(volume: number): string {
