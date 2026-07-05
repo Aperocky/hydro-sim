@@ -13,6 +13,7 @@ export enum Biome {
 }
 
 export const MARSH_SUBMERGENCE_TURNS = 20;
+export const MARSH_ANY_GRADIENT_TURNS = 5;
 export const SALT_PAN_SUBMERGENCE_TURNS = 100;
 export const SALT_PAN_MOISTURE_THRESHOLD = 2;
 export const FLAT_WETLAND_GRADIENT = 1;
@@ -31,7 +32,10 @@ export function getBiome(square: Square, localGradient: number = square.flow.hei
         return Biome.Cliff;
     }
 
-    if (wasRecentlySubmerged(square, MARSH_SUBMERGENCE_TURNS) && localGradient < FLAT_WETLAND_GRADIENT) {
+    if (
+        wasRecentlySubmerged(square, MARSH_ANY_GRADIENT_TURNS) ||
+        (wasRecentlySubmerged(square, MARSH_SUBMERGENCE_TURNS) && localGradient < FLAT_WETLAND_GRADIENT)
+    ) {
         return Biome.Marsh;
     }
 

@@ -68,6 +68,13 @@ test('biome classifier maps recently submerged flat squares to marsh', () => {
     expect(getBiome(square, 1)).toBe(Biome.Rainforest);
 });
 
+test('biome classifier maps very recently submerged squares to marsh regardless of slope', () => {
+    let square = makeSquare(Math.exp(4.5) * 10000, 1000);
+    square.previously_submerged = 4;
+
+    expect(getBiome(square, 100)).toBe(Biome.Marsh);
+});
+
 test('biome classifier maps recently submerged dry flats to salt pan after marsh window', () => {
     let square = makeSquare(Math.exp(1.5) * 10000);
     square.previously_submerged = 100;
