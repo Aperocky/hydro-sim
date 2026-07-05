@@ -14,6 +14,9 @@ import * as constants from '../constant/constant';
 
 const SPRITE_SIZE = constants.SPRITE_SIZE;
 const MAP_PIXEL_SIZE = constants.MAP_SIZE * SPRITE_SIZE;
+const HILLSHADE_LIGHT_X = -0.7071;
+const HILLSHADE_LIGHT_Y = -0.7071;
+const HILLSHADE_STRENGTH = 0.35;
 
 
 type Component = {
@@ -130,7 +133,8 @@ export class MapContainer {
                 } else {
                     scaled = 2 + (maxDiff - 50) / 150;
                 }
-                return SpriteUtil.getColorMapColor('flatness', scaled, 1, 100);
+                let flatnessColor = SpriteUtil.getColorMapColor('flatness', scaled, 1, 100);
+                return this.applyHillshade(flatnessColor, square);
             }
         }
     }
@@ -190,5 +194,42 @@ export class MapContainer {
             if (diff > maxDiff) maxDiff = diff;
         });
         return maxDiff;
+    }
+
+    applyHillshade(color: number[], square: Square): number[] {
+        let slope = this.getSlopeVector(square);
+        let magnitude = Math.sqrt(slope.x * slope.x + slope.y * slope.y);
+        if (magnitude <= 0) {
+            return color;
+        }
+        let uphillX = slope.x / magnitude;
+        let uphillY = slope.y / magnitude;
+        let alignment = uphillX * HILLSHADE_LIGHT_X + uphillY * HILLSHADE_LIGHT_Y;
+        let relief = Math.min(1, magnitude / 50);
+        let brightness = 1 + alignment * HILLSHADE_STRENGTH * relief;
+        return color.map((channel) => Math.max(0, Math.min(255, Math.floor(channel * brightness))));
+    }
+
+    getSlopeVector(square: Square): {x: number, y: number} {
+        let loc: {i: number, j: number} = JSON.parse(square.location);
+        let altitudeAt = (di: number, dj: number): number => {
+            let i = Math.max(0, Math.min(this.simSize - 1, loc.i + di));
+            let j = Math.max(0, Math.min(this.simSize - 1, loc.j + dj));
+            return this.simMap[i][j].altitude;
+        };
+
+        let nw = altitudeAt(-1, -1);
+        let n = altitudeAt(0, -1);
+        let ne = altitudeAt(1, -1);
+        let w = altitudeAt(-1, 0);
+        let e = altitudeAt(1, 0);
+        let sw = altitudeAt(-1, 1);
+        let s = altitudeAt(0, 1);
+        let se = altitudeAt(1, 1);
+
+        return {
+            x: ((ne + 2 * e + se) - (nw + 2 * w + sw)) / 8,
+            y: ((sw + 2 * s + se) - (nw + 2 * n + ne)) / 8,
+        };
     }
 }

@@ -13,6 +13,12 @@ const ALTITUDE_OCTAVES = {
         [24, 0.02],
     ],
     exponent: 3.0,
+    localBands: [
+        [10, 0.7],
+        [18, 1],
+        [36, 0.4],
+    ],
+    localAmplitude: 0.055,
 }
 
 const PRECIPITATION_OCTAVES = {
@@ -22,6 +28,8 @@ const PRECIPITATION_OCTAVES = {
         [4, 0.1],
     ],
     exponent: 2.5,
+    localBands: [],
+    localAmplitude: 0,
 }
 
 const TYPE_MAP = {
@@ -41,7 +49,7 @@ export default function generate(size, dtype): number[][] {
     let octaves = TYPE_MAP[dtype];
     // Prevent predictable mapping by adding random offsets to each octave
     let offSets = [];
-    for (let i = 0; i < octaves.bands.length; i++) {
+    for (let i = 0; i < octaves.bands.length + octaves.localBands.length; i++) {
         offSets.push(Math.random()/2 - 0.5);
     }
     for (let y = 0; y < size; y++) {
@@ -59,6 +67,19 @@ export default function generate(size, dtype): number[][] {
                 sumWeight += weight;
             })
             let value = Math.pow((sumValue/sumWeight), octaves.exponent);
+            if (octaves.localBands.length > 0 && octaves.localAmplitude > 0) {
+                let localValue = 0;
+                let localWeight = 0;
+                octaves.localBands.forEach((val, index) => {
+                    let param = val[0];
+                    let weight = val[1];
+                    let offSet = offSets[octaves.bands.length + index];
+                    localValue += weight * getNoise(noise)(param * (nx - offSet), param * (ny - offSet));
+                    localWeight += weight;
+                });
+                value += ((localValue / localWeight) - 0.5) * octaves.localAmplitude;
+                value = Math.max(0, Math.min(1, value));
+            }
             map[y][x] = value;
         }
     }

@@ -62,7 +62,7 @@ test('biome classifier uses net sedimentation depth after erosion', () => {
 test('biome classifier maps recently submerged flat squares to marsh', () => {
     let square = makeSquare(Math.exp(4.5) * 10000, 1000);
     square.flow.totalSedimentation = 2_100_000;
-    square.previously_submerged = 9;
+    square.previously_submerged = 19;
 
     expect(getBiome(square, 0.5)).toBe(Biome.Marsh);
     expect(getBiome(square, 1)).toBe(Biome.Rainforest);

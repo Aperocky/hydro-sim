@@ -12,7 +12,7 @@ export enum Biome {
     Rainforest = 'rainforest',
 }
 
-export const MARSH_SUBMERGENCE_TURNS = 10;
+export const MARSH_SUBMERGENCE_TURNS = 20;
 export const SALT_PAN_SUBMERGENCE_TURNS = 100;
 export const SALT_PAN_MOISTURE_THRESHOLD = 2;
 export const FLAT_WETLAND_GRADIENT = 1;
