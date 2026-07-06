@@ -36,6 +36,14 @@
             display: inline-block;
             margin: 10px;
         }
+        #mapspace {
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        #mapspace canvas {
+            display: block;
+            max-width: none;
+        }
         #controlPanel {
             display: flex;
             flex-direction: column;
@@ -124,8 +132,20 @@
             font-size: 13px;
         }
         @media (max-width: 767px) {
+            .sig {
+                padding: 6px;
+            }
+            #mapspace {
+                max-height: 70vh;
+                margin-bottom: 12px;
+                border: 1px solid rgba(0,0,0,0.12);
+                background: #cfd3d7;
+            }
             #controlPanel {
                 overflow: visible;
+            }
+            .inlineb {
+                margin: 5px;
             }
             #console {
                 min-height: 260px;
@@ -133,7 +153,7 @@
                 grid-template-columns: 1fr;
             }
             .info-metrics {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: 1fr;
             }
         }
     </style>

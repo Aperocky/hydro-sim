@@ -76,6 +76,9 @@ export class MapContainer {
                 sprite.
                     on('mouseover', () => {
                         Console.displaySquare(square, sim.superBasins.get(square.basin));
+                    }).
+                    on('pointertap', () => {
+                        Console.displaySquare(square, sim.superBasins.get(square.basin));
                     });
                 this.mapContainer.addChild(sprite);
                 let record: Component = {
