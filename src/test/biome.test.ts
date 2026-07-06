@@ -75,9 +75,9 @@ test('biome classifier maps very recently submerged squares to marsh regardless 
     expect(getBiome(square, 100)).toBe(Biome.Marsh);
 });
 
-test('biome classifier maps recently submerged dry flats to salt pan after marsh window', () => {
+test('biome classifier maps recently submerged dry flats to salt pan over marsh', () => {
     let square = makeSquare(Math.exp(1.5) * 10000);
-    square.previously_submerged = 20;
+    square.previously_submerged = 4;
 
     expect(getBiome(square, 0.5)).toBe(Biome.SaltPan);
 });

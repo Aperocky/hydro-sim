@@ -31,13 +31,6 @@ export function getBiome(square: Square, localGradient: number = square.flow.hei
         return Biome.Cliff;
     }
 
-    if (
-        wasRecentlySubmerged(square, MARSH_ANY_GRADIENT_TURNS) ||
-        (wasRecentlySubmerged(square, MARSH_SUBMERGENCE_TURNS) && localGradient < FLAT_WETLAND_GRADIENT)
-    ) {
-        return Biome.Marsh;
-    }
-
     let moisture = getMoistureIndex(square);
     if (
         moisture < SALT_PAN_MOISTURE_THRESHOLD &&
@@ -45,6 +38,13 @@ export function getBiome(square: Square, localGradient: number = square.flow.hei
         localGradient < FLAT_WETLAND_GRADIENT
     ) {
         return Biome.SaltPan;
+    }
+
+    if (
+        wasRecentlySubmerged(square, MARSH_ANY_GRADIENT_TURNS) ||
+        (wasRecentlySubmerged(square, MARSH_SUBMERGENCE_TURNS) && localGradient < FLAT_WETLAND_GRADIENT)
+    ) {
+        return Biome.Marsh;
     }
     if (moisture < 1) {
         return Biome.Desert;
