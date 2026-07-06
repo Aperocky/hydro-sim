@@ -12,7 +12,7 @@ import * as constant from '../../constant/constant';
 import TinyQueue from 'tinyqueue';
 
 
-export const SUBMERGENCE_MEMORY_TURNS = 100;
+export const SUBMERGENCE_MEMORY_TURNS = 20;
 
 // Turn phases:
 // 1. apply pending erosion deltas from last turn
@@ -88,6 +88,8 @@ export function updateSubmergenceHistory(sim: Sim): void {
                 square.previously_submerged = 1;
             } else if (square.previously_submerged > 0 && square.previously_submerged < SUBMERGENCE_MEMORY_TURNS) {
                 square.previously_submerged += 1;
+            } else if (square.previously_submerged >= SUBMERGENCE_MEMORY_TURNS) {
+                square.previously_submerged = SUBMERGENCE_MEMORY_TURNS;
             } else {
                 square.previously_submerged = 0;
             }

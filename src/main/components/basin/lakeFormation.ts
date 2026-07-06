@@ -157,6 +157,48 @@ export default class LakeFormation {
         this.fillToVolume(sim, volume);
     }
 
+    resetToElevationFromMembers(sim: Sim, members: string[], elevation: number): void {
+        this.clearLakeStateToSim();
+        this.shore = new TinyQueue([], squareCompare);
+        this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
+        this.volume = 0;
+
+        if (elevation <= this.anchorElevation) {
+            this.surfaceElevation = this.anchorElevation;
+            this.initiateQueue(sim);
+            return;
+        }
+
+        let floodedSet: Set<Square> = new Set();
+        for (let locStr of members) {
+            let loc: {i: number, j: number} = JSON.parse(locStr);
+            let square = sim.map[loc.i][loc.j];
+            if (square.altitude < elevation) {
+                this.flooded.push(square);
+                floodedSet.add(square);
+                this.volume += (elevation - square.altitude) * UNIT_SQUARE_VOLUME;
+            }
+        }
+
+        if (this.flooded.length === 0) {
+            this.surfaceElevation = this.anchorElevation;
+            this.initiateQueue(sim);
+            return;
+        }
+
+        let shoreSet: Set<Square> = new Set();
+        floodedSet.forEach((square) => {
+            for (let upstream of SquareUtil.getUpstreamSquares(square, sim)) {
+                if (!floodedSet.has(upstream)) {
+                    shoreSet.add(upstream);
+                }
+            }
+        });
+        shoreSet.forEach((square) => this.shore.push(square));
+        this.surfaceElevation = elevation;
+        this.setLakeStateToSim();
+    }
+
     drain(sim: Sim, elevation: number, recedingShores: Square[], depth: number = 0): void {
         if (depth > 50000) {
             console.warn(`drain() hit recursion limit at depth ${depth}`);

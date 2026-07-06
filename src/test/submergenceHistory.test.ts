@@ -25,7 +25,7 @@ test('submergence history marks currently submerged squares as -1', () => {
     expect(square.previously_submerged).toBe(-1);
 });
 
-test('submergence history ages dry squares up to the memory limit then resets', () => {
+test('submergence history ages dry squares up to the memory limit then caps', () => {
     let justDried = makeSquare(false, -1);
     let aging = makeSquare(false, 4);
     let old = makeSquare(false, SUBMERGENCE_MEMORY_TURNS);
@@ -42,6 +42,6 @@ test('submergence history ages dry squares up to the memory limit then resets', 
 
     expect(justDried.previously_submerged).toBe(1);
     expect(aging.previously_submerged).toBe(5);
-    expect(old.previously_submerged).toBe(0);
+    expect(old.previously_submerged).toBe(SUBMERGENCE_MEMORY_TURNS);
     expect(never.previously_submerged).toBe(0);
 });

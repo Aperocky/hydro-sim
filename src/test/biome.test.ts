@@ -77,7 +77,7 @@ test('biome classifier maps very recently submerged squares to marsh regardless 
 
 test('biome classifier maps recently submerged dry flats to salt pan after marsh window', () => {
     let square = makeSquare(Math.exp(1.5) * 10000);
-    square.previously_submerged = 100;
+    square.previously_submerged = 20;
 
     expect(getBiome(square, 0.5)).toBe(Biome.SaltPan);
 });

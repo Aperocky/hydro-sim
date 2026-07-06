@@ -117,37 +117,28 @@ export default class SuperBasin extends Basin {
     }
 
     populateLakeFormation(sim: Sim, basinA: Basin, basinB: Basin): void {
-        // BasinA and BasinB shares a hold
-        // It's the only way it comes up here.
-        // just merge the flooded & shore.
         let lake = new LakeFormation();
         let anchorLoc = JSON.parse(this.anchor);
         let anchorSquare = sim.map[anchorLoc.i][anchorLoc.j];
-        let combinedShore = basinA.lake.shore.data.concat(basinB.lake.shore.data);
-        let combinedLake = basinA.lake.flooded.data.concat(basinB.lake.flooded.data);
-        let sumVolume = basinA.lake.volume + basinB.lake.volume;
-        lake.initiateFromSuperBasin(anchorSquare, combinedShore, combinedLake, sumVolume, this.divideElevation);
+        lake.initiateFromSuperBasin(anchorSquare, [], [], 0, anchorSquare.altitude);
+        lake.resetToElevationFromMembers(sim, this.members, this.divideElevation);
         this.lake = lake;
     }
 
     divideBasin(sim: Sim, newElevation: number): void {
         // console.log(`dividing superbasin into subbasins: ${this.anchor}, ${newElevation}`)
-        this.lake.drainToElevation(sim, this.divideElevation);
+        this.lake.clearLakeStateToSim();
         this.rehabilitateMemberBasins(sim);
-        this.drainSubSuperBasins(sim, this.originalBasinA, newElevation);
-        this.drainSubSuperBasins(sim, this.originalBasinB, newElevation);
+        this.rebuildSubBasinAtElevation(sim, this.originalBasinA, newElevation);
+        this.rebuildSubBasinAtElevation(sim, this.originalBasinB, newElevation);
     }
 
-    drainSubSuperBasins(sim: Sim, basin: Basin, newElevation: number): void {
-        if (basin.isBaseBasin) {
-            basin.lake.drainToElevation(sim, newElevation);
-        } else {
-            if (basin.divideElevation > newElevation) {
-                basin.divideBasin(sim, newElevation);
-            } else {
-                basin.lake.drainToElevation(sim, newElevation);
-            }
+    rebuildSubBasinAtElevation(sim: Sim, basin: Basin, newElevation: number): void {
+        if (!basin.isBaseBasin && basin.divideElevation > newElevation) {
+            basin.divideBasin(sim, newElevation);
+            return;
         }
+        basin.lake.resetToElevationFromMembers(sim, basin.members, newElevation);
     }
 
     rehabilitateMemberBasins(sim: Sim): void {

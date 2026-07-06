@@ -6,12 +6,13 @@ const NEIGHBOR_DIVISOR = 8;
 
 export default function lakebedSmudge(sim: Sim): void {
     let deltas: number[][] = [];
+    let activeSquares = getSubmergedOrShoreSquares(sim);
 
     for (let i = 0; i < sim.size; i++) {
         deltas.push([]);
         for (let j = 0; j < sim.size; j++) {
             let square = sim.map[i][j];
-            if (!square.submerged) {
+            if (!activeSquares.has(square.location)) {
                 deltas[i][j] = 0;
                 continue;
             }
@@ -20,7 +21,7 @@ export default function lakebedSmudge(sim: Sim): void {
             let adjacents = SquareUtil.getAdjacentSquares(i, j, sim.size);
             adjacents.forEach((loc) => {
                 let neighbor = sim.map[loc[0]][loc[1]];
-                if (neighbor.submerged) {
+                if (activeSquares.has(neighbor.location)) {
                     sumDiff += neighbor.altitude - square.altitude;
                 }
             });
@@ -35,4 +36,27 @@ export default function lakebedSmudge(sim: Sim): void {
             }
         }
     }
+}
+
+function getSubmergedOrShoreSquares(sim: Sim): Set<string> {
+    let result = new Set<string>();
+    for (let i = 0; i < sim.size; i++) {
+        for (let j = 0; j < sim.size; j++) {
+            let square = sim.map[i][j];
+            if (square.submerged) {
+                result.add(square.location);
+            }
+        }
+    }
+
+    let seenBasins = new Set();
+    sim.superBasins.forEach((basin) => {
+        if (seenBasins.has(basin)) return;
+        seenBasins.add(basin);
+        for (let square of basin.lake.shore.data) {
+            result.add(square.location);
+        }
+    });
+
+    return result;
 }

@@ -44,3 +44,30 @@ test('lakebed smudge smooths submerged squares without net altitude drift', () =
     expect(sim.map[1][1].flow.pendingErosion).toBeGreaterThan(0);
     expect(sim.map[0][0].flow.pendingErosion).toBeLessThan(0);
 });
+
+test('lakebed smudge includes lake shore squares but not unrelated dry squares', () => {
+    let sim = createFlatSim(3);
+    let submerged = sim.map[1][1];
+    let shore = sim.map[1][2];
+    let dry = sim.map[1][0];
+
+    submerged.altitude = 80;
+    shore.altitude = 120;
+    dry.altitude = 120;
+    submerged.submerged = true;
+
+    sim.superBasins.set('fake', {
+        lake: {
+            shore: {
+                data: [shore],
+            },
+        },
+    });
+
+    lakebedSmudge(sim);
+
+    expect(submerged.flow.pendingErosion).toBeGreaterThan(0);
+    expect(shore.flow.pendingErosion).toBeLessThan(0);
+    expect(dry.flow.pendingErosion).toBe(0);
+    expect(submerged.flow.pendingErosion + shore.flow.pendingErosion).toBeCloseTo(0, 9);
+});
