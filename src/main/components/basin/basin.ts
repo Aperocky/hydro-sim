@@ -5,10 +5,10 @@ import { BasinHold, HoldUtil } from './basinHold';
 
 
 export type BasinFullEvent = {
-    anchor: string;
-    holdMember: string;
+    anchor: number;
+    holdMember: number;
     holdElevation: number;
-    holdBasins: string[];
+    holdBasins: number[];
     overflowVolume: number;
     valid: boolean;
 }
@@ -25,9 +25,9 @@ export class Basin {
     // BASICS
     // The lowest point square location
     // member Squares where the converges to the anchor
-    anchor: string;
+    anchor: number;
     anchorAltitude: number;
-    members: string[];
+    members: number[];
 
     // WATER HOLD
     basinHold: BasinHold;
@@ -38,7 +38,7 @@ export class Basin {
 
     // For super basin
     isBaseBasin: boolean;
-    memberBasins: string[];
+    memberBasins: number[];
     divideElevation: number;
 
     // keep basin full event in instance before it gets processed
@@ -54,7 +54,7 @@ export class Basin {
         this.isFull = false;
     }
 
-    static fromMembers(anchor: string, anchorAltitude: number, members: string[]): Basin {
+    static fromMembers(anchor: number, anchorAltitude: number, members: number[]): Basin {
         let basin = new Basin();
         basin.isBaseBasin = true;
         basin.anchor = anchor;

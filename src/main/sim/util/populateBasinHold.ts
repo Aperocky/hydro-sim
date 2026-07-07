@@ -17,7 +17,7 @@ function findEdge(sim: Sim): void {
     for (let i = 0; i < sim.size; i++) {
         for (let j = 0; j < sim.size; j++) {
             let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(i, j, sim.size);
-            let flowIntoBasins: Set<string> = new Set();
+            let flowIntoBasins: Set<number> = new Set();
             let currSquare: Square = sim.map[i][j];
             adjacents.forEach((loc, key) => {
                 let adjacentSquare: Square = sim.map[loc[0]][loc[1]];
@@ -38,13 +38,13 @@ function findEdge(sim: Sim): void {
 
 function findHold(sim: Sim): void {
     sim.basins.forEach((basin, anchor) => {
-        let minLoc: string;
-        let holdBasins: Set<string>;
+        let minLoc: number;
+        let holdBasins: Set<number>;
         let basinHold: BasinHold = basin.basinHold;
         if (basinHold.edgeMembers.length === 0) return;
         let minimumHeight = Number.MAX_SAFE_INTEGER;
         basinHold.edgeMembers.forEach((locStr) => {
-            let loc: {i: number, j: number} = JSON.parse(locStr);
+            let loc = SquareUtil.locFromId(locStr);
             let edgeSquare: Square = sim.map[loc.i][loc.j];
             if (edgeSquare.altitude < minimumHeight) {
                 minimumHeight = edgeSquare.altitude;
@@ -52,7 +52,6 @@ function findHold(sim: Sim): void {
                 holdBasins = edgeSquare.edgeOf;
             }
         })
-        let loc = JSON.parse(minLoc);
         basinHold.holdMember = minLoc;
         basinHold.holdElevation = minimumHeight;
         let localSet = new Set(holdBasins);
@@ -68,7 +67,7 @@ function findHoldCapacity(sim: Sim, basin: Basin): void {
     let capacity = 0;
     let holdElevation = basin.basinHold.holdElevation;
     basin.members.forEach((locStr) => {
-        let loc: {i: number, j: number} = JSON.parse(locStr);
+        let loc = SquareUtil.locFromId(locStr);
         let memberSquare: Square = sim.map[loc.i][loc.j];
         if (memberSquare.altitude < holdElevation) {
             capacity += constants.UNITS.get('squareToVolume') * (holdElevation - memberSquare.altitude);

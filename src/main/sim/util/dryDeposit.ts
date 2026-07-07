@@ -18,13 +18,13 @@ export function depositAtDryAnchor(
         return sq.altitude + sq.flow.pendingErosion;
     }
 
-    let basin = sim.superBasins ? sim.superBasins.get(anchor.basin || anchor.location) : null;
+    let basin = sim.superBasins ? sim.superBasins.get(anchor.basin >= 0 ? anchor.basin : anchor.location) : null;
     let memberLocations = basin ? basin.members : traceDryMembers(anchor, sim);
     let targetElevation = basin ? basin.basinHold.holdElevation : findFallbackHoldElevation(memberLocations, sim, effAlt);
 
     let members: Square[] = [];
     for (let locStr of memberLocations) {
-        let loc = JSON.parse(locStr);
+        let loc = SquareUtil.locFromId(locStr);
         let sq = sim.map[loc.i][loc.j];
         members.push(sq);
     }
@@ -96,9 +96,9 @@ export function depositAtDryAnchor(
     return remaining;
 }
 
-function traceDryMembers(anchor: Square, sim: Sim): string[] {
-    let result: string[] = [];
-    let visited = new Set<string>();
+function traceDryMembers(anchor: Square, sim: Sim): number[] {
+    let result: number[] = [];
+    let visited = new Set<number>();
 
     function dfs(square: Square): void {
         if (visited.has(square.location)) return;
@@ -114,7 +114,7 @@ function traceDryMembers(anchor: Square, sim: Sim): string[] {
 }
 
 function findFallbackHoldElevation(
-    memberLocations: string[],
+    memberLocations: number[],
     sim: Sim,
     effAlt: (sq: Square) => number
 ): number {
@@ -122,7 +122,7 @@ function findFallbackHoldElevation(
     let holdElevation = Infinity;
 
     for (let locStr of memberLocations) {
-        let loc = JSON.parse(locStr);
+        let loc = SquareUtil.locFromId(locStr);
         let adjacents = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
         adjacents.forEach((coords) => {
             let adj = sim.map[coords[0]][coords[1]];

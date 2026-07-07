@@ -6,9 +6,11 @@ export type Square = {
     altitude: number;
     precipitation: number;
     flow: Flow;
-    basin: string;
-    edgeOf: Set<string>;
-    location: string;
+    basin: number;
+    edgeOf: Set<number>;
+    location: number;
+    i: number;
+    j: number;
     submerged: boolean;
     previously_submerged: number;
     depth: number;
@@ -16,15 +18,19 @@ export type Square = {
 
 
 export class SquareUtil {
+    static NO_LOCATION = -1;
+    static LOCATION_ID_MULTIPLIER = 100000;
 
     static createSquare(altitude: number, precip: number): Square {
         return {
             altitude: SquareUtil.altAdjust(altitude),
             precipitation: SquareUtil.precipAdjust(precip),
             flow: FlowUtil.initFlow(),
-            basin: "",
+            basin: SquareUtil.NO_LOCATION,
             edgeOf: new Set(),
-            location: "", // To be filled
+            location: SquareUtil.NO_LOCATION, // To be filled
+            i: SquareUtil.NO_LOCATION,
+            j: SquareUtil.NO_LOCATION,
             submerged: false,
             previously_submerged: 0,
             depth: 0,
@@ -39,21 +45,28 @@ export class SquareUtil {
         return precip * constants.UNITS.get('precipitation');
     }
 
-    static stringRep(i: number, j: number): string {
-        return JSON.stringify({
-            i: i,
-            j: j,
-        })
+    static stringRep(i: number, j: number): number {
+        return SquareUtil.locationId(i, j);
+    }
+
+    static locationId(i: number, j: number): number {
+        return i * SquareUtil.LOCATION_ID_MULTIPLIER + j;
+    }
+
+    static locFromId(location: number): {i: number, j: number} {
+        return {
+            i: Math.floor(location / SquareUtil.LOCATION_ID_MULTIPLIER),
+            j: location % SquareUtil.LOCATION_ID_MULTIPLIER,
+        };
     }
 
     static getAdjacentLocs(square: Square, size: number): Map<number, number[]> {
-        let loc: {i:number, j:number} = JSON.parse(square.location);
-        return SquareUtil.getAdjacentSquares(loc.i, loc.j, size);
+        return SquareUtil.getAdjacentSquares(square.i, square.j, size);
     }
 
     // Reset square state for basin recomputation. Preserves altitude, precipitation, location, and flow aquifer state.
     static resetForRecompute(square: Square): void {
-        square.basin = "";
+        square.basin = SquareUtil.NO_LOCATION;
         square.edgeOf = new Set();
         square.submerged = false;
         square.depth = 0;
@@ -84,15 +97,13 @@ export class SquareUtil {
     }
 
     static getAdjacentMapFromSquare(square: Square, size: number): Map<number, {i:number, j:number}> {
-        let loc = JSON.parse(square.location);
-        return SquareUtil.getAdjacentMap(loc.i, loc.j, size);
+        return SquareUtil.getAdjacentMap(square.i, square.j, size);
     }
 
     // Easy way, only works when location has been published
     static getInflowLocs(square: Square, size: number): {i: number, j: number}[] {
         let inFlowMap: Map<number, number> = square.flow.inFlows;
-        let currLoc: {i: number, j: number} = JSON.parse(square.location);
-        let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(currLoc.i, currLoc.j, size);
+        let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(square.i, square.j, size);
         let result = [];
         inFlowMap.forEach((value, key) => {
             let loc = adjacents.get(key);
@@ -110,11 +121,10 @@ export class SquareUtil {
     }
 
     static getDownstreamSquare(square: Square, sim): Square | null {
-        let currLoc: {i: number, j: number} = JSON.parse(square.location);
-        let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(currLoc.i, currLoc.j, sim.size);
         if (square.flow.flowDirection == 9 || square.flow.flowDirection == 0) {
             return null;
         }
+        let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(square.i, square.j, sim.size);
         let loc = adjacents.get(square.flow.flowDirection);
         return sim.map[loc[0]][loc[1]];
     }

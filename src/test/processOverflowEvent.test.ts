@@ -1,9 +1,11 @@
 import processOverflowEvent from '../main/sim/util/processOverflowEvent';
 import { Square, SquareUtil } from '../main/components/square';
 
-function makeSquare(i: number, j: number, basin: string, altitude: number, precipitation: number): Square {
+function makeSquare(i: number, j: number, basin: number, altitude: number, precipitation: number): Square {
     let square = SquareUtil.createSquare(0, 0);
     square.location = SquareUtil.stringRep(i, j);
+    square.i = i;
+    square.j = j;
     square.basin = basin;
     square.altitude = altitude;
     square.precipitation = precipitation;

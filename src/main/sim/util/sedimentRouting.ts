@@ -15,8 +15,8 @@ export function settleOrRouteSediment(
 
     let current: Square | null = entrySquare;
     let remaining = sediment;
-    let visitedBasins: Set<string> = new Set();
-    let visitedSquares: Set<string> = new Set();
+    let visitedBasins: Set<number> = new Set();
+    let visitedSquares: Set<number> = new Set();
     let steps = 0;
     let maxSteps = Math.max(1, sim.size * sim.size * 4);
 
@@ -51,20 +51,20 @@ export function settleOrRouteSediment(
 function getBasinOutflowTarget(
     square: Square,
     sim: Sim,
-    visitedBasins: Set<string>
+    visitedBasins: Set<number>
 ): Square | null {
     let basin = getSquareBasin(square, sim);
-    if (!basin || !basin.basinHold || !basin.basinHold.holdMember) {
+    if (!basin || !basin.basinHold || basin.basinHold.holdMember < 0) {
         return null;
     }
 
-    let basinKey = basin.memberBasins ? basin.memberBasins.join('|') : basin.anchor;
+    let basinKey = basin.anchor;
     if (visitedBasins.has(basinKey)) {
         return null;
     }
     visitedBasins.add(basinKey);
 
-    let holdLoc = JSON.parse(basin.basinHold.holdMember);
+    let holdLoc = SquareUtil.locFromId(basin.basinHold.holdMember);
     let adjacents = SquareUtil.getAdjacentSquares(holdLoc.i, holdLoc.j, sim.size);
     let target: Square | null = null;
     let targetElevation = Infinity;
@@ -89,7 +89,7 @@ function getBasinOutflowTarget(
 
 function getSquareBasin(square: Square, sim: Sim): Basin | null {
     if (!sim.superBasins) return null;
-    if (square.basin && sim.superBasins.has(square.basin)) {
+    if (square.basin >= 0 && sim.superBasins.has(square.basin)) {
         return sim.superBasins.get(square.basin);
     }
     if (sim.superBasins.has(square.location)) {

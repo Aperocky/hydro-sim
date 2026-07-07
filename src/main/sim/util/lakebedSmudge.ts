@@ -38,8 +38,8 @@ export default function lakebedSmudge(sim: Sim): void {
     }
 }
 
-function getSubmergedOrShoreSquares(sim: Sim): Set<string> {
-    let result = new Set<string>();
+function getSubmergedOrShoreSquares(sim: Sim): Set<number> {
+    let result = new Set<number>();
     for (let i = 0; i < sim.size; i++) {
         for (let j = 0; j < sim.size; j++) {
             let square = sim.map[i][j];

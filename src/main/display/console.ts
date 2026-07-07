@@ -68,10 +68,8 @@ export class Console {
     static displaySquare(square: Square, basin: Basin, localGradient: number): void {
         Console.clearText();
         Console.appendTitle('Square');
-        let loc: {i: number, j: number} = JSON.parse(square.location);
-
         let terrainRows: InfoRow[] = [
-            {label: 'X    Y', value: `${loc.i}    ${loc.j}`},
+            {label: 'X    Y', value: `${square.i}    ${square.j}`},
             {label: 'Biome', value: Console.displayFlora(square)},
             {label: 'Rain', value: `${trimNumber(square.precipitation)} mm`},
         ];

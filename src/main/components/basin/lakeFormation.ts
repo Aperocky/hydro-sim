@@ -157,7 +157,7 @@ export default class LakeFormation {
         this.fillToVolume(sim, volume);
     }
 
-    resetToElevationFromMembers(sim: Sim, members: string[], elevation: number): void {
+    resetToElevationFromMembers(sim: Sim, members: number[], elevation: number): void {
         this.clearLakeStateToSim();
         this.shore = new TinyQueue([], squareCompare);
         this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
@@ -171,7 +171,7 @@ export default class LakeFormation {
 
         let floodedSet: Set<Square> = new Set();
         for (let locStr of members) {
-            let loc: {i: number, j: number} = JSON.parse(locStr);
+            let loc = SquareUtil.locFromId(locStr);
             let square = sim.map[loc.i][loc.j];
             if (square.altitude < elevation) {
                 this.flooded.push(square);

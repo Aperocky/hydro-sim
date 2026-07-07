@@ -46,6 +46,8 @@ function buildSim(): SimBase {
         for (let j = 0; j < SIZE; j++) {
             let sq = SquareUtil.createSquare(sim.altitude[i][j], sim.precip[i][j]);
             sq.location = SquareUtil.stringRep(i, j);
+            sq.i = i;
+            sq.j = j;
             sim.map[i][j] = sq;
         }
     }

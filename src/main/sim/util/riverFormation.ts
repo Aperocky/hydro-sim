@@ -24,8 +24,7 @@ function populateFlow(square: Square, sim: Sim): FlowResult {
     if (square.flow.flowDirection == 0) {
         return { water: 0, sediment: 0 };
     }
-    let loc: {i: number, j: number} = JSON.parse(square.location);
-    let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
+    let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(square.i, square.j, sim.size);
     let inFlowAmount = 0;
     let inSediment = 0;
     square.flow.inFlows.forEach((value, key) => {

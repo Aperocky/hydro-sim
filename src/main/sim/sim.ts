@@ -9,7 +9,7 @@ import * as constants from '../constant/constant';
 
 export class Sim extends SimBase {
 
-    superBasins: Map<string, Basin>;
+    superBasins: Map<number, Basin>;
 
     constructor(size) {
         super(size);

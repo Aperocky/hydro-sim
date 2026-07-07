@@ -8,7 +8,7 @@ export function createDrySim(size: number): Sim {
             sim.map[i][j].precipitation = 0;
             // Cap altitude below mountain dew threshold
             if (sim.map[i][j].altitude > 1000) {
-                sim.map[i][j].altitude = 1000;
+                sim.map[i][j].altitude = 1000 - (i * size + j) * 0.000001;
             }
         }
     }

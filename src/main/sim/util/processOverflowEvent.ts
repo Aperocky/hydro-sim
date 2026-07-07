@@ -20,7 +20,7 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, op
     }
     let thisBasin = sim.superBasins.get(event.anchor);
     let holdBasins = event.holdBasins.slice();
-    let nextBasinAnchor: string;
+    let nextBasinAnchor: number;
     let nextBasin: Basin;
     while (true) {
         nextBasinAnchor = holdBasins.pop();
@@ -71,8 +71,8 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, op
 }
 
 
-function identifyOutflow(sim: Sim, holdMember: string, flowToBasin: string, overflowVolume: number): {square: Square, direction: number} | null {
-    let loc = JSON.parse(holdMember);
+function identifyOutflow(sim: Sim, holdMember: number, flowToBasin: number, overflowVolume: number): {square: Square, direction: number} | null {
+    let loc = SquareUtil.locFromId(holdMember);
     let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
     let holdSquare = sim.map[loc.i][loc.j];
     let lowestElevation = Number.MAX_SAFE_INTEGER;

@@ -187,7 +187,7 @@ export function dumpSedimentAtMouth(
     if (sediment <= 0 || !isFinite(sediment)) return 0;
 
     let queue: Square[] = [square];
-    let visited: Set<string> = new Set([square.location]);
+    let visited: Set<number> = new Set([square.location]);
     let remaining = sediment;
 
     while (remaining > 0 && queue.length > 0) {

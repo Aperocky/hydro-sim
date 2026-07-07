@@ -15,17 +15,17 @@ VOLUME_MAP.set(4, 1600000000);
 
 
 type RiverLine = {
-    key: string;
-    loc: string;
-    flowTo: string;
+    key: number;
+    loc: Square;
+    flowTo: Square;
     width: number;
     line: PIXI.Graphics | null;
 }
 
 
-function getFlowTo(square: Square, sim: Sim): string | null {
+function getFlowTo(square: Square, sim: Sim): Square | null {
     let ds = SquareUtil.getDownstreamSquare(square, sim);
-    return ds ? ds.location : null;
+    return ds;
 }
 
 
@@ -44,7 +44,7 @@ function getLineWidth(volume: number): number {
 
 export class RiverManager {
 
-    rivers: Map<string, RiverLine>;
+    rivers: Map<number, RiverLine>;
     currentRivers: RiverLine[];
 
     constructor() {
@@ -67,7 +67,7 @@ export class RiverManager {
                     if (!flowTo) continue;
                     this.currentRivers.push({
                         key: square.location,
-                        loc: square.location,
+                        loc: square,
                         flowTo: flowTo,
                         width: getLineWidth(square.flow.flowVolume),
                         line: null,
@@ -79,14 +79,14 @@ export class RiverManager {
     }
 
     renderOutlets(sim: Sim): void {
-        let visited = new Set<string>();
+        let visited = new Set<number>();
         sim.superBasins.forEach((basin) => {
             if (visited.has(basin.anchor)) return;
             visited.add(basin.anchor);
             if (!basin.isFull) return;
             let holdMember = basin.basinHold.holdMember;
-            if (!holdMember) return;
-            let loc = JSON.parse(holdMember);
+            if (holdMember < 0) return;
+            let loc = SquareUtil.locFromId(holdMember);
             let holdSquare: Square = sim.map[loc.i][loc.j];
             let adjacents = SquareUtil.getAdjacentSquares(loc.i, loc.j, sim.size);
             let holdBasins = new Set(basin.basinHold.holdBasins);
@@ -104,9 +104,9 @@ export class RiverManager {
             let width = getLineWidth(volume);
             if (width < 1) width = 1;
             this.currentRivers.push({
-                key: holdMember + '_outlet',
-                loc: holdMember,
-                flowTo: outletTarget.location,
+                key: -holdMember - 1,
+                loc: holdSquare,
+                flowTo: outletTarget,
                 width: width,
                 line: null,
             });
@@ -126,10 +126,8 @@ export class RiverManager {
         this.currentRivers.forEach((river) => {
             river.line = new PIXI.Graphics();
             river.line.lineStyle(river.width, 0x10a5f5);
-            let startloc = JSON.parse(river.loc);
-            let endloc = JSON.parse(river.flowTo);
-            river.line.moveTo(startloc.i * SPRITE_SIZE + SPRITE_SIZE/2, startloc.j * SPRITE_SIZE + SPRITE_SIZE/2);
-            river.line.lineTo(endloc.i * SPRITE_SIZE + SPRITE_SIZE/2, endloc.j * SPRITE_SIZE + SPRITE_SIZE/2);
+            river.line.moveTo(river.loc.i * SPRITE_SIZE + SPRITE_SIZE/2, river.loc.j * SPRITE_SIZE + SPRITE_SIZE/2);
+            river.line.lineTo(river.flowTo.i * SPRITE_SIZE + SPRITE_SIZE/2, river.flowTo.j * SPRITE_SIZE + SPRITE_SIZE/2);
             mapContainer.addChild(river.line);
             this.rivers.set(river.key, river);
         });

@@ -27,6 +27,8 @@ function buildGrid(altitudes: number[][]): SimBase {
         for (let j = 0; j < size; j++) {
             let sq = SquareUtil.createSquare(sim.altitude[i][j], sim.precip[i][j]);
             sq.location = SquareUtil.stringRep(i, j);
+            sq.i = i;
+            sq.j = j;
             sim.map[i][j] = sq;
         }
     }
@@ -49,7 +51,7 @@ function totalPendingVolume(sim: SimBase): number {
 }
 
 function attachBasin(sim: SimBase, anchor: Square, members: Square[], holdElevation: number): void {
-    let anchorId = 'basin';
+    let anchorId = anchor.location;
     for (let sq of members) {
         sq.basin = anchorId;
     }
@@ -61,7 +63,7 @@ function attachBasin(sim: SimBase, anchor: Square, members: Square[], holdElevat
             edgeMembers: [],
             holdElevation,
             holdCapacity: 0,
-            holdMember: '',
+            holdMember: SquareUtil.NO_LOCATION,
             holdBasins: [],
         },
     });

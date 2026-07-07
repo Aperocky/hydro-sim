@@ -1,4 +1,5 @@
 import { Sim } from '../main/sim/sim';
+import { SquareUtil } from '../main/components/square';
 
 const SIZE = 150;
 
@@ -11,10 +12,10 @@ describe('Erosion and sedimentation', () => {
         for (let i = 0; i < 5; i++) sim.run();
 
         // Find full basins with hold members
-        let holdAltitudes: Map<string, number> = new Map();
+        let holdAltitudes: Map<number, number> = new Map();
         sim.superBasins.forEach(basin => {
-            if (basin.isFull && basin.basinHold.holdMember) {
-                let loc = JSON.parse(basin.basinHold.holdMember);
+            if (basin.isFull && basin.basinHold.holdMember >= 0) {
+                let loc = SquareUtil.locFromId(basin.basinHold.holdMember);
                 holdAltitudes.set(basin.basinHold.holdMember, sim.map[loc.i][loc.j].altitude);
             }
         });
@@ -25,7 +26,7 @@ describe('Erosion and sedimentation', () => {
         // At least one hold member should have lower altitude
         let eroded = 0;
         holdAltitudes.forEach((oldAlt, holdMember) => {
-            let loc = JSON.parse(holdMember);
+            let loc = SquareUtil.locFromId(holdMember);
             let newAlt = sim.map[loc.i][loc.j].altitude;
             if (newAlt < oldAlt) eroded++;
         });

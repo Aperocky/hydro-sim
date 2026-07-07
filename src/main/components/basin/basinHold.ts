@@ -10,11 +10,11 @@
 // 2. in case the other basin is also filled to this altitude,
 // the formation of SuperBasin
 export type BasinHold = {
-    edgeMembers: string[];
+    edgeMembers: number[];
     holdElevation: number;
     holdCapacity: number;
-    holdMember: string;
-    holdBasins: string[];
+    holdMember: number;
+    holdBasins: number[];
 }
 
 
@@ -25,9 +25,8 @@ export class HoldUtil {
             edgeMembers: [],
             holdElevation: 0,
             holdCapacity: 0,
-            holdMember: '',
+            holdMember: -1,
             holdBasins: [],
         }
     }
 }
-

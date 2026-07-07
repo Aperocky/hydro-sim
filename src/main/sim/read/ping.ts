@@ -6,13 +6,13 @@ import { Square, SquareUtil } from '../../components/square';
 export default function ping(sim: Sim): Object {
     let basinCount = 0;
     let maxHeight = 0;
-    let basins: {[location: string]: number} = {};
+    let basins: Map<number, number> = new Map();
     for (let i = 0; i < sim.size; i++) {
         for (let j = 0; j < sim.size; j++) {
             let square: Square = sim.map[i][j];
             if (square.flow.flowDirection === 0) {
                 let locStr = SquareUtil.stringRep(i, j);
-                basins[locStr] = square.altitude;
+                basins.set(locStr, square.altitude);
                 basinCount++;
             }
             if (square.altitude > maxHeight) {

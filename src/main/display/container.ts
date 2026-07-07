@@ -20,7 +20,7 @@ const HILLSHADE_STRENGTH = 0.35;
 
 
 type Component = {
-    locStr: string;
+    locStr: number;
     square: Square;
     sprite: PIXI.Sprite;
 }
@@ -29,7 +29,7 @@ type Component = {
 export class MapContainer {
 
     mapContainer: PIXI.Container;
-    mapComponents: Map<string, Component>;
+    mapComponents: Map<number, Component>;
     riverManager: RiverManager;
     simMap: Square[][];
     simSize: number;
@@ -188,8 +188,7 @@ export class MapContainer {
     }
 
     getLocalGradient(square: Square): number {
-        let loc: {i: number, j: number} = JSON.parse(square.location);
-        let adjacents = SquareUtil.getAdjacentSquares(loc.i, loc.j, this.simSize);
+        let adjacents = SquareUtil.getAdjacentSquares(square.i, square.j, this.simSize);
         let maxDiff = 0;
         adjacents.forEach((coords) => {
             let adj = this.simMap[coords[0]][coords[1]];
@@ -214,10 +213,9 @@ export class MapContainer {
     }
 
     getSlopeVector(square: Square): {x: number, y: number} {
-        let loc: {i: number, j: number} = JSON.parse(square.location);
         let altitudeAt = (di: number, dj: number): number => {
-            let i = Math.max(0, Math.min(this.simSize - 1, loc.i + di));
-            let j = Math.max(0, Math.min(this.simSize - 1, loc.j + dj));
+            let i = Math.max(0, Math.min(this.simSize - 1, square.i + di));
+            let j = Math.max(0, Math.min(this.simSize - 1, square.j + dj));
             return this.simMap[i][j].altitude;
         };
 

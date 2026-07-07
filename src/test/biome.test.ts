@@ -1,5 +1,5 @@
 import { FlowUtil } from '../main/components/flow';
-import { Square } from '../main/components/square';
+import { Square, SquareUtil } from '../main/components/square';
 import { Biome, getBiome, getMoistureIndex } from '../main/sim/util/biome';
 
 function makeSquare(aquiferDrain: number, precipitation: number = 0): Square {
@@ -10,9 +10,11 @@ function makeSquare(aquiferDrain: number, precipitation: number = 0): Square {
             ...FlowUtil.initFlow(),
             aquiferDrain,
         },
-        basin: '',
+        basin: SquareUtil.NO_LOCATION,
         edgeOf: new Set(),
-        location: JSON.stringify({i: 0, j: 0}),
+        location: SquareUtil.stringRep(0, 0),
+        i: 0,
+        j: 0,
         submerged: false,
         previously_submerged: 0,
         depth: 0,

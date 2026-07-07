@@ -16,7 +16,7 @@ export class SimBase {
     initialized: boolean;
     altitude: number[][];
     precip: number[][];
-    basins: Map<string, Basin>;
+    basins: Map<number, Basin>;
     turn: number;
 
     constructor(size) {
@@ -33,6 +33,8 @@ export class SimBase {
             for (let j=0; j<this.size; j++) {
                 let square: Square = SquareUtil.createSquare(this.altitude[i][j], this.precip[i][j]);
                 square.location = SquareUtil.stringRep(i, j);
+                square.i = i;
+                square.j = j;
                 this.map[i][j] = square;
             }
         }
@@ -55,7 +57,7 @@ export class SimBase {
         }
 
         // Clear lake state from all basins
-        let visited: Set<string> = new Set();
+        let visited: Set<number> = new Set();
         (this as any).superBasins.forEach((basin: Basin) => {
             if (visited.has(basin.anchor)) return;
             visited.add(basin.anchor);
@@ -78,7 +80,7 @@ export class SimBase {
 
         // Aggregate saved water volume per new base basin
         // Use surface elevation vs new altitude to handle terrain changes correctly
-        let basinWater: Map<string, number> = new Map();
+        let basinWater: Map<number, number> = new Map();
         let targetLakeVolume = 0;
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
@@ -106,7 +108,7 @@ export class SimBase {
         }
         let fullEvents: BasinFullEvent[] = [];
         let processedBasins: Set<Basin> = new Set();
-        (this as any).superBasins.forEach((basin: Basin, anchor: string) => {
+        (this as any).superBasins.forEach((basin: Basin, anchor: number) => {
             if (processedBasins.has(basin)) return;
             processedBasins.add(basin);
             let volume = 0;

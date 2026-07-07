@@ -18,7 +18,7 @@ export default class SuperBasin extends Basin {
 
         // Use the current altitude of the shared hold member as the divide elevation
         // (erosion may have slightly changed it since hold was computed)
-        let holdLoc = JSON.parse(basinA.basinHold.holdMember);
+        let holdLoc = SquareUtil.locFromId(basinA.basinHold.holdMember);
         let divideElevation = sim.map[holdLoc.i][holdLoc.j].altitude;
 
         // Extend to member basins
@@ -65,12 +65,12 @@ export default class SuperBasin extends Basin {
         let hold = HoldUtil.createHold();
 
         // Find edge members:
-        let edgeMemberSet: Set<string> = new Set();
+        let edgeMemberSet: Set<number> = new Set();
         basinA.basinHold.edgeMembers.forEach((loc) => edgeMemberSet.add(loc));
         basinB.basinHold.edgeMembers.forEach((loc) => edgeMemberSet.add(loc));
         hold.edgeMembers = Array.from(edgeMemberSet).filter((locStr) => {
-            let loc = JSON.parse(locStr);
-            let edgeOf: Set<string> = sim.map[loc.i][loc.j].edgeOf;
+            let loc = SquareUtil.locFromId(locStr);
+            let edgeOf: Set<number> = sim.map[loc.i][loc.j].edgeOf;
             let isEdge = false;
             for (let anchor of Array.from(edgeOf)) {
                 if (!this.memberBasins.includes(anchor)) {
@@ -83,10 +83,10 @@ export default class SuperBasin extends Basin {
 
         // Find hold;
         let holdElevation = Number.MAX_SAFE_INTEGER;
-        let holdMember = "";
-        let holdBasins: Set<string>;
+        let holdMember = SquareUtil.NO_LOCATION;
+        let holdBasins: Set<number>;
         for (let locStr of hold.edgeMembers) {
-            let loc = JSON.parse(locStr);
+            let loc = SquareUtil.locFromId(locStr);
             let locSquare: Square = sim.map[loc.i][loc.j];
             if (locSquare.altitude < holdElevation) {
                 holdElevation = locSquare.altitude;
@@ -106,7 +106,7 @@ export default class SuperBasin extends Basin {
 
         let capacity = 0;
         this.members.forEach((locStr) => {
-            let loc: {i: number, j: number} = JSON.parse(locStr);
+            let loc = SquareUtil.locFromId(locStr);
             let memberSquare: Square = sim.map[loc.i][loc.j];
             if (memberSquare.altitude < hold.holdElevation) {
                 capacity += constants.UNITS.get('squareToVolume') * (holdElevation - memberSquare.altitude);
@@ -118,7 +118,7 @@ export default class SuperBasin extends Basin {
 
     populateLakeFormation(sim: Sim, basinA: Basin, basinB: Basin): void {
         let lake = new LakeFormation();
-        let anchorLoc = JSON.parse(this.anchor);
+        let anchorLoc = SquareUtil.locFromId(this.anchor);
         let anchorSquare = sim.map[anchorLoc.i][anchorLoc.j];
         lake.initiateFromSuperBasin(anchorSquare, [], [], 0, anchorSquare.altitude);
         lake.resetToElevationFromMembers(sim, this.members, this.divideElevation);

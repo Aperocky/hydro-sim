@@ -1,6 +1,7 @@
 import { Sim } from '../main/sim/sim';
 import { Basin } from '../main/components/basin/basin';
 import SuperBasin from '../main/components/basin/superBasin';
+import { SquareUtil } from '../main/components/square';
 import * as constants from '../main/constant/constant';
 
 const UNIT_SQUARE_VOLUME = constants.UNITS.get('squareToVolume');
@@ -20,7 +21,7 @@ function seedRandom(seed: number): () => void {
 function volumeAtElevation(sim: Sim, basin: Basin, elevation: number): number {
     let volume = 0;
     for (let locStr of basin.members) {
-        let loc: {i: number, j: number} = JSON.parse(locStr);
+        let loc = SquareUtil.locFromId(locStr);
         let square = sim.map[loc.i][loc.j];
         if (square.altitude < elevation) {
             volume += (elevation - square.altitude) * UNIT_SQUARE_VOLUME;
@@ -32,7 +33,7 @@ function volumeAtElevation(sim: Sim, basin: Basin, elevation: number): number {
 function countSubmergedMembers(sim: Sim, basin: Basin): number {
     let count = 0;
     for (let locStr of basin.members) {
-        let loc: {i: number, j: number} = JSON.parse(locStr);
+        let loc = SquareUtil.locFromId(locStr);
         if (sim.map[loc.i][loc.j].submerged) count++;
     }
     return count;
@@ -41,7 +42,7 @@ function countSubmergedMembers(sim: Sim, basin: Basin): number {
 function findSplittablePair(sim: Sim): [Basin, Basin] {
     let result: [Basin, Basin];
     sim.basins.forEach((basin) => {
-        if (result || !basin.basinHold.holdMember) return;
+        if (result || basin.basinHold.holdMember < 0) return;
         for (let anchor of basin.basinHold.holdBasins) {
             let other = sim.basins.get(anchor);
             if (!other) continue;

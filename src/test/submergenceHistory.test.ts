@@ -1,5 +1,5 @@
 import { FlowUtil } from '../main/components/flow';
-import { Square } from '../main/components/square';
+import { Square, SquareUtil } from '../main/components/square';
 import { SUBMERGENCE_MEMORY_TURNS, updateSubmergenceHistory } from '../main/sim/util/runTurn';
 
 function makeSquare(submerged: boolean, previouslySubmerged: number): Square {
@@ -7,9 +7,11 @@ function makeSquare(submerged: boolean, previouslySubmerged: number): Square {
         altitude: 0,
         precipitation: 0,
         flow: FlowUtil.initFlow(),
-        basin: '',
+        basin: SquareUtil.NO_LOCATION,
         edgeOf: new Set(),
-        location: JSON.stringify({i: 0, j: 0}),
+        location: SquareUtil.stringRep(0, 0),
+        i: 0,
+        j: 0,
         submerged,
         previously_submerged: previouslySubmerged,
         depth: submerged ? 1 : 0,

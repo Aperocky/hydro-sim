@@ -190,15 +190,15 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
 // Erode outlet channels of full basins.
 // Traces from hold member downstream, applying erosion based on overflow volume.
 function erodeOutlets(sim: Sim): void {
-    let visited = new Set<string>();
+    let visited = new Set<number>();
     sim.superBasins.forEach((basin) => {
         if (visited.has(basin.anchor)) return;
         visited.add(basin.anchor);
         if (!basin.isFull) return;
 
         let holdLoc = basin.basinHold.holdMember;
-        if (!holdLoc) return;
-        let loc = JSON.parse(holdLoc);
+        if (holdLoc < 0) return;
+        let loc = SquareUtil.locFromId(holdLoc);
         let holdSquare: Square = sim.map[loc.i][loc.j];
 
         // Use the basin's overflow volume as the flow for erosion
