@@ -19,10 +19,11 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, op
     if (event.holdBasins.length != 1) {
     }
     let thisBasin = sim.superBasins.get(event.anchor);
+    let holdBasins = event.holdBasins.slice();
     let nextBasinAnchor: string;
     let nextBasin: Basin;
     while (true) {
-        nextBasinAnchor = event.holdBasins.pop();
+        nextBasinAnchor = holdBasins.pop();
         if (nextBasinAnchor === undefined) {
             // All hold basins belong to current superbasin — skip event
             return null;

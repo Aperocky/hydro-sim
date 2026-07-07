@@ -151,11 +151,26 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
     let processCount = 0;
     let maxEvents = sim.size * sim.size;
     let fullEventQueue = new TinyQueue(basinFullEvents, fullEventComparator);
+    let processedOverflowEvents: Set<string> = new Set();
     while (fullEventQueue.length) {
         let currentEvent = fullEventQueue.pop();
         if (!currentEvent.valid) {
             continue;
         }
+        let eventKey = [
+            currentEvent.anchor,
+            currentEvent.holdMember,
+            currentEvent.holdElevation,
+            currentEvent.holdBasins.slice().sort().join('|'),
+        ].join('::');
+        if (processedOverflowEvents.has(eventKey)) {
+            let basin = sim.superBasins.get(currentEvent.anchor);
+            if (basin != null) {
+                basin.basinFullEvent = null;
+            }
+            continue;
+        }
+        processedOverflowEvents.add(eventKey);
         let newEvent: BasinFullEvent | null = processOverflowEvent(sim, currentEvent);
         processCount += 1;
         if (processCount > maxEvents) {

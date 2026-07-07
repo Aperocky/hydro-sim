@@ -29,6 +29,15 @@ function volumeAtElevation(sim: Sim, basin: Basin, elevation: number): number {
     return volume;
 }
 
+function countSubmergedMembers(sim: Sim, basin: Basin): number {
+    let count = 0;
+    for (let locStr of basin.members) {
+        let loc: {i: number, j: number} = JSON.parse(locStr);
+        if (sim.map[loc.i][loc.j].submerged) count++;
+    }
+    return count;
+}
+
 function findSplittablePair(sim: Sim): [Basin, Basin] {
     let result: [Basin, Basin];
     sim.basins.forEach((basin) => {
@@ -71,6 +80,33 @@ test('superbasin split rebuilds child lake water from terrain instead of stale c
 
         expect(basinA.lake.getVolume()).toBeCloseTo(expectedA, -2);
         expect(basinB.lake.getVolume()).toBeCloseTo(expectedB, -2);
+    } finally {
+        restoreRandom();
+    }
+}, 30000);
+
+test('superbasin split rebuilds correctly when child lakes still have stale water queues', () => {
+    let restoreRandom = seedRandom(13);
+    try {
+        let sim = new Sim(140);
+        let [basinA, basinB] = findSplittablePair(sim);
+        expect(basinA).toBeDefined();
+        expect(basinB).toBeDefined();
+
+        basinA.lake.fillToVolume(sim, volumeAtElevation(sim, basinA, basinA.basinHold.holdElevation));
+        basinB.lake.fillToVolume(sim, volumeAtElevation(sim, basinB, basinA.basinHold.holdElevation));
+
+        let targetElevation = basinA.basinHold.holdElevation - 0.5;
+        let expectedA = volumeAtElevation(sim, basinA, targetElevation);
+        let expectedB = volumeAtElevation(sim, basinB, targetElevation);
+
+        let superBasin = SuperBasin.fromBasins(sim, basinA, basinB);
+        superBasin.divideBasin(sim, targetElevation);
+
+        expect(basinA.lake.getVolume()).toBeCloseTo(expectedA, -2);
+        expect(basinB.lake.getVolume()).toBeCloseTo(expectedB, -2);
+        expect(countSubmergedMembers(sim, basinA)).toBeGreaterThan(0);
+        expect(countSubmergedMembers(sim, basinB)).toBeGreaterThan(0);
     } finally {
         restoreRandom();
     }

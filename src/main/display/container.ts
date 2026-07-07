@@ -75,10 +75,10 @@ export class MapContainer {
                 sprite.interactive = true;
                 sprite.
                     on('mouseover', () => {
-                        Console.displaySquare(square, sim.superBasins.get(square.basin));
+                        Console.displaySquare(square, sim.superBasins.get(square.basin), this.getLocalGradient(square));
                     }).
                     on('pointertap', () => {
-                        Console.displaySquare(square, sim.superBasins.get(square.basin));
+                        Console.displaySquare(square, sim.superBasins.get(square.basin), this.getLocalGradient(square));
                     });
                 this.mapContainer.addChild(sprite);
                 let record: Component = {

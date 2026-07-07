@@ -65,7 +65,7 @@ export class Console {
         }
     }
 
-    static displaySquare(square: Square, basin: Basin): void {
+    static displaySquare(square: Square, basin: Basin, localGradient: number): void {
         Console.clearText();
         Console.appendTitle('Square');
         let loc: {i: number, j: number} = JSON.parse(square.location);
@@ -78,7 +78,6 @@ export class Console {
 
         if (square.submerged && basin) {
             terrainRows.push(
-                {label: 'Altitude', value: `${trimNumber(square.altitude)} m`},
                 {label: 'Surface', value: `${trimNumber(basin.lake.surfaceElevation)} m`},
                 {label: 'Depth', value: `${trimNumber(square.depth)} m`},
             );
@@ -96,7 +95,7 @@ export class Console {
         Console.appendSection('Flow', [
             {label: 'Water', value: hasFlow ? Console.displayVolume(flowVal) : '—'},
             {label: 'Direction', value: hasFlow ? constants.DIRECTION_DESCRIPTION.get(square.flow.flowDirection) : '—'},
-            {label: 'Gradient', value: hasFlow ? `${trimNumber(square.flow.heightDiff)} m` : '—'},
+            {label: 'Gradient', value: `${trimNumber(localGradient)} m`},
             {label: 'Sediment', value: hasFlow && square.flow.sediment > 0 ? Console.displayVolume(square.flow.sediment) : '—'},
             {label: 'Erosion', value: hasFlow && square.flow.erosion > 0 ? Console.displaySedimentDepth(square.flow.erosion) : '—'},
             {label: 'Deposit', value: hasFlow && square.flow.sedimentation > 0 ? Console.displaySedimentDepth(square.flow.sedimentation) : '—'},

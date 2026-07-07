@@ -65,4 +65,5 @@ test('overflow transfer mode does not route through cells or add precipitation',
 
     expect(capturedInflow).toBe(overflowVolume);
     expect(rainyOutlet.flow.inFlows.size).toBe(0);
+    expect(event.holdBasins).toEqual([targetAnchor]);
 });
