@@ -116,8 +116,14 @@ export class SquareUtil {
     }
 
     static getUpstreamSquares(square: Square, sim): Square[] {
-        let inflowLocs = SquareUtil.getInflowLocs(square, sim.size);
-        return inflowLocs.map((loc) => sim.map[loc.i][loc.j]);
+        let result: Square[] = [];
+        SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach((loc) => {
+            let candidate = sim.map[loc[0]][loc[1]];
+            if (SquareUtil.getDownstreamSquare(candidate, sim) === square) {
+                result.push(candidate);
+            }
+        });
+        return result;
     }
 
     static getDownstreamSquare(square: Square, sim): Square | null {

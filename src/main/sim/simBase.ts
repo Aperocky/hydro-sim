@@ -137,6 +137,7 @@ export class SimBase {
                 currentEvent.holdMember,
                 currentEvent.holdElevation,
                 currentEvent.holdBasins.slice().sort().join('|'),
+                Math.round(currentEvent.overflowVolume),
             ].join('::');
             if (processedOverflowEvents.has(eventKey)) {
                 let basin = (this as any).superBasins.get(currentEvent.anchor);

@@ -162,6 +162,7 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[]): void {
             currentEvent.holdMember,
             currentEvent.holdElevation,
             currentEvent.holdBasins.slice().sort().join('|'),
+            Math.round(currentEvent.overflowVolume),
         ].join('::');
         if (processedOverflowEvents.has(eventKey)) {
             let basin = sim.superBasins.get(currentEvent.anchor);

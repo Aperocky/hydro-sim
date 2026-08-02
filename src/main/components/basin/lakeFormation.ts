@@ -85,7 +85,10 @@ export default class LakeFormation {
         // Find the lowest shore and pop that.
         let lowestShore: Square = this.shore.pop();
         if (!lowestShore) {
-            // No more shore to flood — cap at current volume
+            // Edge basins can have no upstream shore, but their surface still rises.
+            if (this.flooded.length > 0) {
+                this.surfaceElevation += diffVolume / (this.flooded.length * UNIT_SQUARE_VOLUME);
+            }
             this.volume = volume;
             return;
         }
@@ -244,6 +247,10 @@ export default class LakeFormation {
 
     setLakeStateToSim(): void {
         let hasWater = this.volume > 0;
+        for (let square of this.shore.data) {
+            square.submerged = false;
+            square.depth = 0;
+        }
         for (let square of this.flooded.data) {
             square.submerged = hasWater;
             square.depth = hasWater ? this.surfaceElevation - square.altitude : 0;

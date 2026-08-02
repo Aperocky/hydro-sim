@@ -16,22 +16,25 @@ type ProcessOverflowOptions = {
 export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, options: ProcessOverflowOptions = {}): BasinFullEvent | null {
     let includePrecipitation = options.includePrecipitation !== false;
     let routeFlow = options.routeFlow !== false;
-    if (event.holdBasins.length != 1) {
-    }
     let thisBasin = sim.superBasins.get(event.anchor);
-    let holdBasins = event.holdBasins.slice();
+    let holdBasins = new Set(event.holdBasins);
     let nextBasinAnchor: number;
     let nextBasin: Basin;
-    while (true) {
-        nextBasinAnchor = holdBasins.pop();
-        if (nextBasinAnchor === undefined) {
-            // All hold basins belong to current superbasin — skip event
-            return null;
+    let lowestElevation = Number.MAX_SAFE_INTEGER;
+    let holdLoc = SquareUtil.locFromId(event.holdMember);
+    SquareUtil.getAdjacentSquares(holdLoc.i, holdLoc.j, sim.size).forEach((loc) => {
+        let adjacent = sim.map[loc[0]][loc[1]];
+        let candidate = sim.superBasins.get(adjacent.basin);
+        if (holdBasins.has(adjacent.basin) && candidate && candidate !== thisBasin
+                && adjacent.altitude < lowestElevation) {
+            lowestElevation = adjacent.altitude;
+            nextBasinAnchor = adjacent.basin;
+            nextBasin = candidate;
         }
-        nextBasin = sim.superBasins.get(nextBasinAnchor);
-        if (thisBasin != nextBasin) {
-            break;
-        }
+    });
+    if (nextBasinAnchor === undefined) {
+        // All hold basins belong to the current superbasin.
+        return null;
     }
     let shareHold = thisBasin.basinHold.holdMember == nextBasin.basinHold.holdMember;
     if (nextBasin.isFull && shareHold) {
@@ -93,8 +96,6 @@ function identifyOutflow(sim: Sim, holdMember: number, flowToBasin: number, over
     }
     if (flowDirection == holdSquare.flow.flowDirection) {
         holdSquare.flow.flowVolume = overflowVolume;
-    } else {
-        holdSquare.submerged = true;
     }
     return {
         square: flowToSquare,

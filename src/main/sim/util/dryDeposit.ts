@@ -104,8 +104,8 @@ function traceDryMembers(anchor: Square, sim: Sim): number[] {
         if (visited.has(square.location)) return;
         visited.add(square.location);
         result.push(square.location);
-        for (let loc of SquareUtil.getInflowLocs(square, sim.size)) {
-            dfs(sim.map[loc.i][loc.j]);
+        for (let upstream of SquareUtil.getUpstreamSquares(square, sim)) {
+            dfs(upstream);
         }
     }
 
