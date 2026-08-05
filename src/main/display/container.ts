@@ -33,6 +33,9 @@ export class MapContainer {
     riverManager: RiverManager;
     simMap: Square[][];
     simSize: number;
+    godModeHandler: ((square: Square) => boolean) | null;
+    godModeSquare: Square | null;
+    godModeTimer: number | null;
 
     constructor() {
         let canvas = document.createElement('canvas');
@@ -46,6 +49,10 @@ export class MapContainer {
         this.mapContainer = mapContainer;
         this.mapComponents = new Map();
         this.riverManager = new RiverManager();
+        this.godModeHandler = null;
+        this.godModeSquare = null;
+        this.godModeTimer = null;
+        window.addEventListener('pointerup', () => this.stopGodMode());
         Console.appendText("INITIATE MAPCONTAINER");
     }
 
@@ -63,6 +70,7 @@ export class MapContainer {
     }
 
     initializeComponents(sim: Sim): void {
+        this.stopGodMode();
         this.mapContainer.removeChildren();
         this.mapComponents.clear();
         this.riverManager.clear();
@@ -75,7 +83,11 @@ export class MapContainer {
                 sprite.interactive = true;
                 sprite.
                     on('mouseover', () => {
+                        this.godModeSquare = square;
                         Console.displaySquare(square, sim.superBasins.get(square.basin), this.getLocalGradient(square));
+                    }).
+                    on('pointerdown', () => {
+                        this.startGodMode(square);
                     }).
                     on('pointertap', () => {
                         Console.displaySquare(square, sim.superBasins.get(square.basin), this.getLocalGradient(square));
@@ -90,6 +102,24 @@ export class MapContainer {
             }
         }
         console.log(`mapContainer has ${this.mapContainer.children.length} children`);
+    }
+
+    setGodModeHandler(handler: (square: Square) => boolean): void {
+        this.godModeHandler = handler;
+    }
+
+    startGodMode(square: Square): void {
+        this.stopGodMode();
+        this.godModeSquare = square;
+        if (!this.godModeHandler || !this.godModeHandler(square)) return;
+        this.godModeTimer = window.setInterval(() => {
+            if (this.godModeSquare) this.godModeHandler(this.godModeSquare);
+        }, 200);
+    }
+
+    stopGodMode(): void {
+        if (this.godModeTimer !== null) window.clearInterval(this.godModeTimer);
+        this.godModeTimer = null;
     }
 
     renderRivers(sim: Sim): void {

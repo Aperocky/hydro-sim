@@ -131,6 +131,22 @@
             margin: 0;
             font-size: 13px;
         }
+        .god-control {
+            display: grid;
+            grid-template-columns: 72px minmax(120px, 1fr) 38px;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 2px 10px;
+            font-size: 12px;
+        }
+        .god-control label, .god-control output {
+            margin: 0;
+        }
+        .god-control output {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
         @media (max-width: 767px) {
             .sig {
                 padding: 6px;
@@ -185,6 +201,23 @@
                 <button type="button" class="btn btn-info inlineb" id="flora_alpha">BIOME<sup>ALPHA</sup></button>
                 <button type="button" class="btn btn-info inlineb" id="show_flatness">FLATNESS</button>
                 <button type="button" class="btn btn-info inlineb" id="show_sedimentation">SEDIMENT</button>
+            </div>
+            <div class="row ubscript">
+                <p class='text-muted'>God Mode</p>
+            </div>
+            <div class="row">
+                <button type="button" class="btn btn-info inlineb" id="god_precipitation">PRECIPITATION</button>
+                <button type="button" class="btn btn-info inlineb" id="god_altitude">ALTITUDE</button>
+            </div>
+            <div class="god-control">
+                <label for="god_size">Size</label>
+                <input type="range" id="god_size" min="5" max="50" value="15">
+                <output id="god_size_value" for="god_size">15</output>
+            </div>
+            <div class="god-control">
+                <label for="god_amplitude">Amplitude</label>
+                <input type="range" id="god_amplitude" min="-100" max="100" value="10">
+                <output id="god_amplitude_value" for="god_amplitude">10</output>
             </div>
             <div class="row ubscript">
                 <p class='text-muted'>Climate Change</p>

@@ -5,6 +5,8 @@ import generalInfo from '../sim/read/generalInfo';
 import shiftPrecipitation from '../sim/util/precipitationShift';
 import earthquake from '../sim/util/earthquake';
 import { Console } from './console';
+import { Square } from '../components/square';
+import applyGodMode, { GodModeAction } from '../sim/util/godMode';
 
 
 export class SimAdapter {
@@ -37,6 +39,10 @@ export class SimAdapter {
 
     earthquake(): void {
         earthquake(this.sim);
+    }
+
+    applyGodMode(center: Square, action: GodModeAction, radius: number, amplitude: number): void {
+        applyGodMode(this.sim, center, action, radius, amplitude);
     }
 
     run() {

@@ -1,6 +1,7 @@
 import PAGE from './elements';
 import { controller } from './main';
 import { DisplayState, AlphaDisplayState } from './controller';
+import { GodModeAction } from '../sim/util/godMode';
 
 
 export function registerButtons(): void {
@@ -82,6 +83,21 @@ export function registerButtons(): void {
         controller.changeAlphaDisplayState(
             controller.alphaDisplayState === AlphaDisplayState.SEDIMENTATION
                 ? AlphaDisplayState.NONE : AlphaDisplayState.SEDIMENTATION);
+    });
+    let selectGodMode = (action: GodModeAction): void => {
+        let selected = controller.changeGodModeAction(action);
+        buttons.godPrecipButton.classList.toggle('active', selected === GodModeAction.PRECIPITATION);
+        buttons.godAltitudeButton.classList.toggle('active', selected === GodModeAction.ALTITUDE);
+    };
+    buttons.godPrecipButton.addEventListener('click', () => selectGodMode(GodModeAction.PRECIPITATION));
+    buttons.godAltitudeButton.addEventListener('click', () => selectGodMode(GodModeAction.ALTITUDE));
+    buttons.godSize.addEventListener('input', () => {
+        buttons.godSizeValue.textContent = buttons.godSize.value;
+        controller.changeGodModeSize(Number(buttons.godSize.value));
+    });
+    buttons.godAmplitude.addEventListener('input', () => {
+        buttons.godAmplitudeValue.textContent = buttons.godAmplitude.value;
+        controller.changeGodModeAmplitude(Number(buttons.godAmplitude.value));
     });
     buttons.dryButton.addEventListener('click', () => {
         controller.changePrecipitation(0.8);

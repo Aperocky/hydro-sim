@@ -2,6 +2,8 @@ import PAGE from './elements';
 import { MapContainer } from './container';
 import { registerButtons } from './buttons';
 import { SimAdapter } from './simAdapter';
+import { Square } from '../components/square';
+import { GodModeAction } from '../sim/util/godMode';
 
 
 //registerButtons();
@@ -31,13 +33,20 @@ export class StateController {
     alphaDisplayState: AlphaDisplayState
     mapContainer: MapContainer;
     simAdapter: SimAdapter;
+    godModeAction: GodModeAction;
+    godModeSize: number;
+    godModeAmplitude: number;
 
     constructor() {
         this.displayState = DisplayState.ALTITUDE;
         this.alphaDisplayState = AlphaDisplayState.NONE;
+        this.godModeAction = GodModeAction.NONE;
+        this.godModeSize = 15;
+        this.godModeAmplitude = 10;
         this.mapContainer = new MapContainer();
         this.simAdapter = new SimAdapter()
         this.mapContainer.initialize(this.simAdapter.sim);
+        this.mapContainer.setGodModeHandler((square) => this.applyGodMode(square));
     }
 
     reloadMap() {
@@ -87,6 +96,27 @@ export class StateController {
     earthquake(): void {
         this.simAdapter.earthquake();
         this.refreshDisplay();
+    }
+
+    changeGodModeAction(action: GodModeAction): GodModeAction {
+        this.godModeAction = this.godModeAction === action ? GodModeAction.NONE : action;
+        return this.godModeAction;
+    }
+
+    changeGodModeSize(size: number): void {
+        this.godModeSize = size;
+    }
+
+    changeGodModeAmplitude(amplitude: number): void {
+        this.godModeAmplitude = amplitude;
+    }
+
+    private applyGodMode(square: Square): boolean {
+        if (this.godModeAction === GodModeAction.NONE) return false;
+        this.simAdapter.applyGodMode(
+            square, this.godModeAction, this.godModeSize, this.godModeAmplitude);
+        this.refreshDisplay();
+        return true;
     }
 
     runTurn() {
