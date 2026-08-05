@@ -20,7 +20,6 @@ export const CLIFF_GRADIENT = 100;
 export const RAINFOREST_MOISTURE_THRESHOLD = 3.5;
 export const RAINFOREST_SEDIMENT_DEPTH = 2;
 export const RAINFOREST_PRECIPITATION_THRESHOLD = 1000;
-export const SQUARE_AREA_M2 = 1000 * 1000;
 
 export function getBiome(square: Square, localGradient: number = square.flow.heightDiff): Biome {
     if (square.submerged) {
@@ -54,7 +53,7 @@ export function getBiome(square: Square, localGradient: number = square.flow.hei
     }
     if (
         moisture > RAINFOREST_MOISTURE_THRESHOLD &&
-        getNetSedimentationDepth(square) > RAINFOREST_SEDIMENT_DEPTH
+        square.flow.totalSedimentation > RAINFOREST_SEDIMENT_DEPTH
     ) {
         if (square.precipitation >= RAINFOREST_PRECIPITATION_THRESHOLD) {
             return Biome.Rainforest;
@@ -71,10 +70,6 @@ export function getMoistureIndex(square: Square): number {
         return 0;
     }
     return moisture;
-}
-
-export function getNetSedimentationDepth(square: Square): number {
-    return (square.flow.totalSedimentation - square.flow.totalErosion) / SQUARE_AREA_M2;
 }
 
 function wasRecentlySubmerged(square: Square, turns: number): boolean {

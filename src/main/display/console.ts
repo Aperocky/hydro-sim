@@ -103,8 +103,7 @@ export class Console {
             {label: 'Aquifer', value: Console.displayVolume(roundTo(square.flow.aquifer, 1000))},
             {label: 'Aq max', value: Console.displayVolume(roundTo(square.flow.aquiferMax, 1000))},
             {label: 'Aq loss', value: Console.displayVolume(roundTo(square.flow.aquiferDrain, 1000))},
-            {label: 'Erosion', value: Console.displaySedimentMeters(square.flow.totalErosion)},
-            {label: 'Sedimentation', value: Console.displaySedimentMeters(square.flow.totalSedimentation)},
+            {label: 'Sedimentation', value: `${trimNumber(square.flow.totalSedimentation)} m`},
         ];
         Console.appendSection('Soil', soilRows);
 
@@ -199,7 +198,4 @@ export class Console {
         return `${Math.floor(volume)} m³ (${Math.floor(volume/10000)/100} m)`;
     }
 
-    static displaySedimentMeters(volume: number): string {
-        return `${Math.floor(volume/10000)/100} m`;
-    }
 }

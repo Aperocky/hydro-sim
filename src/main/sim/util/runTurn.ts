@@ -22,7 +22,8 @@ export const SUBMERGENCE_MEMORY_TURNS = 20;
 // 5. process any overfilling basin and basin mergers
 // 6. erode basin outlet channels (stores pending deltas)
 // 7. smooth submerged lakebeds (stores pending deltas)
-// 8. update submergence history from final water state
+// 8. add this turn's net terrain change to sedimentation history
+// 9. update submergence history from final water state
 
 export default function runTurn(sim: Sim): void {
     applyPendingErosion(sim);
@@ -34,7 +35,16 @@ export default function runTurn(sim: Sim): void {
     processOverflows(sim, fullEvents);
     erodeOutlets(sim);
     lakebedSmudge(sim);
+    updateSedimentationHistory(sim);
     updateSubmergenceHistory(sim);
+}
+
+function updateSedimentationHistory(sim: Sim): void {
+    for (let row of sim.map) {
+        for (let square of row) {
+            square.flow.totalSedimentation += square.flow.pendingErosion;
+        }
+    }
 }
 
 // For any square that shares an exact altitude with at least one of its 8 neighbors,

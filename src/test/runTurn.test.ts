@@ -15,10 +15,14 @@ describe('Simulation turns (with rainfall)', () => {
         let totalVolume = 0;
         sim.superBasins.forEach(b => { totalVolume += b.lake.getVolume(); });
         expect(totalVolume).toBeGreaterThan(0);
+        sim.map.forEach(row => row.forEach(square => {
+            expect(square.flow.totalSedimentation).toBeCloseTo(square.flow.pendingErosion, 9);
+        }));
     });
 
     test('lakes and shores form after several turns', () => {
         // Already ran 1 turn in previous test
+        let previousSedimentation = sim.map.map(row => row.map(square => square.flow.totalSedimentation));
         sim.run();
         let lakeTiles = 0;
         let beachTiles = 0;
@@ -26,6 +30,10 @@ describe('Simulation turns (with rainfall)', () => {
             if (square.submerged) lakeTiles++;
         }));
         expect(lakeTiles).toBeGreaterThan(0);
+        sim.map.forEach((row, i) => row.forEach((square, j) => {
+            expect(square.flow.totalSedimentation).toBeCloseTo(
+                previousSedimentation[i][j] + square.flow.pendingErosion, 9);
+        }));
     });
 
     test('aquifer state is preserved across turns', () => {

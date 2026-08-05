@@ -37,33 +37,32 @@ test('biome classifier maps base moisture to desert, grassland, and woodland ban
 
 test('biome classifier requires wetness and more than 2m total sedimentation for forest biomes', () => {
     let drySediment = makeSquare(Math.exp(3.4) * 10000, 1200);
-    drySediment.flow.totalSedimentation = 2_100_000;
+    drySediment.flow.totalSedimentation = 2.1;
     expect(getBiome(drySediment)).toBe(Biome.Woodland);
 
     let wetThinSediment = makeSquare(Math.exp(3.6) * 10000, 1200);
-    wetThinSediment.flow.totalSedimentation = 2_000_000;
+    wetThinSediment.flow.totalSedimentation = 2;
     expect(getBiome(wetThinSediment)).toBe(Biome.Woodland);
 
     let forest = makeSquare(Math.exp(3.6) * 10000, 999);
-    forest.flow.totalSedimentation = 2_100_000;
+    forest.flow.totalSedimentation = 2.1;
     expect(getBiome(forest)).toBe(Biome.Forest);
 
     let rainforest = makeSquare(Math.exp(3.6) * 10000, 1000);
-    rainforest.flow.totalSedimentation = 2_100_000;
+    rainforest.flow.totalSedimentation = 2.1;
     expect(getBiome(rainforest)).toBe(Biome.Rainforest);
 });
 
-test('biome classifier uses net sedimentation depth after erosion', () => {
+test('biome classifier uses signed total sedimentation depth', () => {
     let square = makeSquare(Math.exp(3.6) * 10000, 1000);
-    square.flow.totalSedimentation = 2_100_000;
-    square.flow.totalErosion = 200_000;
+    square.flow.totalSedimentation = 1.9;
 
     expect(getBiome(square)).toBe(Biome.Woodland);
 });
 
 test('biome classifier maps recently submerged flat squares to marsh', () => {
     let square = makeSquare(Math.exp(4.5) * 10000, 1000);
-    square.flow.totalSedimentation = 2_100_000;
+    square.flow.totalSedimentation = 2.1;
     square.previously_submerged = 19;
 
     expect(getBiome(square, 0.5)).toBe(Biome.Marsh);
