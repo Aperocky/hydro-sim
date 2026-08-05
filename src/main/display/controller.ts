@@ -38,7 +38,7 @@ export class StateController {
     godModeAmplitude: number;
 
     constructor() {
-        this.displayState = DisplayState.ALTITUDE;
+        this.displayState = DisplayState.BASE;
         this.alphaDisplayState = AlphaDisplayState.NONE;
         this.godModeAction = GodModeAction.NONE;
         this.godModeSize = 15;

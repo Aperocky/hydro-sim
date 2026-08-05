@@ -127,7 +127,7 @@ export class MapContainer {
         this.riverManager.draw(this.mapContainer);
     }
 
-    createColorMap(mapType='altitude'): void {
+    createColorMap(mapType='base'): void {
         this.mapComponents.forEach((val) => {
             let baseColor = this.getBaseTint(mapType, val.square);
             val.sprite.tint = SpriteUtil.getColorCode(baseColor[0], baseColor[1], baseColor[2]);
@@ -137,7 +137,19 @@ export class MapContainer {
     getBaseTint(mapType: string, square: Square): number[] {
         let baseConf = COLOR.MAP_CONFIG[mapType];
         switch(mapType) {
-            case 'base':
+            case 'base': {
+                if (square.submerged) {
+                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
+                }
+                let gradient = this.getLocalGradient(square);
+                let darkening = gradient <= 1 ? 0
+                    : gradient <= 10 ? 0.08 * (gradient - 1) / 9
+                    : gradient <= 50 ? 0.08 + 0.1 * (gradient - 10) / 40
+                    : 0.18 + 0.1 * Math.min(1, (gradient - 50) / 150);
+                let reliefColor = SpriteUtil.getColor(square.altitude, baseConf)
+                    .map(channel => Math.floor(channel * (1 - darkening)));
+                return this.applyHillshade(reliefColor, square);
+            }
             case 'altitude': {
                 if (square.submerged) {
                     return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])

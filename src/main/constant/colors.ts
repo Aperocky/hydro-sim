@@ -22,8 +22,13 @@ export const BIOME_COLORS = {
 }
 
 const BASE_COLOR_MAP: Map<number, number[]> = new Map();
-BASE_COLOR_MAP.set(0, [80, 140, 80]);
-BASE_COLOR_MAP.set(1, [210, 240, 210]);
+BASE_COLOR_MAP.set(0, [36, 92, 58]);
+BASE_COLOR_MAP.set(1, [95, 158, 85]);
+BASE_COLOR_MAP.set(2, [169, 180, 106]);
+BASE_COLOR_MAP.set(3, [197, 145, 87]);
+BASE_COLOR_MAP.set(4, [140, 112, 91]);
+BASE_COLOR_MAP.set(5, [170, 169, 164]);
+BASE_COLOR_MAP.set(6, [236, 239, 241]);
 
 const ALT_COLOR_MAP: Map<number, number[]> = new Map();
 ALT_COLOR_MAP.set(0, [40, 140, 70]); // Dark Green
@@ -74,7 +79,7 @@ export const MAP_CONFIG = {
     },
     base: {
         name: 'base',
-        stepSize: 2000,
+        stepSize: 500,
         subStep: 100,
         alpha: false,
     },
