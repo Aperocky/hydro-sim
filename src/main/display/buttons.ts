@@ -78,6 +78,11 @@ export function registerButtons(): void {
         }
         floraToggler = !floraToggler;
     });
+    buttons.sedimentationButton.addEventListener('click', () => {
+        controller.changeAlphaDisplayState(
+            controller.alphaDisplayState === AlphaDisplayState.SEDIMENTATION
+                ? AlphaDisplayState.NONE : AlphaDisplayState.SEDIMENTATION);
+    });
     buttons.dryButton.addEventListener('click', () => {
         controller.changePrecipitation(0.8);
     });

@@ -22,6 +22,7 @@ export enum AlphaDisplayState {
     BASIN = "basin",
     AQUIFER = "aquifer",
     FLORA = "flora",
+    SEDIMENTATION = "sedimentation",
 }
 
 export class StateController {

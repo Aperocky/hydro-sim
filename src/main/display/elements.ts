@@ -15,6 +15,7 @@ let wetSpell = document.getElementById("wet_spell");
 let drySpell = document.getElementById("dry_spell");
 let shiftSpell = document.getElementById("shift_spell");
 let flatnessButton = document.getElementById("show_flatness");
+let sedimentationButton = document.getElementById("show_sedimentation");
 
 let elements = {
     mapSpace: mapspace,
@@ -34,6 +35,7 @@ let elements = {
         shiftButton: shiftSpell,
         earthquakeButton: document.getElementById("earthquake"),
         flatnessButton: flatnessButton,
+        sedimentationButton: sedimentationButton,
     },
 }
 export default elements;

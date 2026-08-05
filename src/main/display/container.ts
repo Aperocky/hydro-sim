@@ -167,6 +167,10 @@ export class MapContainer {
             case 'flora': {
                 return COLOR.BIOME_COLORS[getBiome(square, this.getLocalGradient(square))];
             }
+            case 'sedimentation': {
+                return square.flow.totalSedimentation >= 0
+                    ? COLOR.SEDIMENTATION_COLOR : COLOR.EROSION_COLOR;
+            }
             default: {
                 return [255, 255, 255]
             }
@@ -174,14 +178,15 @@ export class MapContainer {
     }
 
     createAlphaColorMap(baseMapType: string, alphaMapType: string): void {
-        let alpha = COLOR.OVERLAY_ALPHA;
-        if (alphaMapType === 'flora') {
-            alpha = 0.4;
-        }
         this.mapComponents.forEach((val) => {
-            let altitude = val.square.altitude;
             let baseColor = this.getBaseTint(baseMapType, val.square);
             let alphaColor = this.getAlphaTint(alphaMapType, val.square);
+            let alpha = alphaMapType === 'flora' ? 0.4 : COLOR.OVERLAY_ALPHA;
+            if (alphaMapType === 'sedimentation') {
+                let magnitude = Math.min(Math.abs(val.square.flow.totalSedimentation), 100);
+                alpha = magnitude < 0.05 ? 0
+                    : 0.1 + 0.45 * Math.log1p(magnitude) / Math.log1p(100);
+            }
             let tint = SpriteUtil.alphaBlend(alphaColor, baseColor, alpha);
             val.sprite.tint = tint;
         })

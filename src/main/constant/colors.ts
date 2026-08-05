@@ -2,6 +2,8 @@
 
 export const OVERLAY_ALPHA: number = 0.2;
 export const LAKE_BLUE = [16, 165, 245];
+export const SEDIMENTATION_COLOR = [245, 185, 66];
+export const EROSION_COLOR = [160, 90, 212];
 
 const LAKE_COLOR_MAP: Map<number, number[]> = new Map();
 LAKE_COLOR_MAP.set(0, [16, 165, 245]);
