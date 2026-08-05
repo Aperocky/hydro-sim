@@ -2,11 +2,12 @@ import { SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 
 const SMUDGE_RATE = 0.05;
+const SHORE_SMUDGE_MULTIPLIER = 0.1;
 const NEIGHBOR_DIVISOR = 8;
 
 export default function lakebedSmudge(sim: Sim): void {
     let deltas: number[][] = [];
-    let activeSquares = getSubmergedOrShoreSquares(sim);
+    let {activeSquares, shoreSquares} = getSubmergedOrShoreSquares(sim);
 
     for (let i = 0; i < sim.size; i++) {
         deltas.push([]);
@@ -22,7 +23,9 @@ export default function lakebedSmudge(sim: Sim): void {
             adjacents.forEach((loc) => {
                 let neighbor = sim.map[loc[0]][loc[1]];
                 if (activeSquares.has(neighbor.location)) {
-                    sumDiff += neighbor.altitude - square.altitude;
+                    let multiplier = shoreSquares.has(square.location)
+                            || shoreSquares.has(neighbor.location) ? SHORE_SMUDGE_MULTIPLIER : 1;
+                    sumDiff += multiplier * (neighbor.altitude - square.altitude);
                 }
             });
             deltas[i][j] = SMUDGE_RATE * sumDiff / NEIGHBOR_DIVISOR;
@@ -38,13 +41,14 @@ export default function lakebedSmudge(sim: Sim): void {
     }
 }
 
-function getSubmergedOrShoreSquares(sim: Sim): Set<number> {
-    let result = new Set<number>();
+function getSubmergedOrShoreSquares(sim: Sim): {activeSquares: Set<number>, shoreSquares: Set<number>} {
+    let activeSquares = new Set<number>();
+    let shoreSquares = new Set<number>();
     for (let i = 0; i < sim.size; i++) {
         for (let j = 0; j < sim.size; j++) {
             let square = sim.map[i][j];
             if (square.submerged) {
-                result.add(square.location);
+                activeSquares.add(square.location);
             }
         }
     }
@@ -54,9 +58,10 @@ function getSubmergedOrShoreSquares(sim: Sim): Set<number> {
         if (seenBasins.has(basin)) return;
         seenBasins.add(basin);
         for (let square of basin.lake.shore.data) {
-            result.add(square.location);
+            activeSquares.add(square.location);
+            shoreSquares.add(square.location);
         }
     });
 
-    return result;
+    return {activeSquares, shoreSquares};
 }

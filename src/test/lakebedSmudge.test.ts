@@ -45,7 +45,7 @@ test('lakebed smudge smooths submerged squares without net altitude drift', () =
     expect(sim.map[0][0].flow.pendingErosion).toBeLessThan(0);
 });
 
-test('lakebed smudge includes lake shore squares but not unrelated dry squares', () => {
+test('lakebed smudge applies one tenth strength to shore interactions without altitude drift', () => {
     let sim = createFlatSim(3);
     let submerged = sim.map[1][1];
     let shore = sim.map[1][2];
@@ -66,8 +66,8 @@ test('lakebed smudge includes lake shore squares but not unrelated dry squares',
 
     lakebedSmudge(sim);
 
-    expect(submerged.flow.pendingErosion).toBeGreaterThan(0);
-    expect(shore.flow.pendingErosion).toBeLessThan(0);
+    expect(submerged.flow.pendingErosion).toBeCloseTo(0.025, 9);
+    expect(shore.flow.pendingErosion).toBeCloseTo(-0.025, 9);
     expect(dry.flow.pendingErosion).toBe(0);
     expect(submerged.flow.pendingErosion + shore.flow.pendingErosion).toBeCloseTo(0, 9);
 });
