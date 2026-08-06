@@ -17,12 +17,15 @@ describe('Simulation turns (with rainfall)', () => {
         expect(totalVolume).toBeGreaterThan(0);
         sim.map.forEach(row => row.forEach(square => {
             expect(square.flow.totalSedimentation).toBeCloseTo(square.flow.pendingErosion, 9);
+            expect(square.flow.currentSedimentation).toBeCloseTo(
+                Math.max(0, square.flow.pendingErosion), 9);
         }));
     });
 
     test('lakes and shores form after several turns', () => {
         // Already ran 1 turn in previous test
         let previousSedimentation = sim.map.map(row => row.map(square => square.flow.totalSedimentation));
+        let previousCurrent = sim.map.map(row => row.map(square => square.flow.currentSedimentation));
         sim.run();
         let lakeTiles = 0;
         let beachTiles = 0;
@@ -33,6 +36,8 @@ describe('Simulation turns (with rainfall)', () => {
         sim.map.forEach((row, i) => row.forEach((square, j) => {
             expect(square.flow.totalSedimentation).toBeCloseTo(
                 previousSedimentation[i][j] + square.flow.pendingErosion, 9);
+            expect(square.flow.currentSedimentation).toBeCloseTo(
+                Math.max(0, previousCurrent[i][j] + square.flow.pendingErosion), 9);
         }));
     });
 

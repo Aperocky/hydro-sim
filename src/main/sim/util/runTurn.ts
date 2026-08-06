@@ -43,6 +43,8 @@ function updateSedimentationHistory(sim: Sim): void {
     for (let row of sim.map) {
         for (let square of row) {
             square.flow.totalSedimentation += square.flow.pendingErosion;
+            square.flow.currentSedimentation = Math.max(
+                0, square.flow.currentSedimentation + square.flow.pendingErosion);
         }
     }
 }

@@ -20,6 +20,7 @@ export type Flow = {
     erosion: number;       // m^3 eroded from this square this turn
     sedimentation: number; // m^3 deposited on this square this turn
     totalSedimentation: number; // cumulative net depth (m): deposition positive, erosion negative
+    currentSedimentation: number; // accumulated net deposition, floored at zero
     // Pending altitude delta (meters) to apply next turn
     pendingErosion: number;
 }
@@ -40,6 +41,7 @@ export class FlowUtil {
             erosion: 0,
             sedimentation: 0,
             totalSedimentation: 0,
+            currentSedimentation: 0,
             pendingErosion: 0,
         };
     }

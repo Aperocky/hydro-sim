@@ -103,7 +103,8 @@ export class Console {
             {label: 'Aquifer', value: Console.displayVolume(roundTo(square.flow.aquifer, 1000))},
             {label: 'Aq max', value: Console.displayVolume(roundTo(square.flow.aquiferMax, 1000))},
             {label: 'Aq loss', value: Console.displayVolume(roundTo(square.flow.aquiferDrain, 1000))},
-            {label: 'Sedimentation', value: `${trimNumber(square.flow.totalSedimentation)} m`},
+            {label: 'Total sediment', value: `${trimNumber(square.flow.totalSedimentation)} m`},
+            {label: 'Current sediment', value: `${trimNumber(square.flow.currentSedimentation)} m`},
         ];
         Console.appendSection('Soil', soilRows);
 

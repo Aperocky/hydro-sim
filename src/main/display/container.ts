@@ -84,13 +84,13 @@ export class MapContainer {
                 sprite.
                     on('mouseover', () => {
                         this.godModeSquare = square;
-                        Console.displaySquare(square, sim.superBasins.get(square.basin), this.getLocalGradient(square));
+                        Console.displaySquare(square, sim.superBasins.get(square.basin), square.flow.heightDiff);
                     }).
                     on('pointerdown', () => {
                         this.startGodMode(square);
                     }).
                     on('pointertap', () => {
-                        Console.displaySquare(square, sim.superBasins.get(square.basin), this.getLocalGradient(square));
+                        Console.displaySquare(square, sim.superBasins.get(square.basin), square.flow.heightDiff);
                     });
                 this.mapContainer.addChild(sprite);
                 let record: Component = {
@@ -160,23 +160,23 @@ export class MapContainer {
                 if (square.submerged) {
                     return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
                 }
-                return COLOR.BIOME_COLORS[getBiome(square, this.getLocalGradient(square))];
+                return COLOR.BIOME_COLORS[getBiome(square)];
             }
             case 'flatness': {
                 if (square.submerged) {
                     return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
                 }
-                let maxDiff = this.getLocalGradient(square);
+                let gradient = this.getLocalGradient(square);
                 // Remap: 0-1 -> 0 (green), 1-10 -> 0-1 (green->orange), 10-50 -> 1-2 (orange->brown), 50-200 -> 2-3 (brown->red)
                 let scaled: number;
-                if (maxDiff <= 1) {
+                if (gradient <= 1) {
                     scaled = 0;
-                } else if (maxDiff <= 10) {
-                    scaled = (maxDiff - 1) / 9;
-                } else if (maxDiff <= 50) {
-                    scaled = 1 + (maxDiff - 10) / 40;
+                } else if (gradient <= 10) {
+                    scaled = (gradient - 1) / 9;
+                } else if (gradient <= 50) {
+                    scaled = 1 + (gradient - 10) / 40;
                 } else {
-                    scaled = 2 + (maxDiff - 50) / 150;
+                    scaled = 2 + (gradient - 50) / 150;
                 }
                 let flatnessColor = SpriteUtil.getColorMapColor('flatness', scaled, 1, 100);
                 return this.applyHillshade(flatnessColor, square);
@@ -207,10 +207,12 @@ export class MapContainer {
                 return SpriteUtil.getColor(aquiferPercentFull, alphaConf);
             }
             case 'flora': {
-                return COLOR.BIOME_COLORS[getBiome(square, this.getLocalGradient(square))];
+                return COLOR.BIOME_COLORS[getBiome(square)];
             }
             case 'sedimentation': {
-                return square.flow.totalSedimentation >= 0
+                let sedimentation = square.flow.currentSedimentation > 0
+                    ? square.flow.currentSedimentation : square.flow.totalSedimentation;
+                return sedimentation >= 0
                     ? COLOR.SEDIMENTATION_COLOR : COLOR.EROSION_COLOR;
             }
             default: {
@@ -225,7 +227,9 @@ export class MapContainer {
             let alphaColor = this.getAlphaTint(alphaMapType, val.square);
             let alpha = alphaMapType === 'flora' ? 0.4 : COLOR.OVERLAY_ALPHA;
             if (alphaMapType === 'sedimentation') {
-                let magnitude = Math.min(Math.abs(val.square.flow.totalSedimentation), 100);
+                let sedimentation = val.square.flow.currentSedimentation > 0
+                    ? val.square.flow.currentSedimentation : val.square.flow.totalSedimentation;
+                let magnitude = Math.min(Math.abs(sedimentation), 100);
                 alpha = magnitude < 0.05 ? 0
                     : 0.1 + 0.45 * Math.log1p(magnitude) / Math.log1p(100);
             }

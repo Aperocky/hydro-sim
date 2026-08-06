@@ -147,6 +147,28 @@
             text-align: right;
             font-variant-numeric: tabular-nums;
         }
+        .control-section > summary {
+            color: #6c757d;
+            cursor: pointer;
+            list-style: none;
+            line-height: 20px;
+            margin-left: -15px;
+        }
+        .control-section > summary::-webkit-details-marker {
+            display: none;
+        }
+        .control-section > summary::after {
+            content: "";
+            display: inline-block;
+            margin-left: 6px;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid currentColor;
+            transition: transform 120ms ease;
+        }
+        .control-section:not([open]) > summary::after {
+            transform: rotate(-90deg);
+        }
         @media (max-width: 767px) {
             .sig {
                 padding: 6px;
@@ -189,45 +211,45 @@
                 <button type="button" class="btn btn-info inlineb" id="run">NEXT YEAR</button>
                 <button type="button" class="btn btn-info inlineb" id="decade">DECADE</button>
             </div>
-            <div class="row ubscript">
-                <p class='text-muted'>Display Actions</p>
-            </div>
-            <div class="row">
-                <button type="button" class="btn btn-info inlineb" id="show_alt">ALTITUDE</button>
-                <button type="button" class="btn btn-info inlineb" id="show_precip">PRECIP</button>
-                <button type="button" class="btn btn-info inlineb" id="show_basin">BASIN</button>
-                <button type="button" class="btn btn-info inlineb" id="show_aquifer">AQUIFER</button>
-                <button type="button" class="btn btn-info inlineb" id="show_flora">BIOME</button>
-                <button type="button" class="btn btn-info inlineb" id="flora_alpha">BIOME<sup>ALPHA</sup></button>
-                <button type="button" class="btn btn-info inlineb" id="show_flatness">FLATNESS</button>
-                <button type="button" class="btn btn-info inlineb" id="show_sedimentation">SEDIMENT</button>
-            </div>
-            <div class="row ubscript">
-                <p class='text-muted'>God Mode</p>
-            </div>
-            <div class="row">
-                <button type="button" class="btn btn-info inlineb" id="god_precipitation">PRECIPITATION</button>
-                <button type="button" class="btn btn-info inlineb" id="god_altitude">ALTITUDE</button>
-            </div>
-            <div class="god-control">
-                <label for="god_size">Size</label>
-                <input type="range" id="god_size" min="5" max="50" value="15">
-                <output id="god_size_value" for="god_size">15</output>
-            </div>
-            <div class="god-control">
-                <label for="god_amplitude">Amplitude</label>
-                <input type="range" id="god_amplitude" min="-100" max="100" value="10">
-                <output id="god_amplitude_value" for="god_amplitude">10</output>
-            </div>
-            <div class="row ubscript">
-                <p class='text-muted'>Climate Change</p>
-            </div>
-            <div class="row">
-                <button type="button" class="btn btn-info inlineb" id="dry_spell">DRY</button>
-                <button type="button" class="btn btn-info inlineb" id="wet_spell">WET</button>
-                <button type="button" class="btn btn-info inlineb" id="shift_spell">SHIFT</button>
-                <button type="button" class="btn btn-danger inlineb" id="earthquake">QUAKE</button>
-            </div>
+            <details class="control-section" open>
+                <summary>Display Actions</summary>
+                <div class="row">
+                    <button type="button" class="btn btn-info inlineb" id="show_alt">ALTITUDE</button>
+                    <button type="button" class="btn btn-info inlineb" id="show_precip">PRECIP</button>
+                    <button type="button" class="btn btn-info inlineb" id="show_basin">BASIN</button>
+                    <button type="button" class="btn btn-info inlineb" id="show_aquifer">AQUIFER</button>
+                    <button type="button" class="btn btn-info inlineb" id="show_flora">BIOME</button>
+                    <button type="button" class="btn btn-info inlineb" id="flora_alpha">BIOME<sup>ALPHA</sup></button>
+                    <button type="button" class="btn btn-info inlineb" id="show_flatness">FLATNESS</button>
+                    <button type="button" class="btn btn-info inlineb" id="show_sedimentation">SEDIMENT</button>
+                </div>
+            </details>
+            <details class="control-section" open>
+                <summary>God Mode</summary>
+                <div class="row">
+                    <button type="button" class="btn btn-info inlineb" id="god_precipitation">PRECIPITATION</button>
+                    <button type="button" class="btn btn-info inlineb" id="god_altitude">ALTITUDE</button>
+                </div>
+                <div class="god-control">
+                    <label for="god_size">Size</label>
+                    <input type="range" id="god_size" min="5" max="50" value="15">
+                    <output id="god_size_value" for="god_size">15</output>
+                </div>
+                <div class="god-control">
+                    <label for="god_amplitude">Amplitude</label>
+                    <input type="range" id="god_amplitude" min="-100" max="100" value="10">
+                    <output id="god_amplitude_value" for="god_amplitude">10</output>
+                </div>
+            </details>
+            <details class="control-section" open>
+                <summary>Climate Change</summary>
+                <div class="row">
+                    <button type="button" class="btn btn-info inlineb" id="dry_spell">DRY</button>
+                    <button type="button" class="btn btn-info inlineb" id="wet_spell">WET</button>
+                    <button type="button" class="btn btn-info inlineb" id="shift_spell">SHIFT</button>
+                    <button type="button" class="btn btn-danger inlineb" id="earthquake">QUAKE</button>
+                </div>
+            </details>
             <div class="row">
                 <p class='text-muted'>Information Panel</p>
             </div>

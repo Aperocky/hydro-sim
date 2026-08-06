@@ -53,7 +53,7 @@ export function getBiome(square: Square, localGradient: number = square.flow.hei
     }
     if (
         moisture > RAINFOREST_MOISTURE_THRESHOLD &&
-        square.flow.totalSedimentation > RAINFOREST_SEDIMENT_DEPTH
+        square.flow.currentSedimentation > RAINFOREST_SEDIMENT_DEPTH
     ) {
         if (square.precipitation >= RAINFOREST_PRECIPITATION_THRESHOLD) {
             return Biome.Rainforest;

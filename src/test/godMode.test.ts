@@ -28,6 +28,7 @@ test('God Mode applies a circular Gaussian without touching sediment ledgers', (
     let sim = createSim(15);
     let center = sim.map[7][7];
     center.flow.totalSedimentation = 3;
+    center.flow.currentSedimentation = 2;
 
     applyGodMode(sim, center, GodModeAction.ALTITUDE, 5, 100);
 
@@ -36,6 +37,7 @@ test('God Mode applies a circular Gaussian without touching sediment ledgers', (
     expect(sim.map[10][7].altitude).toBeLessThan(200);
     expect(sim.map[11][11].altitude).toBe(100);
     expect(center.flow.totalSedimentation).toBe(3);
+    expect(center.flow.currentSedimentation).toBe(2);
     expect(center.flow.pendingErosion).toBe(0);
 });
 
