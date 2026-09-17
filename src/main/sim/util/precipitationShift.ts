@@ -8,6 +8,7 @@ export default function precipitationShift(sim: Sim): void {
     for (let i=0; i<sim.size; i++) {
         for (let j=0; j<sim.size; j++) {
             sim.map[i][j].precipitation = SquareUtil.precipAdjust(newPrecipitation[i][j]);
+            sim.map[i][j].seasonalRain = 0;
         }
     }
 }

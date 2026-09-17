@@ -5,6 +5,7 @@ import * as constants from '../constant/constant';
 export type Square = {
     altitude: number;
     precipitation: number;
+    seasonalRain?: number;
     flow: Flow;
     basin: number;
     edgeOf: Set<number>;
@@ -25,6 +26,7 @@ export class SquareUtil {
         return {
             altitude: SquareUtil.altAdjust(altitude),
             precipitation: SquareUtil.precipAdjust(precip),
+            seasonalRain: 0,
             flow: FlowUtil.initFlow(),
             basin: SquareUtil.NO_LOCATION,
             edgeOf: new Set(),

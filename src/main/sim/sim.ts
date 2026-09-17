@@ -5,6 +5,7 @@ import timer from './util/timer';
 import runTurn from './util/runTurn';
 import generator from '../async/simplexGenerator';
 import * as constants from '../constant/constant';
+import seasonalRain from './util/seasonalRain';
 
 
 export class Sim extends SimBase {
@@ -23,6 +24,7 @@ export class Sim extends SimBase {
     }
 
     run(): void {
+        seasonalRain(this);
         timer("RUN TURN")(runTurn)(this);
         this.turn++;
     }
