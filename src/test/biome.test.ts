@@ -1,6 +1,6 @@
 import { FlowUtil } from '../main/components/flow';
 import { Square, SquareUtil } from '../main/components/square';
-import { Biome, getBiome, getMoistureIndex } from '../main/sim/util/biome';
+import { Biome, getBiome, getMoistureIndex, getPotentialBiome, updateBiomeState } from '../main/sim/util/biome';
 
 function makeSquare(aquiferDrain: number, precipitation: number = 0): Square {
     return {
@@ -29,28 +29,28 @@ test('biome classifier treats submerged squares as water', () => {
 });
 
 test('biome classifier maps base moisture to desert, grassland, and woodland bands', () => {
-    expect(getBiome(makeSquare(0))).toBe(Biome.Desert);
-    expect(getBiome(makeSquare(Math.exp(2.5) * 10000))).toBe(Biome.Grassland);
-    expect(getBiome(makeSquare(Math.exp(3.5) * 10000))).toBe(Biome.Woodland);
-    expect(getBiome(makeSquare(Math.exp(4.5) * 10000))).toBe(Biome.Woodland);
+    expect(getPotentialBiome(makeSquare(0))).toBe(Biome.Desert);
+    expect(getPotentialBiome(makeSquare(Math.exp(2.5) * 10000))).toBe(Biome.Grassland);
+    expect(getPotentialBiome(makeSquare(Math.exp(3.5) * 10000))).toBe(Biome.Woodland);
+    expect(getPotentialBiome(makeSquare(Math.exp(4.5) * 10000))).toBe(Biome.Woodland);
 });
 
 test('biome classifier requires wetness and more than 2m current sedimentation for forest biomes', () => {
     let drySediment = makeSquare(Math.exp(3.4) * 10000, 1200);
     drySediment.flow.currentSedimentation = 2.1;
-    expect(getBiome(drySediment)).toBe(Biome.Woodland);
+    expect(getPotentialBiome(drySediment)).toBe(Biome.Woodland);
 
     let wetThinSediment = makeSquare(Math.exp(3.6) * 10000, 1200);
     wetThinSediment.flow.currentSedimentation = 2;
-    expect(getBiome(wetThinSediment)).toBe(Biome.Woodland);
+    expect(getPotentialBiome(wetThinSediment)).toBe(Biome.Woodland);
 
     let forest = makeSquare(Math.exp(3.6) * 10000, 999);
     forest.flow.currentSedimentation = 2.1;
-    expect(getBiome(forest)).toBe(Biome.Forest);
+    expect(getPotentialBiome(forest)).toBe(Biome.Forest);
 
     let rainforest = makeSquare(Math.exp(3.6) * 10000, 1000);
     rainforest.flow.currentSedimentation = 2.1;
-    expect(getBiome(rainforest)).toBe(Biome.Rainforest);
+    expect(getPotentialBiome(rainforest)).toBe(Biome.Rainforest);
 });
 
 test('biome classifier uses current sedimentation depth', () => {
@@ -58,7 +58,7 @@ test('biome classifier uses current sedimentation depth', () => {
     square.flow.totalSedimentation = 10;
     square.flow.currentSedimentation = 1.9;
 
-    expect(getBiome(square)).toBe(Biome.Woodland);
+    expect(getPotentialBiome(square)).toBe(Biome.Woodland);
 });
 
 test('biome classifier maps recently submerged flat squares to marsh', () => {
@@ -66,8 +66,8 @@ test('biome classifier maps recently submerged flat squares to marsh', () => {
     square.flow.currentSedimentation = 2.1;
     square.previously_submerged = 19;
 
-    expect(getBiome(square, 0.5)).toBe(Biome.Marsh);
-    expect(getBiome(square, 1)).toBe(Biome.Rainforest);
+    expect(getPotentialBiome(square, 0.5)).toBe(Biome.Marsh);
+    expect(getPotentialBiome(square, 1)).toBe(Biome.Rainforest);
 });
 
 test('biome classifier maps very recently submerged squares to marsh regardless of slope', () => {
@@ -93,4 +93,44 @@ test('biome classifier maps steep dry squares to cliff', () => {
 
 test('moisture index is clamped to zero for dry squares', () => {
     expect(getMoistureIndex(makeSquare(0))).toBe(0);
+});
+
+test('vegetation starts as desert and upgrades only one level every five years', () => {
+    let square = makeSquare(Math.exp(3.6) * 10000, 1000);
+    square.flow.currentSedimentation = 2.1;
+
+    expect(getBiome(square)).toBe(Biome.Desert);
+    updateBiomeState(square);
+    expect(getBiome(square)).toBe(Biome.Grassland);
+
+    for (let i = 0; i < 5; i++) updateBiomeState(square);
+    expect(getBiome(square)).toBe(Biome.Woodland);
+    for (let i = 0; i < 5; i++) updateBiomeState(square);
+    expect(getBiome(square)).toBe(Biome.Forest);
+    for (let i = 0; i < 5; i++) updateBiomeState(square);
+    expect(getBiome(square)).toBe(Biome.Rainforest);
+});
+
+test('vegetation degrades after three consecutive unsustainable years', () => {
+    let square = makeSquare(Math.exp(2) * 10000);
+    square.vegetation = Biome.Rainforest;
+
+    updateBiomeState(square);
+    updateBiomeState(square);
+    expect(getBiome(square)).toBe(Biome.Rainforest);
+    updateBiomeState(square);
+    expect(getBiome(square)).toBe(Biome.Grassland);
+});
+
+test('a sustainable year resets the degradation delay', () => {
+    let square = makeSquare(Math.exp(2) * 10000);
+    square.vegetation = Biome.Woodland;
+    updateBiomeState(square);
+    updateBiomeState(square);
+
+    square.flow.aquiferDrain = Math.exp(3.2) * 10000;
+    updateBiomeState(square);
+    square.flow.aquiferDrain = Math.exp(2) * 10000;
+    updateBiomeState(square);
+    expect(getBiome(square)).toBe(Biome.Woodland);
 });

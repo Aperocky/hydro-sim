@@ -20,8 +20,24 @@ export const CLIFF_GRADIENT = 100;
 export const RAINFOREST_MOISTURE_THRESHOLD = 3.5;
 export const RAINFOREST_SEDIMENT_DEPTH = 2;
 export const RAINFOREST_PRECIPITATION_THRESHOLD = 1000;
+export const BIOME_UPGRADE_YEARS = 5;
+export const BIOME_DEGRADE_YEARS = 3;
+
+const VEGETATION = [
+    Biome.Desert,
+    Biome.Grassland,
+    Biome.Woodland,
+    Biome.Forest,
+    Biome.Rainforest,
+];
 
 export function getBiome(square: Square, localGradient: number = square.flow.heightDiff): Biome {
+    let potential = getPotentialBiome(square, localGradient);
+    if (VEGETATION.indexOf(potential) === -1) return potential;
+    return square.vegetation as Biome || Biome.Desert;
+}
+
+export function getPotentialBiome(square: Square, localGradient: number = square.flow.heightDiff): Biome {
     if (square.submerged) {
         return Biome.Water;
     }
@@ -61,6 +77,42 @@ export function getBiome(square: Square, localGradient: number = square.flow.hei
         return Biome.Forest;
     }
     return Biome.Woodland;
+}
+
+export function updateBiomeState(square: Square): void {
+    let potential = getPotentialBiome(square);
+    let potentialLevel = VEGETATION.indexOf(potential);
+    if (potentialLevel === -1) return;
+
+    let current = square.vegetation as Biome || Biome.Desert;
+    let currentLevel = VEGETATION.indexOf(current);
+    square.vegetationYears = (square.vegetationYears || 0) + 1;
+
+    if (current === Biome.Desert && potentialLevel >= VEGETATION.indexOf(Biome.Grassland)) {
+        setVegetation(square, Biome.Grassland);
+        return;
+    }
+
+    if (potentialLevel < currentLevel) {
+        square.unsustainableVegetationYears = (square.unsustainableVegetationYears || 0) + 1;
+        if (square.unsustainableVegetationYears >= BIOME_DEGRADE_YEARS) {
+            setVegetation(square, potential);
+        }
+        return;
+    }
+
+    square.unsustainableVegetationYears = 0;
+    if (currentLevel < VEGETATION.length - 1 &&
+        square.vegetationYears >= BIOME_UPGRADE_YEARS &&
+        potentialLevel > currentLevel) {
+        setVegetation(square, VEGETATION[currentLevel + 1]);
+    }
+}
+
+function setVegetation(square: Square, biome: Biome): void {
+    square.vegetation = biome;
+    square.vegetationYears = 0;
+    square.unsustainableVegetationYears = 0;
 }
 
 export function getMoistureIndex(square: Square): number {

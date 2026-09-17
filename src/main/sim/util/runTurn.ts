@@ -10,6 +10,7 @@ import { settleOrRouteSediment } from './sedimentRouting';
 import lakebedSmudge from './lakebedSmudge';
 import * as constant from '../../constant/constant';
 import TinyQueue from 'tinyqueue';
+import { updateBiomeState } from './biome';
 
 
 export const SUBMERGENCE_MEMORY_TURNS = 20;
@@ -24,6 +25,7 @@ export const SUBMERGENCE_MEMORY_TURNS = 20;
 // 7. smooth submerged lakebeds (stores pending deltas)
 // 8. add this turn's net terrain change to sedimentation history
 // 9. update submergence history from final water state
+// 10. advance persistent vegetation state
 
 export default function runTurn(sim: Sim): void {
     applyPendingErosion(sim);
@@ -37,6 +39,9 @@ export default function runTurn(sim: Sim): void {
     lakebedSmudge(sim);
     updateSedimentationHistory(sim);
     updateSubmergenceHistory(sim);
+    for (let row of sim.map) {
+        for (let square of row) updateBiomeState(square);
+    }
 }
 
 function updateSedimentationHistory(sim: Sim): void {
