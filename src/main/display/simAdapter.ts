@@ -25,6 +25,7 @@ export class SimAdapter {
         for (let i = 0; i < this.sim.size; i++) {
             for (let j = 0; j < this.sim.size; j++) {
                 this.sim.map[i][j].precipitation *= ratio;
+                this.sim.map[i][j].seasonalRain = (this.sim.map[i][j].seasonalRain || 0) * ratio;
             }
         }
         dataStore.updatePrecip(ratio);

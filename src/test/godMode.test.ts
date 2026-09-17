@@ -50,3 +50,15 @@ test('God Mode precipitation cannot fall below zero', () => {
     expect(center.precipitation).toBe(0);
     expect(center.altitude).toBe(100);
 });
+
+test('God Mode changes base precipitation without removing seasonal rain', () => {
+    let sim = createSim(15);
+    let center = sim.map[7][7];
+    center.precipitation = 150;
+    center.seasonalRain = 100;
+
+    applyGodMode(sim, center, GodModeAction.PRECIPITATION, 5, -100);
+
+    expect(center.precipitation).toBe(100);
+    expect(center.seasonalRain).toBe(100);
+});

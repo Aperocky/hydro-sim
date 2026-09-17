@@ -20,7 +20,9 @@ export default function applyGodMode(
             let delta = amplitude * Math.exp(-distanceSquared / (2 * sigma * sigma));
             let square = sim.map[i][j];
             if (action === GodModeAction.PRECIPITATION) {
-                square.precipitation = Math.max(0, square.precipitation + delta);
+                let seasonalRain = square.seasonalRain || 0;
+                let basePrecipitation = square.precipitation - seasonalRain;
+                square.precipitation = Math.max(0, basePrecipitation + delta) + seasonalRain;
             } else {
                 square.altitude = Math.max(0, square.altitude + delta);
             }

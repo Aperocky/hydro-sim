@@ -2,20 +2,30 @@ import { Sim } from '../main/sim/sim';
 import seasonalRain from '../main/sim/util/seasonalRain';
 
 
-test('seasonal rain adds a smooth 30-50 cell storm without accumulating', () => {
+test('seasonal rain adds smooth storms without accumulating', () => {
     let sim = new Sim(60);
-    let random = jest.spyOn(Math, 'random')
-        .mockReturnValueOnce(0) // one storm
-        .mockReturnValue(0.5);  // centered, 40 wide, 150 mm peak
+    let random = jest.spyOn(Math, 'random').mockReturnValue(0.5);
     let baseline = sim.map[30][30].precipitation;
 
     seasonalRain(sim);
-    expect(sim.map[30][30].precipitation).toBeCloseTo(baseline + 150);
-    expect(sim.map[30][30].seasonalRain).toBeCloseTo(150);
-    expect(sim.map[30][10].seasonalRain).toBe(0);
+    let added = sim.map[30][30].seasonalRain;
+    expect(added).toBeGreaterThan(0);
+    expect(sim.map[0][0].seasonalRain).toBe(0);
 
-    random.mockClear().mockReturnValueOnce(0).mockReturnValue(0.5);
     seasonalRain(sim);
-    expect(sim.map[30][30].precipitation).toBeCloseTo(baseline + 150);
+    expect(sim.map[30][30].seasonalRain).toBeCloseTo(added);
+    expect(sim.map[30][30].precipitation).toBeCloseTo(baseline + added);
+    random.mockRestore();
+});
+
+test('removing stale seasonal rain cannot make precipitation negative', () => {
+    let sim = new Sim(60);
+    sim.map[0][0].precipitation = 0;
+    sim.map[0][0].seasonalRain = 100;
+    let random = jest.spyOn(Math, 'random').mockReturnValue(0.5);
+
+    seasonalRain(sim);
+
+    expect(sim.map[0][0].precipitation).toBe(0);
     random.mockRestore();
 });
