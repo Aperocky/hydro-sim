@@ -8,6 +8,7 @@ import {
     MIN_SLOPE_CAP_DISTANCE,
     SEDIMENTATION_SLOPE_FRACTION,
 } from '../main/sim/util/erosion';
+import { settleOrRouteSediment } from '../main/sim/util/sedimentRouting';
 
 // Build a minimal 2x2 grid:
 //  A(0,0)  B(0,1)
@@ -112,9 +113,27 @@ describe('Sediment carrying downstream', () => {
 
         let remaining = dumpSedimentAtMouth(lake, 1500000, sim);
 
-        expect(lake.flow.pendingErosion).toBeCloseTo(1, 5);
+        expect(lake.flow.pendingErosion).toBeCloseTo(1.1, 5);
         expect(lake.flow.sedimentation).toBeCloseTo(0, 5);
-        expect(remaining).toBeCloseTo(500000, -2);
+        expect(remaining).toBeCloseTo(400000, -2);
+    });
+
+    test('sediment with no remaining route settles instead of disappearing', () => {
+        let lake = makeSquare(10, 0, 0);
+        let basinMember = makeSquare(11, 0, 1);
+        lake.submerged = true;
+        let basin: any = {members: [lake.location, basinMember.location], basinHold: null};
+        let sim = {
+            size: 2,
+            map: [[lake, basinMember], [makeSquare(12, 1, 0), makeSquare(13, 1, 1)]],
+            superBasins: new Map([[lake.location, basin]]),
+        } as any;
+
+        let remaining = settleOrRouteSediment(lake, 500000, sim);
+
+        expect(remaining).toBe(0);
+        expect(lake.flow.pendingErosion).toBeCloseTo(0.30, 9);
+        expect(basinMember.flow.pendingErosion).toBeCloseTo(0.20, 9);
     });
 
     test('erosion and deposition caps cannot flatten an active slope edge', () => {

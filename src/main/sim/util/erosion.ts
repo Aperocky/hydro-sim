@@ -191,8 +191,8 @@ export function dumpSedimentAtMouth(
     while (remaining > 0 && queue.length > 0) {
         let current = queue.shift();
         if (!current.submerged) continue;
-        // Remaining depth accounts for sediment already pending deposit
-        let effectiveDepth = current.depth - current.flow.pendingErosion;
+        // Allow deltas 0.10 m above water, accounting for pending deposits.
+        let effectiveDepth = current.depth + 0.10 - current.flow.pendingErosion;
         if (effectiveDepth <= 0) continue;
 
         let capacity = effectiveDepth * UNIT_SQUARE_VOLUME;

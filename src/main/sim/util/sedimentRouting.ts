@@ -3,6 +3,9 @@ import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import { dumpSedimentAtMouth } from './erosion';
 import { depositAtDryAnchor } from './dryDeposit';
+import * as constants from '../../constant/constant';
+
+const UNIT_SQUARE_VOLUME = constants.UNITS.get('squareToVolume');
 
 // Deposit sediment at the next sink. If that sink cannot hold all sediment,
 // route the remainder through basin holds and existing downstream flow.
@@ -14,6 +17,7 @@ export function settleOrRouteSediment(
     if (sediment <= 0 || !isFinite(sediment)) return 0;
 
     let current: Square | null = entrySquare;
+    let last = entrySquare;
     let remaining = sediment;
     let visitedBasins: Set<number> = new Set();
     let visitedSquares: Set<number> = new Set();
@@ -22,6 +26,7 @@ export function settleOrRouteSediment(
 
     while (current && remaining > 0 && steps < maxSteps) {
         steps++;
+        last = current;
 
         if (current.submerged) {
             remaining = dumpSedimentAtMouth(current, remaining, sim);
@@ -38,14 +43,22 @@ export function settleOrRouteSediment(
         }
 
         if (visitedSquares.has(current.location)) {
-            return remaining;
+            break;
         }
         visitedSquares.add(current.location);
 
         current = SquareUtil.getDownstreamSquare(current, sim);
     }
 
-    return remaining;
+    let basin = getSquareBasin(last, sim);
+    let members = basin ? basin.members.map((id) => {
+        let loc = SquareUtil.locFromId(id);
+        return sim.map[loc.i][loc.j];
+    }) : [last];
+    if (members.length === 0) members = [last];
+    let rise = remaining / (members.length * UNIT_SQUARE_VOLUME);
+    for (let square of members) square.flow.pendingErosion += rise;
+    return 0;
 }
 
 function getBasinOutflowTarget(
