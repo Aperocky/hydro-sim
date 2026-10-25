@@ -1,3 +1,8 @@
+export type RiverOutflow = {
+    direction: number;
+    volume: number;
+};
+
 export type Flow = {
     // Flow Direction in relation with other squares
     // 1  2  3
@@ -8,6 +13,8 @@ export type Flow = {
     flowDirection: number;
     heightDiff: number;
     flowVolume: number;
+    // Actual river transport; flowDirection remains the basin topology.
+    outFlows: RiverOutflow[];
     // Map: direction, volume
     inFlows: Map<number, number>;
     // Aquifer
@@ -33,6 +40,7 @@ export class FlowUtil {
             flowDirection: 0,
             heightDiff: 0,
             flowVolume: 0,
+            outFlows: [],
             inFlows: new Map(),
             aquifer: 0,
             aquiferDrain: 0,
@@ -126,6 +134,10 @@ export class FlowUtil {
             flow.inFlows.set(key, 0);
         });
         flow.flowVolume = 0;
+        flow.outFlows = [];
+        flow.erosion = 0;
+        flow.sedimentation = 0;
+        flow.sediment = 0;
     }
 
     // Reset flow direction and inflow structure for basin recomputation.
