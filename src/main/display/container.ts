@@ -41,7 +41,7 @@ export class MapContainer {
         let canvas = document.createElement('canvas');
         PAGE.mapSpace.appendChild(canvas);
         let app = new PIXI.Application({
-            width: MAP_PIXEL_SIZE, height: MAP_PIXEL_SIZE, view: canvas
+            width: MAP_PIXEL_SIZE, height: MAP_PIXEL_SIZE, view: canvas, antialias: true
         });
         let mapContainer = new PIXI.Container();
         mapContainer.interactive = true;

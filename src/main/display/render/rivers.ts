@@ -5,12 +5,7 @@ import * as constants from '../../constant/constant';
 
 
 const SPRITE_SIZE = constants.SPRITE_SIZE;
-const VOLUME_START = 10000000; // Show the smaller arms of a 50M m³/year split.
-const VOLUME_MAP: Map<number, number> = new Map();
-VOLUME_MAP.set(1, 30000000);
-VOLUME_MAP.set(2, 120000000);
-VOLUME_MAP.set(3, 480000000);
-VOLUME_MAP.set(4, 1600000000);
+const VOLUME_START = 10000000; // Keep small distributary arms visible.
 
 
 type RiverLine = {
@@ -21,15 +16,9 @@ type RiverLine = {
 
 
 function getLineWidth(volume: number): number {
-    let width = 0;
-    for (let i = 1; i<5; i++) {
-        if (VOLUME_MAP.get(i) < volume) {
-            width = i;
-        } else {
-            break;
-        }
-    }
-    return Math.max(1, width);
+    // Keep even the largest river below 40% of a tile; small arms stay fine.
+    let strength = volume / (volume + 120000000);
+    return SPRITE_SIZE * (0.125 + 0.275 * strength);
 }
 
 

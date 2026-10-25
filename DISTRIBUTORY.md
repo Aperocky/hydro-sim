@@ -123,6 +123,22 @@ destination elevations split equally. Shares are positive and conserve volume.
   including 26 across basin divides. Summed pending terrain change stayed below
   6e-13 m in absolute value.
 
+## Stage 6 — narrower river strokes and fewer splits
+
+- Replaced 1/2/3/4-pixel width steps with
+  `tileSize * (0.125 + 0.275 * volume / (volume + 120M))`.
+  At the current four-pixel tile size, widths approach 0.5–1.6 pixels; even the
+  largest river occupies at most 40% of a tile's width. Enabled canvas antialiasing.
+- Raised split activation from 50M to 75M/year. The tolerance curve and weighting
+  still use the original 50M reference, preserving the accepted equations.
+- The same seeded 200×200, 30-turn run peaked at 96 splits versus 114 previously,
+  about 16% fewer, with no invalid state or overflow warnings. It averaged
+  209 ms/turn; summed pending terrain change stayed below 7e-13 m in absolute value.
+- Rendering/routing checks cover fractional widths, extreme-volume width caps,
+  visibility of small arms, and the new 75M activation boundary.
+- Evaluation: 38 rendering/routing tests plus the 100-turn stability and overflow
+  regression checks passed. Browser build and project type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.

@@ -22,7 +22,8 @@ test('renderer uses each branch volume and clears vanished rivers', () => {
     let manager = new RiverManager();
     let container: any = {addChild: jest.fn()};
     manager.getRivers(sim);
-    expect(manager.currentRivers.map(river => river.width)).toEqual([1, 2]);
+    expect(manager.currentRivers[0].width).toBeCloseTo(0.775, 6);
+    expect(manager.currentRivers[1].width).toBeCloseTo(1.072, 6);
     manager.draw(container);
     expect((manager.graphics as any).segments).toHaveLength(2);
     source.flow.outFlows = [];
@@ -51,7 +52,7 @@ test('full lakes do not create fictional outlet lines; actual recorded spills ar
     expect(manager.currentRivers).toHaveLength(0);
 });
 
-test('both arms of a small 50M m³/year distributary remain visible', () => {
+test('both arms of a small distributary remain visible', () => {
     let map = [[SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)],
         [SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)]];
     map.forEach((row, i) => row.forEach((square, j) => Object.assign(square, {i, j})));
@@ -59,5 +60,20 @@ test('both arms of a small 50M m³/year distributary remain visible', () => {
     let manager = new RiverManager();
     manager.getRivers({size: 2, map, superBasins: new Map()} as any);
     expect(manager.currentRivers).toHaveLength(2);
-    expect(manager.currentRivers.map(river => river.width)).toEqual([1, 1]);
+    for (let river of manager.currentRivers) {
+        expect(river.width).toBeGreaterThan(0.5);
+        expect(river.width).toBeLessThan(1);
+    }
+});
+
+
+test('even extreme river volumes stay narrower than half a tile', () => {
+    let source = SquareUtil.createSquare(0, 0), target = SquareUtil.createSquare(0, 0);
+    Object.assign(source, {i: 0, j: 0});
+    Object.assign(target, {i: 0, j: 1});
+    source.flow.outFlows = [{direction: 4, volume: 1e15}];
+    let manager = new RiverManager();
+    manager.getRivers({size: 2, map: [[source, target],
+        [SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)]], superBasins: new Map()} as any);
+    expect(manager.currentRivers[0].width).toBeLessThanOrEqual(1.6);
 });
