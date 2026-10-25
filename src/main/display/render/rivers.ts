@@ -1,6 +1,5 @@
 import * as PIXI from 'pixi.js';
 import { Sim } from '../../sim/sim';
-import { MapContainer } from '../container';
 import { Square, SquareUtil } from '../../components/square';
 import * as constants from '../../constant/constant';
 
@@ -15,17 +14,9 @@ VOLUME_MAP.set(4, 1600000000);
 
 
 type RiverLine = {
-    key: number;
     loc: Square;
     flowTo: Square;
     width: number;
-    line: PIXI.Graphics | null;
-}
-
-
-function getFlowTo(square: Square, sim: Sim): Square | null {
-    let ds = SquareUtil.getDownstreamSquare(square, sim);
-    return ds;
 }
 
 
@@ -44,16 +35,16 @@ function getLineWidth(volume: number): number {
 
 export class RiverManager {
 
-    rivers: Map<number, RiverLine>;
+    graphics: PIXI.Graphics;
     currentRivers: RiverLine[];
 
     constructor() {
-        this.rivers = new Map();
+        this.graphics = new PIXI.Graphics();
         this.currentRivers = [];
     }
 
     clear() {
-        this.rivers.clear();
+        this.graphics.clear();
         this.currentRivers = [];
     }
 
@@ -63,14 +54,12 @@ export class RiverManager {
             for (let j = 0; j < sim.size; j++) {
                 let square: Square = sim.map[i][j];
                 if (square.flow.flowVolume > VOLUME_START && !square.submerged) {
-                    let flowTo = getFlowTo(square, sim);
+                    let flowTo = SquareUtil.getDownstreamSquare(square, sim);
                     if (!flowTo) continue;
                     this.currentRivers.push({
-                        key: square.location,
                         loc: square,
                         flowTo: flowTo,
                         width: getLineWidth(square.flow.flowVolume),
-                        line: null,
                     });
                 }
             }
@@ -104,33 +93,21 @@ export class RiverManager {
             let width = getLineWidth(volume);
             if (width < 1) width = 1;
             this.currentRivers.push({
-                key: -holdMember - 1,
                 loc: holdSquare,
                 flowTo: outletTarget,
                 width: width,
-                line: null,
             });
         });
     }
 
     draw(mapContainer: PIXI.Container) {
-        // Remove all old river lines
-        this.rivers.forEach((river) => {
-            if (river.line != null) {
-                mapContainer.removeChild(river.line);
-            }
-        });
-        this.rivers.clear();
-
-        // Draw current rivers fresh
+        this.graphics.clear();
         this.currentRivers.forEach((river) => {
-            river.line = new PIXI.Graphics();
-            river.line.lineStyle(river.width, 0x10a5f5);
-            river.line.moveTo(river.loc.i * SPRITE_SIZE + SPRITE_SIZE/2, river.loc.j * SPRITE_SIZE + SPRITE_SIZE/2);
-            river.line.lineTo(river.flowTo.i * SPRITE_SIZE + SPRITE_SIZE/2, river.flowTo.j * SPRITE_SIZE + SPRITE_SIZE/2);
-            mapContainer.addChild(river.line);
-            this.rivers.set(river.key, river);
+            this.graphics.lineStyle(river.width, 0x10a5f5);
+            this.graphics.moveTo(river.loc.i * SPRITE_SIZE + SPRITE_SIZE/2, river.loc.j * SPRITE_SIZE + SPRITE_SIZE/2);
+            this.graphics.lineTo(river.flowTo.i * SPRITE_SIZE + SPRITE_SIZE/2, river.flowTo.j * SPRITE_SIZE + SPRITE_SIZE/2);
         });
+        mapContainer.addChild(this.graphics);
         this.currentRivers = [];
     }
 }

@@ -76,6 +76,7 @@ export class StateController {
     }
 
     private refreshDisplay(): void {
+        this.mapContainer.renderRivers(this.simAdapter.sim);
         if (this.alphaDisplayState != AlphaDisplayState.NONE) {
             this.mapContainer.createAlphaColorMap(this.displayState, this.alphaDisplayState);
         } else {
@@ -121,12 +122,7 @@ export class StateController {
 
     runTurn() {
         this.simAdapter.run();
-        this.mapContainer.renderRivers(this.simAdapter.sim);
-        if (this.alphaDisplayState != AlphaDisplayState.NONE) {
-            this.mapContainer.createAlphaColorMap(this.displayState, this.alphaDisplayState);
-        } else {
-            this.mapContainer.createColorMap(this.displayState);
-        }
+        this.refreshDisplay();
     }
 
 }
