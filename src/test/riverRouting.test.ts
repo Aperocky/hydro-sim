@@ -1,6 +1,6 @@
 import { Square, SquareUtil } from '../main/components/square';
 import { FlowUtil } from '../main/components/flow';
-import { RiverRouting, riverDestinations } from '../main/sim/util/riverRouting';
+import { RiverRouting, riverDestinations, distributaryTolerance, higherBranchFraction } from '../main/sim/util/riverRouting';
 import processOverflowEvent from '../main/sim/util/processOverflowEvent';
 import * as constants from '../main/constant/constant';
 import { SimBase } from '../main/sim/simBase';
@@ -99,7 +99,7 @@ function distributaryFixture() {
             map[i].push(square);
         }
     }
-    let hold = map[0][0], sourceRoot = map[1][0];
+    let hold = map[1][0], sourceRoot = map[2][0];
     let head = map[0][1], left = map[0][2], right = map[1][2], join = map[1][3], sink = map[1][4];
     let connect = (square: Square, target: Square) => {
         constants.DIRECTIONS.forEach((offset, direction) => {
@@ -273,20 +273,55 @@ test('overflow resolves receiving basins after their lakes merge', () => {
     expect(otherBasin.processInflow).not.toHaveBeenCalled();
 });
 
-test.each([[0.89, 1], [0.90, 2], [0.91, 2]])('drop ratio %s requires at least 90%% similarity', (ratio, count) => {
-    let {sim, head, left, right} = distributaryFixture();
-    head.altitude = 1;
-    right.altitude = 0;
-    left.altitude = 1 - ratio;
-    expect(riverDestinations(head, sim)).toHaveLength(count);
+test.each([[50, 0.2], [525, 0.35], [1000, 0.5], [2000, 0.5]])(
+    '%s million m³/year allows a %s m elevation gap', (volume, tolerance) => {
+        expect(distributaryTolerance(volume * 1000000)).toBeCloseTo(tolerance, 12);
+    });
+
+test.each([[49, 0.1, 1], [50, 0.2, 2], [50, 0.201, 1], [525, 0.35, 2],
+    [525, 0.351, 1], [1000, 0.5, 2], [1000, 0.501, 1]])(
+    '%s million m³/year with gap %s produces %s destinations', (volume, gap, count) => {
+        let {sim, head, left, right, hold} = distributaryFixture();
+        hold.altitude = 20;
+        head.altitude = 10;
+        head.flow.flowVolume = volume * 1000000;
+        right.altitude = 9;
+        left.altitude = 9 + gap;
+        expect(riverDestinations(head, sim)).toHaveLength(count);
+    });
+
+test('higher branch gains share with volume and larger drops approach equality', () => {
+    let low = higherBranchFraction(50000000, 0.1, 0.2);
+    let high = higherBranchFraction(1000000000, 0.1, 0.2);
+    expect(low).toBeGreaterThan(0);
+    expect(high).toBeGreaterThan(low);
+    expect(high).toBeLessThan(0.5);
+    expect(higherBranchFraction(50000000, 10, 0.2)).toBeGreaterThan(low);
+    expect(higherBranchFraction(50000000, 0.1, 0)).toBe(0.5);
 });
 
-test.each(['low volume', 'steep', 'unequal drops', 'level', 'uphill'])(
+test('steep drops can split when the two destination elevations are close', () => {
+    let {sim, head, hold} = distributaryFixture();
+    hold.altitude = 100;
+    head.altitude = 50;
+    expect(riverDestinations(head, sim)).toHaveLength(2);
+});
+
+test('an isolated lower neighbor does not veto two close downhill alternatives', () => {
+    let {sim, head, hold, left, right} = distributaryFixture();
+    head.altitude = 10;
+    hold.altitude = 0;
+    right.altitude = 9;
+    left.altitude = 9.1;
+    let destinations = riverDestinations(head, sim);
+    expect(destinations.map(destination => destination.square)).toEqual([right, left]);
+});
+
+test.each(['low volume', 'unequal elevations', 'level', 'uphill'])(
     'split eligibility excludes %s', condition => {
         let {sim, head, left} = distributaryFixture();
-        if (condition === 'low volume') head.flow.flowVolume = 1000000;
-        if (condition === 'steep') head.altitude = 3;
-        if (condition === 'unequal drops') left.altitude = 1.7;
+        if (condition === 'low volume') head.flow.flowVolume = 49000000;
+        if (condition === 'unequal elevations') left.altitude = 1.7;
         if (condition === 'level') left.altitude = head.altitude;
         if (condition === 'uphill') left.altitude = head.altitude + 1;
         expect(riverDestinations(head, sim)).toHaveLength(1);

@@ -78,6 +78,51 @@ membership, lake geometry, holds, and merges. Actual river transport is separate
   with both branches above the drawing threshold, including two crossing base
   basin divides; maximum absolute summed pending terrain change was below 6e-13 m.
 
+## Stage 5 — volume-dependent elevation gaps and branch weights
+
+Let `q` be previous turn flow in millions of m³/year. Below 50, no splitting.
+Otherwise, allow a destination elevation gap of:
+
+```
+tolerance = 0.20 + 0.30 * clamp((q - 50) / 950, 0, 1)  // metres
+```
+
+Inspect the eight neighboring ground/water surfaces and choose the lowest pair
+whose gap meets this tolerance and whose destinations are both strictly downhill.
+An isolated lower neighbor does not veto two close alternatives. No basin test,
+maximum drop, percentage similarity rule, or minimum branch-volume gate remains.
+
+For `d` = drop to the higher destination and `g` = gap between destinations:
+
+```
+head = d + 0.004 * q
+higherShare = head / (2 * (head + g))
+lowerShare = 1 - higherShare
+```
+
+The added head is a simple volume weighting, not a calibrated hydraulic depth.
+For fixed terrain, larger volume increases the higher branch's share; raising
+the source above both destinations also moves the shares toward 50/50. Equal
+destination elevations split equally. Shares are positive and conserve volume.
+
+- Tolerance is 0.20 m at 50M/year, 0.35 m at 525M/year, and 0.50 m at/above 1000M/year.
+- Pair selection needs at most 28 comparisons and no sorting. Weighting uses
+  elementary arithmetic, with no powers, roots, exponentials, or iteration.
+- Thin rivers are now drawn above 10M/year (minimum width one pixel), so the
+  smaller arm of a 50M/year split is not hidden by the old 30M/year cutoff.
+- Evaluation: the complete suite passed 100 of 101 tests. The unseeded erosion
+  test asserting every altitude change is under 50 m failed. A separate seeded
+  comparison reproduced this existing issue before and after this change:
+  seed 64, 150×150, first turn, square (84,86) accumulates exactly the same
+  51.53723857667766 m pending rise in both versions. Its bound was not weakened.
+  All new routing/weighting/rendering tests passed. Build and project type check
+  with `--skipLibCheck` passed.
+- A final seeded 200×200, 30-turn run averaged 204 ms/turn, with no invalid numeric
+  states, aquifer-capacity violations, outgoing-volume mismatches, or overflow
+  warnings. It reached 114 simultaneous splits with each arm above 10M/year,
+  including 26 across basin divides. Summed pending terrain change stayed below
+  6e-13 m in absolute value.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.

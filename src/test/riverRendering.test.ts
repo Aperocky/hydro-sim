@@ -50,3 +50,14 @@ test('full lakes do not create fictional outlet lines; actual recorded spills ar
     manager.getRivers(sim);
     expect(manager.currentRivers).toHaveLength(0);
 });
+
+test('both arms of a small 50M m³/year distributary remain visible', () => {
+    let map = [[SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)],
+        [SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)]];
+    map.forEach((row, i) => row.forEach((square, j) => Object.assign(square, {i, j})));
+    map[0][0].flow.outFlows = [{direction: 4, volume: 12500000}, {direction: 6, volume: 37500000}];
+    let manager = new RiverManager();
+    manager.getRivers({size: 2, map, superBasins: new Map()} as any);
+    expect(manager.currentRivers).toHaveLength(2);
+    expect(manager.currentRivers.map(river => river.width)).toEqual([1, 1]);
+});

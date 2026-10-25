@@ -5,7 +5,7 @@ import * as constants from '../../constant/constant';
 
 
 const SPRITE_SIZE = constants.SPRITE_SIZE;
-const VOLUME_START = 30000000; // 30 million cubic meters, 1m^3/sec
+const VOLUME_START = 10000000; // Show the smaller arms of a 50M m³/year split.
 const VOLUME_MAP: Map<number, number> = new Map();
 VOLUME_MAP.set(1, 30000000);
 VOLUME_MAP.set(2, 120000000);
@@ -29,7 +29,7 @@ function getLineWidth(volume: number): number {
             break;
         }
     }
-    return width;
+    return Math.max(1, width);
 }
 
 
