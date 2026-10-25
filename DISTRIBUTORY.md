@@ -194,6 +194,21 @@ destination elevations split equally. Shares are positive and conserve volume.
 - The 30M visibility cutoff and all split rules are unchanged. Renderer checks
   include equal proportional growth for successive doublings.
 
+## Stage 12 — only the two lowest downhill destinations may split
+
+- Removed the 1 m minimum fall. Positive downhill drops qualify again, including
+  on flat plains. Only the two lowest local ground/water surfaces are compared;
+  if their gap fails the existing volume-dependent tolerance, flow stays single.
+  Higher matching pairs cannot bypass an isolated lower neighbor.
+- Selection takes one eight-neighbor scan, removing the pair search and its
+  candidate array. No spacing rule or basin-membership restriction was added.
+- With only one downhill neighbor, no split is possible and all water follows
+  that neighbor. An explicit high-volume routing test checks this and conservation.
+- Controlled complete turns verify splitting on both gentle and steeper terrain.
+  Regression checks also cover mismatched lowest pairs and sub-metre drops.
+- All 50 routing/rendering/overflow checks, the browser build, and project type
+  check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.

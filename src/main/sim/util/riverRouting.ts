@@ -13,7 +13,6 @@ type Destination = { square: Square; direction: number; fraction: number };
 // Per turn volumes (m³); each tile is 1 km². Freeze splits using last turn's
 // volume so late overflow never requires retracting water from filled lakes.
 export const DISTRIBUTARY_MIN_FLOW = 100000000;
-export const DISTRIBUTARY_MIN_DROP = 1;
 const DISTRIBUTARY_REFERENCE_FLOW = 50000000;
 export const DISTRIBUTARY_FULL_FLOW = 1000000000;
 export const DISTRIBUTARY_MIN_GAP = 0.2;
@@ -39,34 +38,30 @@ export function riverDestinations(square: Square, sim: Sim, allowSplit = true): 
     let single = [{square: primary, direction: square.flow.flowDirection, fraction: 1}];
     let volume = square.flow.flowVolume;
     if (!allowSplit || volume < DISTRIBUTARY_MIN_FLOW) return single;
-    // Prefer the lowest eligible pair, without letting an isolated lower neighbor
-    // veto two close alternatives. Eight neighbors require at most 28 pair checks.
+    // Select only the two lowest local ground/water surfaces in one scan.
     // Strictly descending terrain edges keep the transport graph acyclic.
-    let tolerance = distributaryTolerance(volume);
-    let candidates: {square: Square; direction: number; drop: number}[] = [];
     let lower: Square | null = null, higher: Square | null = null;
     let lowerDirection = 0, higherDirection = 0;
     let lowerDrop = 0, higherDrop = 0;
     SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach((loc, direction) => {
         let target = sim.map[loc[0]][loc[1]];
         let drop = square.altitude - target.altitude - (target.submerged ? target.depth : 0);
-        if (drop < DISTRIBUTARY_MIN_DROP || target.altitude >= square.altitude) return;
-        for (let other of candidates) {
-            if (Math.abs(drop - other.drop) > tolerance + 1e-9) continue;
-            let lowDrop = Math.max(drop, other.drop), highDrop = Math.min(drop, other.drop);
-            if (lowDrop < lowerDrop || (lowDrop === lowerDrop && highDrop <= higherDrop)) continue;
-            let targetIsLower = drop >= other.drop;
-            lower = targetIsLower ? target : other.square;
-            higher = targetIsLower ? other.square : target;
-            lowerDirection = targetIsLower ? direction : other.direction;
-            higherDirection = targetIsLower ? other.direction : direction;
-            lowerDrop = lowDrop;
-            higherDrop = highDrop;
+        if (drop <= 0 || target.altitude >= square.altitude) return;
+        if (drop > lowerDrop) {
+            higher = lower;
+            higherDirection = lowerDirection;
+            higherDrop = lowerDrop;
+            lower = target;
+            lowerDirection = direction;
+            lowerDrop = drop;
+        } else if (drop > higherDrop) {
+            higher = target;
+            higherDirection = direction;
+            higherDrop = drop;
         }
-        candidates.push({square: target, direction, drop});
     });
     let gap = lowerDrop - higherDrop;
-    if (!higher) return single;
+    if (!higher || gap > distributaryTolerance(volume) + 1e-9) return single;
     let fraction = higherBranchFraction(volume, higherDrop, gap);
     return [
         {square: lower, direction: lowerDirection, fraction: 1 - fraction},
