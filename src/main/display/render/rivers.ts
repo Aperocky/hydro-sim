@@ -5,7 +5,8 @@ import * as constants from '../../constant/constant';
 
 
 const SPRITE_SIZE = constants.SPRITE_SIZE;
-const VOLUME_START = 10000000; // Keep small distributary arms visible.
+const VOLUME_START = 30000000;
+const VOLUME_MAX_WIDTH = 5000000000;
 
 
 type RiverLine = {
@@ -16,8 +17,9 @@ type RiverLine = {
 
 
 function getLineWidth(volume: number): number {
-    // Use a slow, continuous scale: 0.5–3 px, reaching its midpoint at 2B m³/year.
-    let strength = volume / (volume + 2000000000);
+    // Grow smoothly from 0.5 px at 30M/year to 3 px at 5B/year.
+    let strength = Math.sqrt(Math.min(1, Math.max(0,
+        (volume - VOLUME_START) / (VOLUME_MAX_WIDTH - VOLUME_START))));
     return SPRITE_SIZE * (0.125 + 0.625 * strength);
 }
 
@@ -43,7 +45,7 @@ export class RiverManager {
             for (let j = 0; j < sim.size; j++) {
                 let square: Square = sim.map[i][j];
                 for (let outflow of square.flow.outFlows) {
-                    if (outflow.volume <= VOLUME_START) continue;
+                    if (outflow.volume < VOLUME_START) continue;
                     let offset = constants.DIRECTIONS.get(outflow.direction);
                     let flowTo = sim.map[i + offset[0]][j + offset[1]];
                     if (square.submerged && sim.superBasins.get(square.basin) === sim.superBasins.get(flowTo.basin)) continue;

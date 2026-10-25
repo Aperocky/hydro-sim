@@ -151,6 +151,15 @@ destination elevations split equally. Shares are positive and conserve volume.
 - Evaluation: all 40 rendering, routing, and overflow checks passed, including
   the 100M activation boundary. Browser build and project type check passed.
 
+## Stage 8 — drawing begins at 30M and reaches full width at 5B
+
+- River drawing now begins at 30M/year, including that boundary. Width follows
+  `0.5 + 2.5 * sqrt(clamp((Q - 30M) / (5B - 30M), 0, 1))` pixels at the current
+  tile size. This gives medium flows more presence and caps width at exactly 3 px
+  for 5B/year and above: 100M → 0.80 px, 1B → 1.60 px, 2B → 2.07 px.
+- Split activation remains 100M/year. Renderer checks, browser build, and project
+  type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.

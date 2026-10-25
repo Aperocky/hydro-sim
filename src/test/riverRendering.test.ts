@@ -22,8 +22,8 @@ test('renderer uses each branch volume and clears vanished rivers', () => {
     let manager = new RiverManager();
     let container: any = {addChild: jest.fn()};
     manager.getRivers(sim);
-    expect(manager.currentRivers[0].width).toBeCloseTo(0.549019608, 6);
-    expect(manager.currentRivers[1].width).toBeCloseTo(0.65258216, 6);
+    expect(manager.currentRivers[0].width).toBeCloseTo(0.612140326004, 6);
+    expect(manager.currentRivers[1].width).toBeCloseTo(0.854618847727, 6);
     manager.draw(container);
     expect((manager.graphics as any).segments).toHaveLength(2);
     source.flow.outFlows = [];
@@ -52,28 +52,28 @@ test('full lakes do not create fictional outlet lines; actual recorded spills ar
     expect(manager.currentRivers).toHaveLength(0);
 });
 
-test('both arms of a small distributary remain visible', () => {
+test('branches at or above 30M remain visible', () => {
     let map = [[SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)],
         [SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)]];
     map.forEach((row, i) => row.forEach((square, j) => Object.assign(square, {i, j})));
-    map[0][0].flow.outFlows = [{direction: 4, volume: 12500000}, {direction: 6, volume: 37500000}];
+    map[0][0].flow.outFlows = [{direction: 4, volume: 30000000}, {direction: 6, volume: 37500000}];
     let manager = new RiverManager();
     manager.getRivers({size: 2, map, superBasins: new Map()} as any);
     expect(manager.currentRivers).toHaveLength(2);
     for (let river of manager.currentRivers) {
-        expect(river.width).toBeGreaterThan(0.5);
+        expect(river.width).toBeGreaterThanOrEqual(0.5);
         expect(river.width).toBeLessThan(1);
     }
 });
 
 
-test('even extreme river volumes remain capped at three pixels', () => {
+test.each([5000000000, 1e15])('flow %s reaches the three-pixel cap', volume => {
     let source = SquareUtil.createSquare(0, 0), target = SquareUtil.createSquare(0, 0);
     Object.assign(source, {i: 0, j: 0});
     Object.assign(target, {i: 0, j: 1});
-    source.flow.outFlows = [{direction: 4, volume: 1e15}];
+    source.flow.outFlows = [{direction: 4, volume}];
     let manager = new RiverManager();
     manager.getRivers({size: 2, map: [[source, target],
         [SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)]], superBasins: new Map()} as any);
-    expect(manager.currentRivers[0].width).toBeLessThanOrEqual(3);
+    expect(manager.currentRivers[0].width).toBe(3);
 });
