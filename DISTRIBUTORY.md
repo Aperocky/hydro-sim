@@ -15,3 +15,17 @@ membership, lake geometry, holds, and merges. Actual river transport is separate
 - Evaluation: baseline suite passed (66 tests); four new focused tests passed:
   single-channel equivalence, pulse partition invariance and water conservation,
   fixed lake infiltration, and sediment conservation. Browser bundle builds.
+
+## Stage 2 — integrate single-channel transport
+
+- Ordinary river water is collected for all basins before lakes are filled.
+  The existing overflow queue and superbasin merge/split machinery are retained.
+- Overflow routes incremental water through the same transport engine. Outlet
+  connections record actual spill volumes rather than estimating flow from lake
+  storage. Sediment/erosion runs once after all water routing, including outlets.
+- Initial lake intakes remain fixed during routing, even when lakes expand.
+  Channel/lake membership reflects those expansions on the following turn.
+- Evaluation: all 70 tests across 19 suites passed, including long-running
+  stability, outlet erosion, lake reconstruction, and superbasin regressions.
+  Suite time was 62.8 s versus the baseline's 65.6 s (unseeded suite; these are
+  observations, not a controlled performance comparison). Browser bundle builds.
