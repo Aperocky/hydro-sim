@@ -53,6 +53,11 @@ membership, lake geometry, holds, and merges. Actual river transport is separate
   two simultaneous distributaries. Maximum absolute net pending terrain change
   on this branch was below 1.8e-13 m summed across tiles, consistent with sediment
   conservation; baseline was 0.078–0.272 m in the same diagnostic.
+- After the implementation commit, a default-size 200×200 map completed 30 seeded
+  turns at 199 ms/turn. Every turn had finite terrain/water/sediment values,
+  aquifers within capacity, and outgoing edge volumes matching channel totals.
+  No overflow-limit warnings occurred; maximum absolute summed pending terrain
+  change was below 9e-13 m. The rebuilt local test server responded with HTTP 200.
 
 ## Deliberate limits
 
