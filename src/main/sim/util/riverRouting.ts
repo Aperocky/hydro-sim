@@ -13,6 +13,7 @@ type Destination = { square: Square; direction: number; fraction: number };
 // Per turn volumes (m³); each tile is 1 km². Freeze splits using last turn's
 // volume so late overflow never requires retracting water from filled lakes.
 export const DISTRIBUTARY_MIN_FLOW = 100000000;
+export const DISTRIBUTARY_MIN_DROP = 1;
 const DISTRIBUTARY_REFERENCE_FLOW = 50000000;
 export const DISTRIBUTARY_FULL_FLOW = 1000000000;
 export const DISTRIBUTARY_MIN_GAP = 0.2;
@@ -26,7 +27,7 @@ export function distributaryTolerance(volume: number): number {
 
 // gap is the elevation difference between destinations; drop is the fall to the
 // higher destination. Volume supplies a simple head allowance (0.2 m per 50M m³),
-// so even a nearly level higher branch gets water. Both terms favor equal shares.
+// moving the higher branch's share toward one half. Both terms favor equal shares.
 export function higherBranchFraction(volume: number, drop: number, gap: number): number {
     let head = drop + DISTRIBUTARY_MIN_GAP * (volume / DISTRIBUTARY_REFERENCE_FLOW);
     return 0.5 * head / (head + gap);
@@ -49,7 +50,7 @@ export function riverDestinations(square: Square, sim: Sim, allowSplit = true): 
     SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach((loc, direction) => {
         let target = sim.map[loc[0]][loc[1]];
         let drop = square.altitude - target.altitude - (target.submerged ? target.depth : 0);
-        if (drop <= 0 || target.altitude >= square.altitude) return;
+        if (drop < DISTRIBUTARY_MIN_DROP || target.altitude >= square.altitude) return;
         for (let other of candidates) {
             if (Math.abs(drop - other.drop) > tolerance + 1e-9) continue;
             let lowDrop = Math.max(drop, other.drop), highDrop = Math.min(drop, other.drop);

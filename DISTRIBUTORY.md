@@ -160,6 +160,20 @@ destination elevations split equally. Shares are positive and conserve volume.
 - Split activation remains 100M/year. Renderer checks, browser build, and project
   type check passed.
 
+## Stage 9 — one-pixel minimum strokes and a minimum fall for branching
+
+- Visible rivers from 30M through 100M/year are clamped to 1 px. Above 100M,
+  width is `1 + 2 * sqrt(clamp((Q - 100M) / (5B - 100M), 0, 1))` pixels,
+  reaching the unchanged 3 px cap at 5B/year.
+- Both split destinations must now be at least 1 m below the source, using
+  ground elevation on dry cells and water surface on submerged cells. This
+  suppresses nearly level plain grids; single-channel flow is unchanged.
+- Controlled complete turns verify that a nearly flat plain stays single-channel
+  while a steeper terrain still splits. Tests cover just below/at/above the 1 m
+  threshold, water/sediment conservation, width endpoints, and small-river clamping.
+- Evaluation: all 46 rendering/routing/overflow checks passed; browser build and
+  project type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.

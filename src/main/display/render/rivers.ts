@@ -6,6 +6,7 @@ import * as constants from '../../constant/constant';
 
 const SPRITE_SIZE = constants.SPRITE_SIZE;
 const VOLUME_START = 30000000;
+const VOLUME_MIN_WIDTH = 100000000;
 const VOLUME_MAX_WIDTH = 5000000000;
 
 
@@ -17,10 +18,10 @@ type RiverLine = {
 
 
 function getLineWidth(volume: number): number {
-    // Grow smoothly from 0.5 px at 30M/year to 3 px at 5B/year.
+    // Clamp small visible rivers to 1 px; grow to 3 px from 100M to 5B/year.
     let strength = Math.sqrt(Math.min(1, Math.max(0,
-        (volume - VOLUME_START) / (VOLUME_MAX_WIDTH - VOLUME_START))));
-    return SPRITE_SIZE * (0.125 + 0.625 * strength);
+        (volume - VOLUME_MIN_WIDTH) / (VOLUME_MAX_WIDTH - VOLUME_MIN_WIDTH))));
+    return SPRITE_SIZE * (0.25 + 0.5 * strength);
 }
 
 
