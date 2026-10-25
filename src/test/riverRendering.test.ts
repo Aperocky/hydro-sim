@@ -22,8 +22,8 @@ test('renderer uses each branch volume and clears vanished rivers', () => {
     let manager = new RiverManager();
     let container: any = {addChild: jest.fn()};
     manager.getRivers(sim);
-    expect(manager.currentRivers[0].width).toBeCloseTo(1, 6);
-    expect(manager.currentRivers[1].width).toBeCloseTo(1.156492159287, 6);
+    expect(manager.currentRivers[0].width).toBeCloseTo(0.818379000520, 6);
+    expect(manager.currentRivers[1].width).toBeCloseTo(1.069267267033, 6);
     manager.draw(container);
     expect((manager.graphics as any).segments).toHaveLength(2);
     source.flow.outFlows = [];
@@ -61,7 +61,8 @@ test('branches at or above 30M remain visible', () => {
     manager.getRivers({size: 2, map, superBasins: new Map()} as any);
     expect(manager.currentRivers).toHaveLength(2);
     for (let river of manager.currentRivers) {
-        expect(river.width).toBe(1);
+        expect(river.width).toBeGreaterThan(0.75);
+        expect(river.width).toBeLessThan(1);
     }
 });
 
@@ -74,5 +75,5 @@ test.each([100000000, 5000000000, 1e15])('flow %s respects width endpoints', vol
     let manager = new RiverManager();
     manager.getRivers({size: 2, map: [[source, target],
         [SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)]], superBasins: new Map()} as any);
-    expect(manager.currentRivers[0].width).toBe(volume === 100000000 ? 1 : 3);
+    expect(manager.currentRivers[0].width).toBe(volume === 100000000 ? 1 : 4);
 });

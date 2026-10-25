@@ -6,8 +6,9 @@ import * as constants from '../../constant/constant';
 
 const SPRITE_SIZE = constants.SPRITE_SIZE;
 const VOLUME_START = 30000000;
-const VOLUME_MIN_WIDTH = 100000000;
+const VOLUME_ONE_PIXEL = 100000000;
 const VOLUME_MAX_WIDTH = 5000000000;
+const WIDTH_SQRT_RANGE = Math.sqrt(VOLUME_MAX_WIDTH / VOLUME_ONE_PIXEL) - 1;
 
 
 type RiverLine = {
@@ -18,10 +19,9 @@ type RiverLine = {
 
 
 function getLineWidth(volume: number): number {
-    // Clamp small visible rivers to 1 px; grow to 3 px from 100M to 5B/year.
-    let strength = Math.sqrt(Math.min(1, Math.max(0,
-        (volume - VOLUME_MIN_WIDTH) / (VOLUME_MAX_WIDTH - VOLUME_MIN_WIDTH))));
-    return SPRITE_SIZE * (0.25 + 0.5 * strength);
+    // One continuous square-root curve: 1 px at 100M/year, 4 px at 5B/year.
+    let strength = (Math.sqrt(Math.min(volume, VOLUME_MAX_WIDTH) / VOLUME_ONE_PIXEL) - 1) / WIDTH_SQRT_RANGE;
+    return SPRITE_SIZE * (0.25 + 0.75 * strength);
 }
 
 

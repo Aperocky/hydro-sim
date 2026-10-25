@@ -174,6 +174,16 @@ destination elevations split equally. Shares are positive and conserve volume.
 - Evaluation: all 46 rendering/routing/overflow checks passed; browser build and
   project type check passed.
 
+## Stage 10 — continuous subpixel-to-four-pixel river widths
+
+- A single square-root curve now passes through 1 px at 100M/year and 4 px at
+  5B/year, extending below 100M without a flat clamped segment:
+  `1 + 3 * (sqrt(min(Q, 5B) / 100M) - 1) / (sqrt(50) - 1)` pixels.
+  Width at the unchanged 30M drawing cutoff is about 0.777 px; 1B gives 2.068 px,
+  2B gives 2.716 px. Width remains capped at 4 px above 5B. The denominator is
+  calculated once. Split rules are unchanged.
+- All six renderer checks, browser build, and project type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.
