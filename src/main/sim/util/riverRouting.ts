@@ -17,7 +17,11 @@ const DISTRIBUTARY_REFERENCE_FLOW = 50000000;
 export const DISTRIBUTARY_FULL_FLOW = 1000000000;
 export const DISTRIBUTARY_MIN_GAP = 0.2;
 export const DISTRIBUTARY_MAX_GAP = 0.5;
-export const DISTRIBUTARY_MAX_DROP = 1;
+
+export function distributaryMaxDrop(volume: number): number {
+    // Each tenfold increase in flow allows one additional metre of fall.
+    return 1 + Math.log10(Math.min(100, Math.max(1, volume / DISTRIBUTARY_REFERENCE_FLOW)));
+}
 
 export function distributaryTolerance(volume: number): number {
     let strength = Math.min(1, Math.max(0,
@@ -62,7 +66,7 @@ export function riverDestinations(square: Square, sim: Sim, allowSplit = true): 
         }
     });
     let gap = lowerDrop - higherDrop;
-    if (!higher || lowerDrop > DISTRIBUTARY_MAX_DROP || gap > distributaryTolerance(volume) + 1e-9) return single;
+    if (!higher || lowerDrop > distributaryMaxDrop(volume) + 1e-9 || gap > distributaryTolerance(volume) + 1e-9) return single;
     let fraction = higherBranchFraction(volume, higherDrop, gap);
     return [
         {square: lower, direction: lowerDirection, fraction: 1 - fraction},

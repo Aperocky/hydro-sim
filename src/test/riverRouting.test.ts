@@ -1,6 +1,6 @@
 import { Square, SquareUtil } from '../main/components/square';
 import { FlowUtil } from '../main/components/flow';
-import { RiverRouting, riverDestinations, distributaryTolerance, higherBranchFraction } from '../main/sim/util/riverRouting';
+import { RiverRouting, riverDestinations, distributaryTolerance, higherBranchFraction, distributaryMaxDrop } from '../main/sim/util/riverRouting';
 import processOverflowEvent from '../main/sim/util/processOverflowEvent';
 import * as constants from '../main/constant/constant';
 import { SimBase } from '../main/sim/simBase';
@@ -300,7 +300,7 @@ test('higher branch gains share with volume and larger drops approach equality',
     expect(higherBranchFraction(50000000, 0.1, 0)).toBe(0.5);
 });
 
-test.each([[-0.001, 1], [0, 1], [0.001, 2], [0.5, 2], [0.95, 2], [1, 1]])('split destinations require only a positive drop: %s m', (drop, count) => {
+test.each([[-0.001, 1], [0, 1], [0.001, 2], [0.5, 2], [0.95, 2], [1, 2]])('split destinations require only a positive drop: %s m', (drop, count) => {
     let {sim, head, hold, left, right} = distributaryFixture();
     hold.altitude = 20;
     head.altitude = 10;
@@ -309,12 +309,19 @@ test.each([[-0.001, 1], [0, 1], [0.001, 2], [0.5, 2], [0.95, 2], [1, 1]])('split
     expect(riverDestinations(head, sim)).toHaveLength(count);
 });
 
-test.each([[0.999, 2], [1, 2], [1.001, 1], [20, 1]])(
-    'drop to lowest neighbor %s m yields %s destinations', (drop, count) => {
+test.each([[10000000, 1], [50000000, 1], [100000000, 1.301029995664],
+    [500000000, 2], [5000000000, 3], [50000000000, 3]])(
+    'flow %s permits a maximum drop of %s metres', (volume, expected) => {
+        expect(distributaryMaxDrop(volume)).toBeCloseTo(expected, 10);
+    });
+
+test.each([[100000000, 1.3, 2], [100000000, 1.31, 1], [500000000, 2, 2],
+    [500000000, 2.001, 1], [5000000000, 3, 2], [5000000000, 3.001, 1], [50000000000, 3.001, 1]])(
+    'flow %s and lowest-neighbor drop %s m yield %s destinations', (volume, drop, count) => {
         let {sim, head, hold, right, left} = distributaryFixture();
         hold.altitude = 100;
         head.altitude = 50;
-        head.flow.flowVolume = 2000000000;
+        head.flow.flowVolume = volume;
         right.altitude = head.altitude - drop;
         left.altitude = right.altitude + 0.05;
         expect(riverDestinations(head, sim)).toHaveLength(count);

@@ -236,6 +236,18 @@ destination elevations split equally. Shares are positive and conserve volume.
   and low-flow continuations without unrelated trickles. Routing and split rules
   are unchanged. Browser build and project type check passed.
 
+## Stage 15 — volume-dependent maximum downhill fall
+
+- Replaced the fixed 1 m drop cap with
+  `clamp(1 + log10(Q / 50M), 1, 3)` metres. Each tenfold flow increase permits
+  one more metre of fall: 50M → 1 m, 500M → 2 m, 5B → 3 m. Below 50M the cap
+  stays 1 m; above 5B it stays 3 m. At the existing 100M activation threshold,
+  the cap is about 1.301 m. It is evaluated once after selecting the lowest pair.
+- The 100M split activation threshold, two-lowest rule, elevation-gap tolerance,
+  branch weights, and sprites are unchanged. Checks cover scale anchors, both
+  sides of the drop boundaries, and the upper clamp at very high flow.
+- All 67 targeted checks, browser build, and project type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.
