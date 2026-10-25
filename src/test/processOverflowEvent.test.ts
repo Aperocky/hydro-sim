@@ -63,7 +63,7 @@ test('overflow transfer mode does not route through cells or add precipitation',
         ]),
     };
 
-    processOverflowEvent(sim, event, {includePrecipitation: false, routeFlow: false});
+    processOverflowEvent(sim, event, {routeFlow: false});
 
     expect(capturedInflow).toBe(overflowVolume);
     expect(rainyOutlet.flow.inFlows.size).toBe(0);

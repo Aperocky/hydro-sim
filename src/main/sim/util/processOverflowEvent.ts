@@ -7,7 +7,6 @@ import * as constants from '../../constant/constant';
 
 
 type ProcessOverflowOptions = {
-    includePrecipitation?: boolean;
     routeFlow?: boolean;
     fillAquifer?: boolean;
     routing?: RiverRouting;

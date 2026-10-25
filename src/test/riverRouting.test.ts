@@ -1,8 +1,10 @@
 import { Square, SquareUtil } from '../main/components/square';
 import { FlowUtil } from '../main/components/flow';
-import { RiverRouting } from '../main/sim/util/riverRouting';
-import riverFormation from '../main/sim/util/riverFormation';
+import { RiverRouting, riverDestinations } from '../main/sim/util/riverRouting';
+import processOverflowEvent from '../main/sim/util/processOverflowEvent';
 import * as constants from '../main/constant/constant';
+import { SimBase } from '../main/sim/simBase';
+import runTurn from '../main/sim/util/runTurn';
 
 function fixture() {
     let map: Square[][] = [];
@@ -34,15 +36,13 @@ function fixture() {
     return {sim, a, b, sink, basin};
 }
 
-test('downhill water pass matches single-channel upstream accumulation', () => {
-    let old = fixture();
-    let expected = riverFormation(old.b, old.sim);
+test('downhill water pass accumulates single-channel runoff exactly once', () => {
     let current = fixture();
     let router = new RiverRouting(current.sim);
     let arrivals = router.runWater();
-    expect(arrivals.get(current.sink.basin)).toBeCloseTo(expected, 8);
-    expect(current.a.flow.flowVolume).toBeCloseTo(old.a.flow.flowVolume, 8);
-    expect(current.b.flow.flowVolume).toBeCloseTo(old.b.flow.flowVolume, 8);
+    expect(arrivals.get(current.sink.basin)).toBeCloseTo(400000, 8);
+    expect(current.a.flow.flowVolume).toBeCloseTo(200000, 8);
+    expect(current.b.flow.flowVolume).toBeCloseTo(400000, 8);
 });
 
 test('late overflow is independent of pulse partition, including aquifer seepage', () => {
@@ -85,4 +85,193 @@ test('sediment is processed once after overflow and conserves terrain volume', (
     expect(b.flow.erosion).toBeGreaterThan(0);
     let net = ([] as Square[]).concat(...sim.map).reduce((sum, square) => sum + square.flow.pendingErosion, 0);
     expect(net * constants.UNITS.get('squareToVolume')).toBeCloseTo(0, 7);
+});
+
+// Two branches diverge for a tile and rejoin before reaching a lake. The outlet
+// of a separate basin can inject overflow at the head of this network.
+function distributaryFixture() {
+    let map: Square[][] = [];
+    for (let i = 0; i < 5; i++) {
+        map.push([]);
+        for (let j = 0; j < 5; j++) {
+            let square = SquareUtil.createSquare(0, 0);
+            Object.assign(square, {i, j, location: SquareUtil.stringRep(i, j), altitude: 100, basin: 4});
+            map[i].push(square);
+        }
+    }
+    let hold = map[0][0], sourceRoot = map[1][0];
+    let head = map[0][1], left = map[0][2], right = map[1][2], join = map[1][3], sink = map[1][4];
+    let connect = (square: Square, target: Square) => {
+        constants.DIRECTIONS.forEach((offset, direction) => {
+            if (square.i + offset[0] === target.i && square.j + offset[1] === target.j) {
+                square.flow.flowDirection = direction;
+                square.flow.heightDiff = square.altitude - target.altitude;
+                FlowUtil.addInFlowDir(target.flow, constants.REVERSE.get(direction));
+            }
+        });
+    };
+    hold.altitude = 2;
+    hold.basin = sourceRoot.basin = sourceRoot.location;
+    sourceRoot.altitude = 0;
+    head.altitude = 1.8;
+    left.altitude = 1.1;
+    right.altitude = 1;
+    join.altitude = 0.5;
+    sink.altitude = 0;
+    sink.submerged = sourceRoot.submerged = true;
+    sink.depth = sourceRoot.depth = 0.25;
+    connect(hold, sourceRoot);
+    connect(head, right);
+    connect(left, join);
+    connect(right, join);
+    connect(join, sink);
+    head.flow.flowVolume = 100000000;
+    let targetBasin: any = {
+        anchor: 4, memberBasins: [4], members: map.reduce((ids, row) => ids.concat(row.map(s => s.location)), [] as number[]),
+        isFull: false, basinHold: {holdMember: sink.location, holdBasins: [], holdElevation: Infinity},
+        lake: {flooded: {data: [sink]}}, processInflow: jest.fn(() => null),
+    };
+    let sourceBasin: any = {
+        anchor: sourceRoot.location, memberBasins: [sourceRoot.location],
+        basinHold: {holdMember: hold.location}, lake: {flooded: {data: [sourceRoot]}},
+    };
+    let sim: any = {size: 5, map, superBasins: new Map([[4, targetBasin], [sourceRoot.location, sourceBasin]])};
+    return {sim, hold, sourceRoot, head, left, right, join, sink, targetBasin, sourceBasin};
+}
+
+test('a flat river splits and rejoins without duplicating water, aquifer exchange, or basin connections', () => {
+    let {sim, head, left, right, join, sink} = distributaryFixture();
+    for (let square of [head, left, right, join]) square.flow.aquiferMax = 1000000;
+    let primaryDirection = head.flow.flowDirection;
+    let primaryInflows = Array.from(left.flow.inFlows.keys());
+    let router = new RiverRouting(sim);
+    router.runWater();
+    let arrived = router.routeOverflow(head, 100000000);
+    expect(head.flow.outFlows).toHaveLength(2);
+    expect(left.flow.flowVolume).toBeGreaterThan(30000000);
+    expect(right.flow.flowVolume).toBeGreaterThan(30000000);
+    expect(join.flow.flowVolume).toBeCloseTo(arrived, 6);
+    let aquifer = [head, left, right, join].reduce((sum, square) => sum + square.flow.aquifer, 0);
+    expect(arrived + aquifer).toBeCloseTo(100000000, 6);
+    expect(head.flow.flowDirection).toBe(primaryDirection);
+    expect(Array.from(left.flow.inFlows.keys())).toEqual(primaryInflows);
+    router.runSediment();
+    expect(left.flow.erosion).toBeGreaterThan(0);
+    expect(right.flow.erosion).toBeGreaterThan(0);
+    expect(sink.flow.pendingErosion).toBeGreaterThan(0);
+    let net = ([] as Square[]).concat(...sim.map).reduce((sum, square) => sum + square.flow.pendingErosion, 0);
+    expect(net * constants.UNITS.get('squareToVolume')).toBeCloseTo(0, 6);
+});
+
+test('overflow events traverse both branches and record actual outlet water', () => {
+    let {sim, hold, head, left, right, targetBasin, sourceBasin} = distributaryFixture();
+    let router = new RiverRouting(sim);
+    router.runWater();
+    let event: any = {anchor: sourceBasin.anchor, holdMember: hold.location, holdBasins: [4], overflowVolume: 100000000};
+    sourceBasin.basinFullEvent = event;
+    processOverflowEvent(sim, event, {routing: router});
+    expect(targetBasin.processInflow.mock.calls[0][0]).toBeCloseTo(100000000, 6);
+    expect(left.flow.flowVolume + right.flow.flowVolume).toBeCloseTo(100000000, 6);
+    let direction = constants.DIRECTIONS.get(hold.flow.outFlows.find(flow => flow.volume > 0).direction);
+    expect(sim.map[hold.i + direction[0]][hold.j + direction[1]]).toBe(head);
+    expect(hold.flow.flowVolume).toBe(100000000);
+    router.runSediment();
+    expect(hold.flow.erosion).toBeGreaterThan(0);
+    let net = ([] as Square[]).concat(...sim.map).reduce((sum, square) => sum + square.flow.pendingErosion, 0);
+    expect(net * constants.UNITS.get('squareToVolume')).toBeCloseTo(0, 6);
+});
+
+test('branching overflow is independent of pulse partition and arrival order', () => {
+    function run(pulses: number[]) {
+        let {sim, head, left, right, join} = distributaryFixture();
+        head.flow.aquiferMax = join.flow.aquiferMax = 1000000;
+        head.flow.aquifer = 950000;
+        let router = new RiverRouting(sim);
+        let arrived = router.runWater().get(4) || 0;
+        for (let pulse of pulses) arrived += router.routeOverflow(head, pulse);
+        return [arrived, ...[head, left, right, join].map(square => square.flow.aquifer)];
+    }
+    let expected = run([100000000]);
+    for (let pulses of [[40000000, 60000000], [60000000, 40000000]]) {
+        run(pulses).forEach((value, index) => expect(value).toBeCloseTo(expected[index], 6));
+    }
+});
+
+test.each(['low volume', 'steep', 'unequal drops', 'different basin', 'level', 'uphill'])(
+    'split eligibility excludes %s', condition => {
+        let {sim, head, left} = distributaryFixture();
+        if (condition === 'low volume') head.flow.flowVolume = 1000000;
+        if (condition === 'steep') head.altitude = 3;
+        if (condition === 'unequal drops') left.altitude = 1.7;
+        if (condition === 'different basin') left.basin = 100000;
+        if (condition === 'level') left.altitude = head.altitude;
+        if (condition === 'uphill') left.altitude = head.altitude + 1;
+        expect(riverDestinations(head, sim)).toHaveLength(1);
+    });
+
+test('volume threshold takes effect next turn and routing can disable splits for comparison', () => {
+    let {sim, head} = distributaryFixture();
+    head.flow.flowVolume = 0;
+    head.precipitation = 150100;
+    new RiverRouting(sim).runWater();
+    expect(head.flow.outFlows).toHaveLength(1);
+    new RiverRouting(sim).runWater();
+    expect(head.flow.outFlows).toHaveLength(2);
+    new RiverRouting(sim, {allowDistributaries: false}).runWater();
+    expect(head.flow.outFlows).toHaveLength(1);
+});
+
+test('split eligibility compares lake surface instead of submerged bed elevation', () => {
+    let {sim, head, left, right} = distributaryFixture();
+    head.altitude = 0.35;
+    for (let square of [left, right]) {
+        square.altitude = -5;
+        square.submerged = true;
+        square.depth = 5.25;
+    }
+    expect(riverDestinations(head, sim)).toHaveLength(2);
+});
+
+test('complete turns develop distributaries while preserving basin membership and sediment', () => {
+    let sim: any = new SimBase(12);
+    sim.superBasins = new Map();
+    sim.altitude = [];
+    sim.precip = [];
+    for (let i = 0; i < sim.size; i++) {
+        sim.altitude.push([]);
+        sim.precip.push([]);
+        for (let j = 0; j < sim.size; j++) {
+            sim.altitude[i][j] = (500 + (11 - i) * 0.4 + (11 - j) * 0.05) / 3000;
+            sim.precip[i][j] = 0;
+        }
+    }
+    sim.altitude[11][11] = 0;
+    sim.precip[0][0] = 150100 / 2000;
+    sim.createMap();
+    let maxSplits = 0;
+    for (let turn = 0; turn < 3; turn++) {
+        runTurn(sim);
+        let splits = 0;
+        let netSediment = 0;
+        for (let row of sim.map) {
+            for (let square of row) {
+                let active = square.flow.outFlows.filter(outflow => outflow.volume > 0);
+                if (active.length === 2) splits++;
+                expect(square.basin).toBe(SquareUtil.stringRep(11, 11));
+                expect(Number.isFinite(square.altitude)).toBe(true);
+                expect(square.flow.aquifer).toBeGreaterThanOrEqual(0);
+                expect(square.flow.aquifer).toBeLessThanOrEqual(square.flow.aquiferMax + 0.000001);
+                expect(active.reduce((sum, outflow) => sum + outflow.volume, 0)).toBeCloseTo(square.flow.flowVolume, 6);
+                for (let outflow of active) {
+                    let offset = constants.DIRECTIONS.get(outflow.direction);
+                    let target = sim.map[square.i + offset[0]][square.j + offset[1]];
+                    expect(target.altitude).toBeLessThan(square.altitude);
+                }
+                netSediment += square.flow.pendingErosion;
+            }
+        }
+        expect(netSediment).toBeCloseTo(0, 7);
+        maxSplits = Math.max(maxSplits, splits);
+    }
+    expect(maxSplits).toBeGreaterThan(0);
 });

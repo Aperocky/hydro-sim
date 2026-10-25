@@ -9,6 +9,46 @@ import { settleOrRouteSediment } from './sedimentRouting';
 import * as constants from '../../constant/constant';
 
 type Destination = { square: Square; direction: number; fraction: number };
+
+// Per turn volumes (m³); each tile is 1 km². Freeze splits using last turn's
+// volume so late overflow never requires retracting water from filled lakes.
+export const DISTRIBUTARY_MIN_FLOW = 80000000;
+export const DISTRIBUTARY_MIN_BRANCH_FLOW = 30000000;
+export const DISTRIBUTARY_MAX_DROP = 1;
+export const DISTRIBUTARY_MIN_DROP_RATIO = 0.8;
+
+export function riverDestinations(square: Square, sim: Sim, allowSplit = true): Destination[] {
+    let primary = SquareUtil.getDownstreamSquare(square, sim);
+    if (!primary) return [];
+    let single = [{square: primary, direction: square.flow.flowDirection, fraction: 1}];
+    if (!allowSplit || primary.basin !== square.basin || square.flow.flowVolume < DISTRIBUTARY_MIN_FLOW) return single;
+    let level = (target: Square) => target.altitude + (target.submerged ? target.depth : 0);
+    let primaryDrop = square.altitude - level(primary);
+    if (primaryDrop <= 0 || primaryDrop > DISTRIBUTARY_MAX_DROP) return single;
+    let secondary: Square | null = null;
+    let secondaryDirection = 0;
+    let secondaryDrop = 0;
+    SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach((loc, direction) => {
+        let target = sim.map[loc[0]][loc[1]];
+        if (target === primary || target.basin !== square.basin) return;
+        let drop = square.altitude - level(target);
+        if (drop <= 0 || drop > DISTRIBUTARY_MAX_DROP || target.altitude >= square.altitude) return;
+        if (Math.min(drop, primaryDrop) / Math.max(drop, primaryDrop) < DISTRIBUTARY_MIN_DROP_RATIO) return;
+        if (drop > secondaryDrop) {
+            secondary = target;
+            secondaryDirection = direction;
+            secondaryDrop = drop;
+        }
+    });
+    if (!secondary) return single;
+    let fraction = primaryDrop / (primaryDrop + secondaryDrop);
+    if (square.flow.flowVolume * Math.min(fraction, 1 - fraction) <= DISTRIBUTARY_MIN_BRANCH_FLOW) return single;
+    return [
+        {square: primary, direction: square.flow.flowDirection, fraction},
+        {square: secondary, direction: secondaryDirection, fraction: 1 - fraction},
+    ];
+}
+
 type RiverState = {
     square: Square;
     aquifer: number;
@@ -31,15 +71,14 @@ export class RiverRouting {
     private submerged = new Set<number>();
     private outlets = new Map<number, Map<number, number>>();
 
-    constructor(private sim: Sim) {
+    constructor(private sim: Sim, options: {allowDistributaries?: boolean} = {}) {
         this.ordered = ([] as Square[]).concat(...sim.map).sort(downhill);
         for (let square of this.ordered) {
             if (square.submerged) this.submerged.add(square.location);
             if (!square.submerged && square.flow.flowDirection !== 0 && square.flow.flowDirection !== 9) {
-                let target = SquareUtil.getDownstreamSquare(square, sim);
                 this.states.set(square.location, {
                     square, aquifer: square.flow.aquifer, incoming: 0, output: 0,
-                    destinations: target ? [{square: target, direction: square.flow.flowDirection, fraction: 1}] : [],
+                    destinations: riverDestinations(square, sim, options.allowDistributaries !== false),
                 });
             }
             FlowUtil.clearFlow(square.flow);

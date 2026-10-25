@@ -149,7 +149,6 @@ export class SimBase {
             processedOverflowEvents.add(eventKey);
             let newEvent: BasinFullEvent | null = processOverflowEvent(this as any, currentEvent, {
                 fillAquifer: false,
-                includePrecipitation: false,
                 routeFlow: false,
             });
             overflowCount++;
