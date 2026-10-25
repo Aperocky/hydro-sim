@@ -113,7 +113,7 @@ function distributaryFixture() {
     hold.altitude = 3;
     hold.basin = sourceRoot.basin = sourceRoot.location;
     sourceRoot.altitude = 0;
-    head.altitude = 2.3;
+    head.altitude = 1.8;
     left.altitude = 1.05;
     right.altitude = 1;
     join.altitude = 0.5;
@@ -285,8 +285,8 @@ test.each([[49, 0.1, 1], [50, 0.1, 1], [75, 0.1, 1], [99.9, 0.1, 1], [100, 0.2, 
         hold.altitude = 20;
         head.altitude = 10;
         head.flow.flowVolume = volume * 1000000;
-        right.altitude = 8;
-        left.altitude = 8 + gap;
+        right.altitude = 9;
+        left.altitude = 9 + gap;
         expect(riverDestinations(head, sim)).toHaveLength(count);
     });
 
@@ -300,7 +300,7 @@ test('higher branch gains share with volume and larger drops approach equality',
     expect(higherBranchFraction(50000000, 0.1, 0)).toBe(0.5);
 });
 
-test.each([[-0.001, 1], [0, 1], [0.001, 2], [0.5, 2], [1, 2]])('split destinations require only a positive drop: %s m', (drop, count) => {
+test.each([[-0.001, 1], [0, 1], [0.001, 2], [0.5, 2], [0.95, 2], [1, 1]])('split destinations require only a positive drop: %s m', (drop, count) => {
     let {sim, head, hold, left, right} = distributaryFixture();
     hold.altitude = 20;
     head.altitude = 10;
@@ -309,19 +309,23 @@ test.each([[-0.001, 1], [0, 1], [0.001, 2], [0.5, 2], [1, 2]])('split destinatio
     expect(riverDestinations(head, sim)).toHaveLength(count);
 });
 
-test('steep drops can split when the two destination elevations are close', () => {
-    let {sim, head, hold} = distributaryFixture();
-    hold.altitude = 100;
-    head.altitude = 50;
-    expect(riverDestinations(head, sim)).toHaveLength(2);
-});
+test.each([[0.999, 2], [1, 2], [1.001, 1], [20, 1]])(
+    'drop to lowest neighbor %s m yields %s destinations', (drop, count) => {
+        let {sim, head, hold, right, left} = distributaryFixture();
+        hold.altitude = 100;
+        head.altitude = 50;
+        head.flow.flowVolume = 2000000000;
+        right.altitude = head.altitude - drop;
+        left.altitude = right.altitude + 0.05;
+        expect(riverDestinations(head, sim)).toHaveLength(count);
+    });
 
 test('a mismatched lowest pair vetoes splitting even when higher alternatives match', () => {
     let {sim, head, hold, left, right} = distributaryFixture();
     head.altitude = 10;
-    hold.altitude = 0;
-    right.altitude = 8;
-    left.altitude = 8.1;
+    hold.altitude = 9;
+    right.altitude = 9.3;
+    left.altitude = 9.4;
     let destinations = riverDestinations(head, sim);
     expect(destinations).toHaveLength(1);
     expect(destinations[0].square).toBe(right);
@@ -377,7 +381,7 @@ test('split eligibility compares lake surface instead of submerged bed elevation
     expect(riverDestinations(head, sim)).toHaveLength(2);
 });
 
-test.each([[0.4, true], [2, true]])('complete turns with slope %s have splits: %s', (slope, shouldSplit) => {
+test.each([[0.4, true], [2, false]])('complete turns with slope %s have splits: %s', (slope, shouldSplit) => {
     let sim: any = new SimBase(12);
     sim.superBasins = new Map();
     sim.altitude = [];

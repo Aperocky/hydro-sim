@@ -209,6 +209,18 @@ destination elevations split equally. Shares are positive and conserve volume.
 - All 50 routing/rendering/overflow checks, the browser build, and project type
   check passed.
 
+## Stage 13 — split only when the steepest local fall is at most 1 m
+
+- A split is rejected if the drop from the source to the lowest downstream
+  ground/water surface exceeds 1 m. Exactly 1 m is allowed. There is still no
+  positive minimum drop beyond requiring downhill flow, so gentle terrain can
+  split while steeper terrain stays single-channel.
+- Two-lowest selection, 100M activation, destination-gap tolerance, branch shares,
+  and rendering are unchanged. The implementation adds one scalar comparison.
+- All 54 routing/rendering/overflow checks passed, including the 1 m boundary
+  and complete turns on gentle versus steep terrain. Browser build and project
+  type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.
