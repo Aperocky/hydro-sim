@@ -278,7 +278,7 @@ test.each([[50, 0.2], [525, 0.35], [1000, 0.5], [2000, 0.5]])(
         expect(distributaryTolerance(volume * 1000000)).toBeCloseTo(tolerance, 12);
     });
 
-test.each([[49, 0.1, 1], [50, 0.1, 1], [74.9, 0.1, 1], [75, 0.2, 2], [75, 0.209, 1], [525, 0.35, 2],
+test.each([[49, 0.1, 1], [50, 0.1, 1], [75, 0.1, 1], [99.9, 0.1, 1], [100, 0.2, 2], [100, 0.216, 1], [525, 0.35, 2],
     [525, 0.351, 1], [1000, 0.5, 2], [1000, 0.501, 1]])(
     '%s million m³/year with gap %s produces %s destinations', (volume, gap, count) => {
         let {sim, head, left, right, hold} = distributaryFixture();

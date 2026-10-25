@@ -139,6 +139,18 @@ destination elevations split equally. Shares are positive and conserve volume.
 - Evaluation: 38 rendering/routing tests plus the 100-turn stability and overflow
   regression checks passed. Browser build and project type check passed.
 
+## Stage 7 — higher activation threshold and a broader, slower width scale
+
+- Split activation is now 100M/year; the tolerance and branch-weight equations
+  retain the original 50M reference.
+- River width is `tileSize * (0.125 + 0.625 * Q / (Q + 2B))`, a continuous
+  0.5–3 pixel scale at the current tile size. Approximate widths: 100M → 0.62 px,
+  1B → 1.33 px, 5B → 2.29 px, 20B → 2.77 px. Reaching 2.9 px takes 48B/year.
+  This provides smooth intermediate widths while reserving the thickest strokes
+  for exceptional flows. The calculation remains simple arithmetic.
+- Evaluation: all 40 rendering, routing, and overflow checks passed, including
+  the 100M activation boundary. Browser build and project type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.

@@ -16,9 +16,9 @@ type RiverLine = {
 
 
 function getLineWidth(volume: number): number {
-    // Keep even the largest river below 40% of a tile; small arms stay fine.
-    let strength = volume / (volume + 120000000);
-    return SPRITE_SIZE * (0.125 + 0.275 * strength);
+    // Use a slow, continuous scale: 0.5–3 px, reaching its midpoint at 2B m³/year.
+    let strength = volume / (volume + 2000000000);
+    return SPRITE_SIZE * (0.125 + 0.625 * strength);
 }
 
 

@@ -22,8 +22,8 @@ test('renderer uses each branch volume and clears vanished rivers', () => {
     let manager = new RiverManager();
     let container: any = {addChild: jest.fn()};
     manager.getRivers(sim);
-    expect(manager.currentRivers[0].width).toBeCloseTo(0.775, 6);
-    expect(manager.currentRivers[1].width).toBeCloseTo(1.072, 6);
+    expect(manager.currentRivers[0].width).toBeCloseTo(0.549019608, 6);
+    expect(manager.currentRivers[1].width).toBeCloseTo(0.65258216, 6);
     manager.draw(container);
     expect((manager.graphics as any).segments).toHaveLength(2);
     source.flow.outFlows = [];
@@ -67,7 +67,7 @@ test('both arms of a small distributary remain visible', () => {
 });
 
 
-test('even extreme river volumes stay narrower than half a tile', () => {
+test('even extreme river volumes remain capped at three pixels', () => {
     let source = SquareUtil.createSquare(0, 0), target = SquareUtil.createSquare(0, 0);
     Object.assign(source, {i: 0, j: 0});
     Object.assign(target, {i: 0, j: 1});
@@ -75,5 +75,5 @@ test('even extreme river volumes stay narrower than half a tile', () => {
     let manager = new RiverManager();
     manager.getRivers({size: 2, map: [[source, target],
         [SquareUtil.createSquare(0, 0), SquareUtil.createSquare(0, 0)]], superBasins: new Map()} as any);
-    expect(manager.currentRivers[0].width).toBeLessThanOrEqual(1.6);
+    expect(manager.currentRivers[0].width).toBeLessThanOrEqual(3);
 });

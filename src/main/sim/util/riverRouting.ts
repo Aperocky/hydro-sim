@@ -12,7 +12,7 @@ type Destination = { square: Square; direction: number; fraction: number };
 
 // Per turn volumes (m³); each tile is 1 km². Freeze splits using last turn's
 // volume so late overflow never requires retracting water from filled lakes.
-export const DISTRIBUTARY_MIN_FLOW = 75000000;
+export const DISTRIBUTARY_MIN_FLOW = 100000000;
 const DISTRIBUTARY_REFERENCE_FLOW = 50000000;
 export const DISTRIBUTARY_FULL_FLOW = 1000000000;
 export const DISTRIBUTARY_MIN_GAP = 0.2;
