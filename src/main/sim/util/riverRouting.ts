@@ -15,13 +15,13 @@ type Destination = { square: Square; direction: number; fraction: number };
 export const DISTRIBUTARY_MIN_FLOW = 80000000;
 export const DISTRIBUTARY_MIN_BRANCH_FLOW = 30000000;
 export const DISTRIBUTARY_MAX_DROP = 1;
-export const DISTRIBUTARY_MIN_DROP_RATIO = 0.8;
+export const DISTRIBUTARY_MIN_DROP_RATIO = 0.9;
 
 export function riverDestinations(square: Square, sim: Sim, allowSplit = true): Destination[] {
     let primary = SquareUtil.getDownstreamSquare(square, sim);
     if (!primary) return [];
     let single = [{square: primary, direction: square.flow.flowDirection, fraction: 1}];
-    if (!allowSplit || primary.basin !== square.basin || square.flow.flowVolume < DISTRIBUTARY_MIN_FLOW) return single;
+    if (!allowSplit || square.flow.flowVolume < DISTRIBUTARY_MIN_FLOW) return single;
     let level = (target: Square) => target.altitude + (target.submerged ? target.depth : 0);
     let primaryDrop = square.altitude - level(primary);
     if (primaryDrop <= 0 || primaryDrop > DISTRIBUTARY_MAX_DROP) return single;
@@ -30,7 +30,7 @@ export function riverDestinations(square: Square, sim: Sim, allowSplit = true): 
     let secondaryDrop = 0;
     SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach((loc, direction) => {
         let target = sim.map[loc[0]][loc[1]];
-        if (target === primary || target.basin !== square.basin) return;
+        if (target === primary) return;
         let drop = square.altitude - level(target);
         if (drop <= 0 || drop > DISTRIBUTARY_MAX_DROP || target.altitude >= square.altitude) return;
         if (Math.min(drop, primaryDrop) / Math.max(drop, primaryDrop) < DISTRIBUTARY_MIN_DROP_RATIO) return;
@@ -118,25 +118,25 @@ export class RiverRouting {
 
     // Add only the new output from a late overflow. Re-evaluate aquifer exchange
     // from the original state, so rainfall/seepage/infiltration happen once.
-    routeOverflow(entry: Square, volume: number): number {
-        if (!this.addIncoming(entry, volume)) return volume;
+    routeOverflow(entry: Square, volume: number): Map<number, number> {
+        let arrivals = new Map<number, number>();
+        if (!this.addIncoming(entry, volume)) return new Map([[entry.basin, volume]]);
         let queue = new TinyQueue<Square>([entry], downhill);
         let queued = new Set<number>([entry.location]);
-        let arrived = 0;
         while (queue.length) {
             let square = queue.pop();
             queued.delete(square.location);
             let state = this.states.get(square.location);
             this.distribute(state, this.updateWater(state), (target, amount) => {
                 if (!this.addIncoming(target, amount)) {
-                    arrived += amount;
+                    arrivals.set(target.basin, (arrivals.get(target.basin) || 0) + amount);
                 } else if (!queued.has(target.location)) {
                     queue.push(target);
                     queued.add(target.location);
                 }
             });
         }
-        return arrived;
+        return arrivals;
     }
 
     // Only the initial lake cells absorb inflow this turn. Each has one fixed

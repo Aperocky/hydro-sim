@@ -54,7 +54,7 @@ test('late overflow is independent of pulse partition, including aquifer seepage
         let initialAquifer = a.flow.aquifer + b.flow.aquifer;
         let router = new RiverRouting(sim);
         let total = router.runWater().get(sink.basin);
-        for (let pulse of pulses) total += router.routeOverflow(a, pulse);
+        for (let pulse of pulses) total += router.routeOverflow(a, pulse).get(sink.basin) || 0;
         let aquifer = a.flow.aquifer + b.flow.aquifer;
         expect(total + aquifer - initialAquifer).toBeCloseTo(400000 + pulses.reduce((sum, p) => sum + p, 0), 7);
         return {total, aquifer, flow: b.flow.flowVolume};
@@ -114,7 +114,7 @@ function distributaryFixture() {
     hold.basin = sourceRoot.basin = sourceRoot.location;
     sourceRoot.altitude = 0;
     head.altitude = 1.8;
-    left.altitude = 1.1;
+    left.altitude = 1.05;
     right.altitude = 1;
     join.altitude = 0.5;
     sink.altitude = 0;
@@ -146,7 +146,7 @@ test('a flat river splits and rejoins without duplicating water, aquifer exchang
     let primaryInflows = Array.from(left.flow.inFlows.keys());
     let router = new RiverRouting(sim);
     router.runWater();
-    let arrived = router.routeOverflow(head, 100000000);
+    let arrived = router.routeOverflow(head, 100000000).get(sink.basin);
     expect(head.flow.outFlows).toHaveLength(2);
     expect(left.flow.flowVolume).toBeGreaterThan(30000000);
     expect(right.flow.flowVolume).toBeGreaterThan(30000000);
@@ -188,7 +188,7 @@ test('branching overflow is independent of pulse partition and arrival order', (
         head.flow.aquifer = 950000;
         let router = new RiverRouting(sim);
         let arrived = router.runWater().get(4) || 0;
-        for (let pulse of pulses) arrived += router.routeOverflow(head, pulse);
+        for (let pulse of pulses) arrived += router.routeOverflow(head, pulse).get(4) || 0;
         return [arrived, ...[head, left, right, join].map(square => square.flow.aquifer)];
     }
     let expected = run([100000000]);
@@ -197,13 +197,96 @@ test('branching overflow is independent of pulse partition and arrival order', (
     }
 });
 
-test.each(['low volume', 'steep', 'unequal drops', 'different basin', 'level', 'uphill'])(
+function crossBasinFixture() {
+    let scene = distributaryFixture();
+    let otherSink = scene.sim.map[0][3] as Square;
+    Object.assign(otherSink, {altitude: 0.2, submerged: true, depth: 0.1, basin: otherSink.location});
+    scene.left.basin = otherSink.basin;
+    scene.left.flow.flowDirection = 4;
+    scene.left.flow.heightDiff = scene.left.altitude - otherSink.altitude;
+    let otherBasin: any = {
+        anchor: otherSink.basin, memberBasins: [otherSink.basin], members: [scene.left.location, otherSink.location],
+        isFull: false, basinHold: {holdMember: otherSink.location, holdBasins: [], holdElevation: Infinity},
+        lake: {flooded: {data: [otherSink]}}, processInflow: jest.fn(() => null),
+    };
+    scene.sim.superBasins.set(otherSink.basin, otherBasin);
+    return {...scene, otherSink, otherBasin};
+}
+
+test('split selection is independent of source and destination basin labels', () => {
+    let {sim, head, left, right} = distributaryFixture();
+    let expected = riverDestinations(head, sim).map(destination => ({direction: destination.direction, fraction: destination.fraction}));
+    head.basin = 12;
+    left.basin = 34;
+    right.basin = 56;
+    expect(riverDestinations(head, sim).map(destination => ({direction: destination.direction, fraction: destination.fraction}))).toEqual(expected);
+    expect(expected).toHaveLength(2);
+});
+
+test('ordinary runoff splits across basin divides and conserves water and sediment', () => {
+    let {sim, head, left, right, sink, otherSink} = crossBasinFixture();
+    head.precipitation = 125100; // 100 million m³ effective runoff.
+    let router = new RiverRouting(sim);
+    let arrivals = router.runWater();
+    expect(arrivals.get(sink.basin)).toBeCloseTo(right.flow.flowVolume, 6);
+    expect(arrivals.get(otherSink.basin)).toBeCloseTo(left.flow.flowVolume, 6);
+    expect(arrivals.get(sink.basin) + arrivals.get(otherSink.basin)).toBeCloseTo(100000000, 6);
+    expect(arrivals.get(sink.basin)).toBeGreaterThan(30000000);
+    expect(arrivals.get(otherSink.basin)).toBeGreaterThan(30000000);
+    router.runSediment();
+    expect(sink.flow.pendingErosion).toBeGreaterThan(0);
+    expect(otherSink.flow.pendingErosion).toBeGreaterThan(0);
+    let net = ([] as Square[]).concat(...sim.map).reduce((sum, square) => sum + square.flow.pendingErosion, 0);
+    expect(net * constants.UNITS.get('squareToVolume')).toBeCloseTo(0, 6);
+});
+
+test('one overflow can fill two receiving lakes and emit both subsequent events', () => {
+    let {sim, hold, left, right, sourceBasin, targetBasin, otherBasin} = crossBasinFixture();
+    let router = new RiverRouting(sim);
+    router.runWater();
+    let firstEvent: any = {anchor: targetBasin.anchor};
+    let secondEvent: any = {anchor: otherBasin.anchor};
+    targetBasin.processInflow.mockReturnValue(firstEvent);
+    otherBasin.processInflow.mockReturnValue(secondEvent);
+    let event: any = {anchor: sourceBasin.anchor, holdMember: hold.location, holdBasins: [4], overflowVolume: 100000000};
+    let events = processOverflowEvent(sim, event, {routing: router});
+    expect(events).toEqual(expect.arrayContaining([firstEvent, secondEvent]));
+    expect(events).toHaveLength(2);
+    expect(targetBasin.processInflow.mock.calls[0][0]).toBeCloseTo(right.flow.flowVolume, 6);
+    expect(otherBasin.processInflow.mock.calls[0][0]).toBeCloseTo(left.flow.flowVolume, 6);
+    expect(left.flow.flowVolume + right.flow.flowVolume).toBeCloseTo(100000000, 6);
+});
+
+test('overflow resolves receiving basins after their lakes merge', () => {
+    let {sim, head, hold, sourceBasin, targetBasin, otherBasin} = crossBasinFixture();
+    let router = new RiverRouting(sim);
+    router.runWater();
+    let merged: any = {...targetBasin, memberBasins: [targetBasin.anchor, otherBasin.anchor], processInflow: jest.fn(() => null)};
+    sim.superBasins.set(targetBasin.anchor, merged);
+    sim.superBasins.set(otherBasin.anchor, merged);
+    let event: any = {anchor: sourceBasin.anchor, holdMember: hold.location, holdBasins: [4], overflowVolume: 100000000};
+    processOverflowEvent(sim, event, {routing: router});
+    expect(head.flow.outFlows).toHaveLength(2);
+    let received = merged.processInflow.mock.calls.reduce((sum, call) => sum + call[0], 0);
+    expect(received).toBeCloseTo(100000000, 6);
+    expect(targetBasin.processInflow).not.toHaveBeenCalled();
+    expect(otherBasin.processInflow).not.toHaveBeenCalled();
+});
+
+test.each([[0.89, 1], [0.90, 2], [0.91, 2]])('drop ratio %s requires at least 90%% similarity', (ratio, count) => {
+    let {sim, head, left, right} = distributaryFixture();
+    head.altitude = 1;
+    right.altitude = 0;
+    left.altitude = 1 - ratio;
+    expect(riverDestinations(head, sim)).toHaveLength(count);
+});
+
+test.each(['low volume', 'steep', 'unequal drops', 'level', 'uphill'])(
     'split eligibility excludes %s', condition => {
         let {sim, head, left} = distributaryFixture();
         if (condition === 'low volume') head.flow.flowVolume = 1000000;
         if (condition === 'steep') head.altitude = 3;
         if (condition === 'unequal drops') left.altitude = 1.7;
-        if (condition === 'different basin') left.basin = 100000;
         if (condition === 'level') left.altitude = head.altitude;
         if (condition === 'uphill') left.altitude = head.altitude + 1;
         expect(riverDestinations(head, sim)).toHaveLength(1);
@@ -241,7 +324,7 @@ test('complete turns develop distributaries while preserving basin membership an
         sim.altitude.push([]);
         sim.precip.push([]);
         for (let j = 0; j < sim.size; j++) {
-            sim.altitude[i][j] = (500 + (11 - i) * 0.4 + (11 - j) * 0.05) / 3000;
+            sim.altitude[i][j] = (500 + (11 - i) * 0.4 + (11 - j) * 0.025) / 3000;
             sim.precip[i][j] = 0;
         }
     }

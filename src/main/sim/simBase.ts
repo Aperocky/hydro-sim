@@ -147,7 +147,7 @@ export class SimBase {
                 continue;
             }
             processedOverflowEvents.add(eventKey);
-            let newEvent: BasinFullEvent | null = processOverflowEvent(this as any, currentEvent, {
+            let newEvents = processOverflowEvent(this as any, currentEvent, {
                 fillAquifer: false,
                 routeFlow: false,
             });
@@ -156,9 +156,7 @@ export class SimBase {
                 console.warn(`recomputeTopography overflow processing hit limit at ${overflowCount} events, breaking`);
                 break;
             }
-            if (newEvent != null) {
-                fullEventQueue.push(newEvent);
-            }
+            for (let newEvent of newEvents) fullEventQueue.push(newEvent);
         }
         (this as any).superBasins.forEach((basin: Basin) => {
             basin.basinFullEvent = null;

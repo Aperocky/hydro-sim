@@ -12,7 +12,7 @@ type ProcessOverflowOptions = {
     routing?: RiverRouting;
 }
 
-export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, options: ProcessOverflowOptions = {}): BasinFullEvent | null {
+export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, options: ProcessOverflowOptions = {}): BasinFullEvent[] {
     let routeFlow = options.routeFlow !== false;
     let thisBasin = sim.superBasins.get(event.anchor);
     let holdBasins = new Set(event.holdBasins);
@@ -32,7 +32,7 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, op
     });
     if (nextBasinAnchor === undefined) {
         // All hold basins belong to the current superbasin.
-        return null;
+        return [];
     }
     let shareHold = thisBasin.basinHold.holdMember == nextBasin.basinHold.holdMember;
     if (nextBasin.isFull && shareHold) {
@@ -47,31 +47,34 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, op
         }
         thisBasin.basinFullEvent = null;
         let newEvent = receiveInflow(superBasin, totalOverflow, sim, options);
-        return newEvent;
+        return newEvent ? [newEvent] : [];
     }
-    let diffVolume = event.overflowVolume;
+    let arrivals = new Map([[nextBasinAnchor, event.overflowVolume]]);
     if (routeFlow) {
         let outlet = identifyOutflow(sim, event.holdMember, nextBasinAnchor);
         if (!outlet) {
             // Erosion invalidated the outflow path — skip event
             thisBasin.basinFullEvent = null;
-            return null;
+            return [];
         }
         if (!options.routing) throw new Error('River routing is required for channel overflow');
         let hold = sim.map[holdLoc.i][holdLoc.j];
         options.routing.recordOutlet(hold, constants.REVERSE.get(outlet.direction), event.overflowVolume);
-        diffVolume = options.routing.routeOverflow(outlet.square, event.overflowVolume);
+        arrivals = options.routing.routeOverflow(outlet.square, event.overflowVolume);
     }
 
     thisBasin.basinFullEvent = null; // Clearing the event from original basin.
 
-    if (diffVolume <= 0) {
-        // Erosion/sedimentation absorbed all overflow along the path
-        return null;
-    }
-
-    let newEvent: BasinFullEvent | null = receiveInflow(nextBasin, diffVolume, sim, options);
-    return newEvent;
+    let events: BasinFullEvent[] = [];
+    arrivals.forEach((volume, anchor) => {
+        if (volume <= 0) return;
+        // Channel branches can reach different basins. Resolve current owners
+        // here because earlier overflow events may have merged their lakes.
+        let basin = sim.superBasins.get(anchor);
+        let newEvent = receiveInflow(basin, volume, sim, options);
+        if (newEvent) events.push(newEvent);
+    });
+    return events;
 }
 
 

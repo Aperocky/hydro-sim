@@ -30,7 +30,7 @@ membership, lake geometry, holds, and merges. Actual river transport is separate
   Suite time was 62.8 s versus the baseline's 65.6 s (unseeded suite; these are
   observations, not a controlled performance comparison). Browser bundle builds.
 
-## Stage 3 — distributaries and rendering
+## Stage 3 — initial distributaries and rendering
 
 - Enabled up to two destinations within the same base basin. Both downhill drops
   must be at most 1 m, and the smaller must be at least 80% of the larger.
@@ -59,10 +59,29 @@ membership, lake geometry, holds, and merges. Actual river transport is separate
   No overflow-limit warnings occurred; maximum absolute summed pending terrain
   change was below 9e-13 m. The rebuilt local test server responded with HTTP 200.
 
-## Deliberate limits
+## Stage 4 — local split selection across basin divides
+
+- Removed every basin-membership check from split eligibility. The decision uses
+  only the source's previous flow volume and neighboring ground/water elevations.
+  Raised minimum drop similarity from 80% to 90%; other thresholds are unchanged.
+- Ordinary runoff already records arrivals at the actual receiving basin. Late
+  overflow now does the same, returning arrivals per basin rather than assigning
+  their sum to the first downstream basin. One overflow can enqueue multiple
+  subsequent lake overflow events. Receiving owners are resolved after merges.
+- Added coverage for basin-label-independent selection, runoff and sediment
+  conservation across divides, two receiving overflow events, merged receiving
+  lakes, and the 90% threshold boundary.
+- Evaluation: all 90 tests across 20 suites passed, as did the browser build and
+  project type check with `--skipLibCheck`. A seeded 200×200 map ran 30 turns at
+  194 ms/turn with no invalid values, aquifer-capacity violations, outgoing-volume
+  mismatches, or overflow-limit warnings. It reached seven simultaneous splits
+  with both branches above the drawing threshold, including two crossing base
+  basin divides; maximum absolute summed pending terrain change was below 6e-13 m.
+
+## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.
-  Distributaries do not cross base-basin divides or traverse level/uphill cells.
+  Distributaries may cross base-basin divides but do not traverse level/uphill cells.
 - Lake expansion and split threshold changes affect transport on the next turn.
 - Lake infiltration is limited to the starting footprint and its fixed allowance.
   Hydrology/erosion timing therefore differs from master; identical landscapes

@@ -171,15 +171,13 @@ function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[], routing: 
             continue;
         }
         processedOverflowEvents.add(eventKey);
-        let newEvent: BasinFullEvent | null = processOverflowEvent(sim, currentEvent, {routing});
+        let newEvents = processOverflowEvent(sim, currentEvent, {routing});
         processCount += 1;
         if (processCount > maxEvents) {
             console.warn(`processOverflows hit limit at ${processCount} events, breaking`);
             break;
         }
-        if (newEvent != null) {
-            fullEventQueue.push(newEvent);
-        }
+        for (let newEvent of newEvents) fullEventQueue.push(newEvent);
     }
     // Remove all current events from basins.
     sim.superBasins.forEach((basin) => {
