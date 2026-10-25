@@ -221,6 +221,21 @@ destination elevations split equally. Shares are positive and conserve volume.
   and complete turns on gentle versus steep terrain. Browser build and project
   type check passed.
 
+## Stage 14 — clean river/lake connections
+
+- Lake-to-land segments are no longer hidden just because both squares belong to
+  the same basin. Only segments with both endpoints submerged are omitted.
+- Lake-facing line endpoints meet the tile boundary with a half-pixel overlap,
+  including diagonal entries. This avoids antialiasing gaps and strokes extending
+  to a lake tile's center.
+- Visible rivers retain their positive-flow downstream continuations below the
+  usual 30M drawing cutoff, with a 0.4 px minimum for those connecting strokes.
+  Unconnected sub-threshold streams remain hidden. Each edge is drawn at most
+  once and each continued square is followed at most once.
+- Renderer regression checks cover wet-to-dry outlets, cardinal/diagonal mouths,
+  and low-flow continuations without unrelated trickles. Routing and split rules
+  are unchanged. Browser build and project type check passed.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.

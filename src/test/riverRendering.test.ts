@@ -1,9 +1,10 @@
 jest.mock('pixi.js', () => ({
     Graphics: class {
         segments: number[][] = [];
-        clear() { this.segments = []; }
+        starts: number[][] = [];
+        clear() { this.segments = []; this.starts = []; }
         lineStyle() {}
-        moveTo() {}
+        moveTo(x: number, y: number) { this.starts.push([x, y]); }
         lineTo(x: number, y: number) { this.segments.push([x, y]); }
     },
 }));
@@ -47,9 +48,53 @@ test('full lakes do not create fictional outlet lines; actual recorded spills ar
     source.flow.outFlows = [{direction: 4, volume: 40000000}];
     manager.getRivers(sim);
     expect(manager.currentRivers).toHaveLength(1);
-    sim.superBasins.set(2, sourceBasin);
+    target.submerged = true;
     manager.getRivers(sim);
     expect(manager.currentRivers).toHaveLength(0);
+});
+
+function shorelineScene() {
+    let map = Array.from({length: 3}, () => Array.from({length: 3}, () => SquareUtil.createSquare(0, 0)));
+    map.forEach((row, i) => row.forEach((square, j) => Object.assign(square, {i, j})));
+    return {size: 3, map, superBasins: new Map()} as any;
+}
+
+test('lake outlets remain connected to dry land within the same basin', () => {
+    let sim = shorelineScene();
+    sim.map[0][0].submerged = true;
+    sim.map[0][0].flow.outFlows = [{direction: 4, volume: 100000000}];
+    let manager = new RiverManager();
+    manager.getRivers(sim);
+    expect(manager.currentRivers).toHaveLength(1);
+    manager.draw({addChild() {}} as any);
+    expect((manager.graphics as any).starts).toEqual([[2, 3.5]]);
+    expect((manager.graphics as any).segments).toEqual([[2, 6]]);
+});
+
+test.each([[4, 0, 1, 2, 4.5], [5, 1, 1, 4 + Math.SQRT1_2 / 2, 4 + Math.SQRT1_2 / 2]])(
+    'river mouths overlap water at direction %s without extending to its center', (direction, i, j, x, y) => {
+        let sim = shorelineScene();
+        sim.map[i][j].submerged = true;
+        sim.map[0][0].flow.outFlows = [{direction, volume: 100000000}];
+        let manager = new RiverManager();
+        manager.getRivers(sim);
+        manager.draw({addChild() {}} as any);
+        expect((manager.graphics as any).starts).toEqual([[2, 2]]);
+        expect((manager.graphics as any).segments[0][0]).toBeCloseTo(x, 10);
+        expect((manager.graphics as any).segments[0][1]).toBeCloseTo(y, 10);
+    });
+
+test('visible channels continue to lakes below the cutoff without drawing unrelated trickles', () => {
+    let sim = shorelineScene();
+    sim.map[0][0].flow.outFlows = [{direction: 4, volume: 40000000}];
+    sim.map[0][1].flow.outFlows = [{direction: 4, volume: 20000000}];
+    sim.map[0][2].submerged = true;
+    sim.map[2][0].flow.outFlows = [{direction: 4, volume: 10000000}];
+    let manager = new RiverManager();
+    manager.getRivers(sim);
+    expect(manager.currentRivers).toHaveLength(2);
+    expect(manager.currentRivers[1].flowTo).toBe(sim.map[0][2]);
+    expect(manager.currentRivers.every(river => river.loc.i === 0)).toBe(true);
 });
 
 test('branches at or above 30M remain visible', () => {
