@@ -8,7 +8,7 @@ const SPRITE_SIZE = constants.SPRITE_SIZE;
 const VOLUME_START = 30000000;
 const VOLUME_ONE_PIXEL = 100000000;
 const VOLUME_MAX_WIDTH = 5000000000;
-const WIDTH_SQRT_RANGE = Math.sqrt(VOLUME_MAX_WIDTH / VOLUME_ONE_PIXEL) - 1;
+const WIDTH_EXPONENT = Math.log(SPRITE_SIZE) / Math.log(VOLUME_MAX_WIDTH / VOLUME_ONE_PIXEL);
 
 
 type RiverLine = {
@@ -19,9 +19,9 @@ type RiverLine = {
 
 
 function getLineWidth(volume: number): number {
-    // One continuous square-root curve: 1 px at 100M/year, 4 px at 5B/year.
-    let strength = (Math.sqrt(Math.min(volume, VOLUME_MAX_WIDTH) / VOLUME_ONE_PIXEL) - 1) / WIDTH_SQRT_RANGE;
-    return SPRITE_SIZE * (0.25 + 0.75 * strength);
+    // Constant percentage growth: each doubling of flow adds about 28% width.
+    if (volume >= VOLUME_MAX_WIDTH) return SPRITE_SIZE;
+    return Math.pow(volume / VOLUME_ONE_PIXEL, WIDTH_EXPONENT);
 }
 
 

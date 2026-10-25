@@ -184,6 +184,16 @@ destination elevations split equally. Shares are positive and conserve volume.
   calculated once. Split rules are unchanged.
 - All six renderer checks, browser build, and project type check passed.
 
+## Stage 11 — consistent relative width growth
+
+- Removed the additive offset in the square-root curve. Width now follows
+  `(Q / 100M)^p`, where `p = log(4) / log(50) ≈ 0.35436764`, capped at 4 px.
+  This retains both anchors while giving every doubling the same 27.84% increase
+  in width below the cap. Widths: 30M → 0.653 px, 100M → 1 px, 1B → 2.261 px,
+  2B → 2.891 px, 5B → 4 px. The exponent is computed once.
+- The 30M visibility cutoff and all split rules are unchanged. Renderer checks
+  include equal proportional growth for successive doublings.
+
 ## Current deliberate limits
 
 - Basin membership and lake geometry retain their original primary tree.
