@@ -68,10 +68,6 @@ export class SquareUtil {
         };
     }
 
-    static getAdjacentLocs(square: Square, size: number): Map<number, number[]> {
-        return SquareUtil.getAdjacentSquares(square.i, square.j, size);
-    }
-
     // Reset square state for basin recomputation. Preserves altitude, precipitation, location, and flow aquifer state.
     static resetForRecompute(square: Square): void {
         square.basin = SquareUtil.NO_LOCATION;
@@ -113,7 +109,7 @@ export class SquareUtil {
         let inFlowMap: Map<number, number> = square.flow.inFlows;
         let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(square.i, square.j, size);
         let result = [];
-        inFlowMap.forEach((value, key) => {
+        inFlowMap.forEach((_, key) => {
             let loc = adjacents.get(key);
             result.push({
                 i: loc[0],
@@ -138,8 +134,7 @@ export class SquareUtil {
         if (square.flow.flowDirection == 9 || square.flow.flowDirection == 0) {
             return null;
         }
-        let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(square.i, square.j, sim.size);
-        let loc = adjacents.get(square.flow.flowDirection);
-        return sim.map[loc[0]][loc[1]];
+        let offset = constants.DIRECTIONS.get(square.flow.flowDirection);
+        return sim.map[square.i + offset[0]][square.j + offset[1]];
     }
 }

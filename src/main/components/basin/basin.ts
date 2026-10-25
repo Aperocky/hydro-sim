@@ -1,4 +1,3 @@
-import { SquareUtil } from '../square';
 import { FlowUtil } from '../flow';
 import LakeFormation from './lakeFormation';
 import { BasinHold, HoldUtil } from './basinHold';
@@ -46,11 +45,9 @@ export class Basin {
 
     // State flags
     evaporationProcessed: boolean;
-    inflowProcessed: boolean;
 
     constructor() {
         this.evaporationProcessed = false;
-        this.inflowProcessed = false;
         this.isFull = false;
     }
 
@@ -106,5 +103,5 @@ export class Basin {
         return null;
     }
 
-    divideBasin(sim, newElevation: number): void {}
+    divideBasin(_sim, _newElevation: number): void {}
 }

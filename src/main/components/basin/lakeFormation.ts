@@ -23,24 +23,22 @@ export default class LakeFormation {
     flooded: TinyQueue<Square>;
     shore: TinyQueue<Square>;
 
-    initiate(anchor: Square, sim: Sim) {
-        this.anchor = anchor;
+    private resetQueues(): void {
         this.shore = new TinyQueue([], squareCompare);
         this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
+        this.surfaceElevation = this.anchorElevation;
         this.volume = 0;
-        this.surfaceElevation = anchor.altitude;
-        this.anchorElevation = anchor.altitude;
+    }
+
+    initiate(anchor: Square, sim: Sim): void {
+        this.initiateFromSuperBasin(anchor);
         this.initiateQueue(sim);
     }
 
-    initiateFromSuperBasin(anchor: Square, shore: Square[], flooded: Square[],
-            sumVolume: number, surfaceElevation: number): void {
+    initiateFromSuperBasin(anchor: Square): void {
         this.anchor = anchor;
-        this.shore = new TinyQueue(shore, squareCompare);
-        this.flooded = new TinyQueue(flooded, (a, b) => -squareCompare(a, b));
-        this.volume = sumVolume;
-        this.surfaceElevation = surfaceElevation;
         this.anchorElevation = anchor.altitude;
+        this.resetQueues();
     }
 
     initiateQueue(sim: Sim) {
@@ -116,10 +114,7 @@ export default class LakeFormation {
         if (elevation <= this.anchorElevation) {
             this.clearLakeStateToSim();
             // Re-initiate empty lake
-            this.shore = new TinyQueue([], squareCompare);
-            this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
-            this.surfaceElevation = this.anchorElevation;
-            this.volume = 0;
+            this.resetQueues();
             this.initiateQueue(sim);
         } else {
             let recedingShores: Square[] = [];
@@ -141,30 +136,15 @@ export default class LakeFormation {
 
     drainToVolume(sim: Sim, volume: number): void {
         if (volume >= this.volume) return;
-        if (volume <= 0) {
-            this.clearLakeStateToSim();
-            this.shore = new TinyQueue([], squareCompare);
-            this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
-            this.surfaceElevation = this.anchorElevation;
-            this.volume = 0;
-            this.initiateQueue(sim);
-            return;
-        }
-
         this.clearLakeStateToSim();
-        this.shore = new TinyQueue([], squareCompare);
-        this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
-        this.surfaceElevation = this.anchorElevation;
-        this.volume = 0;
+        this.resetQueues();
         this.initiateQueue(sim);
-        this.fillToVolume(sim, volume);
+        if (volume > 0) this.fillToVolume(sim, volume);
     }
 
     resetToElevationFromMembers(sim: Sim, members: number[], elevation: number): void {
         this.clearLakeStateToSim();
-        this.shore = new TinyQueue([], squareCompare);
-        this.flooded = new TinyQueue([], (a, b) => -squareCompare(a, b));
-        this.volume = 0;
+        this.resetQueues();
 
         if (elevation <= this.anchorElevation) {
             this.surfaceElevation = this.anchorElevation;

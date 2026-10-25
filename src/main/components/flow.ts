@@ -54,7 +54,7 @@ export class FlowUtil {
         };
     }
 
-    static fillAquifer(flow: Flow, volume: number): number {
+    static fillAquifer(flow: Pick<Flow, 'aquifer' | 'aquiferMax'>, volume: number): number {
         if (flow.aquiferMax <= 0) return volume;
         // Reset corrupted or overfilled aquifer
         if (!isFinite(flow.aquifer) || flow.aquifer > flow.aquiferMax) {
@@ -112,25 +112,17 @@ export class FlowUtil {
             Math.max((20 - heightDiff), 1) * 1000 * 1000 * 0.5 ;
     }
 
-    static populateFlowVolume(flow: Flow, volume: number): void {
-        flow.flowVolume = volume;
-    }
-
     // Need to populate directions before we can populate volumes.
     static addInFlowDir(flow: Flow, direction: number): void {
         flow.inFlows.set(direction, 0);
     }
 
     static addInFlowVol(flow: Flow, direction: number, volume: number): void {
-        if (flow.inFlows.has(direction)) {
-            flow.inFlows.set(direction, volume);
-        } else {
-            flow.inFlows.set(direction, volume);
-        }
+        flow.inFlows.set(direction, volume);
     }
 
     static clearFlow(flow: Flow): void {
-        flow.inFlows.forEach((val, key) => {
+        flow.inFlows.forEach((_, key) => {
             flow.inFlows.set(key, 0);
         });
         flow.flowVolume = 0;

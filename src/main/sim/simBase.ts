@@ -3,10 +3,9 @@ import { Basin, BasinFullEvent } from '../components/basin/basin';
 import populateFlowDirection from './util/populateFlowDirection';
 import populateBasins from './util/populateBasins';
 import populateBasinHold from './util/populateBasinHold';
-import processOverflowEvent from './util/processOverflowEvent';
+import { processOverflows } from './util/processOverflowEvent';
 import timer from './util/timer';
 import * as constants from '../constant/constant';
-import TinyQueue from 'tinyqueue';
 
 
 export class SimBase {
@@ -96,19 +95,10 @@ export class SimBase {
             }
         }
 
-        // Fill each basin and process overflows to recreate super-basins
-        // Save and clear flow volumes since processOverflowEvent uses them
-        let savedFlowVolumes: number[][] = [];
-        for (let i = 0; i < this.size; i++) {
-            savedFlowVolumes.push([]);
-            for (let j = 0; j < this.size; j++) {
-                savedFlowVolumes[i][j] = this.map[i][j].flow.flowVolume;
-                this.map[i][j].flow.flowVolume = 0;
-            }
-        }
+        // Fill each basin and process overflows to recreate super-basins.
         let fullEvents: BasinFullEvent[] = [];
         let processedBasins: Set<Basin> = new Set();
-        (this as any).superBasins.forEach((basin: Basin, anchor: number) => {
+        (this as any).superBasins.forEach((basin: Basin) => {
             if (processedBasins.has(basin)) return;
             processedBasins.add(basin);
             let volume = 0;
@@ -123,52 +113,8 @@ export class SimBase {
             }
         });
 
-        // Process overflows to merge basins as needed
-        let fullEventComparator = (a, b) => b.holdElevation - a.holdElevation;
-        let fullEventQueue = new TinyQueue(fullEvents, fullEventComparator);
-        let overflowCount = 0;
-        let maxEvents = this.size * this.size;
-        let processedOverflowEvents: Set<string> = new Set();
-        while (fullEventQueue.length) {
-            let currentEvent = fullEventQueue.pop();
-            if (!currentEvent.valid) continue;
-            let eventKey = [
-                currentEvent.anchor,
-                currentEvent.holdMember,
-                currentEvent.holdElevation,
-                currentEvent.holdBasins.slice().sort().join('|'),
-                Math.round(currentEvent.overflowVolume),
-            ].join('::');
-            if (processedOverflowEvents.has(eventKey)) {
-                let basin = (this as any).superBasins.get(currentEvent.anchor);
-                if (basin != null) {
-                    basin.basinFullEvent = null;
-                }
-                continue;
-            }
-            processedOverflowEvents.add(eventKey);
-            let newEvents = processOverflowEvent(this as any, currentEvent, {
-                fillAquifer: false,
-                routeFlow: false,
-            });
-            overflowCount++;
-            if (overflowCount > maxEvents) {
-                console.warn(`recomputeTopography overflow processing hit limit at ${overflowCount} events, breaking`);
-                break;
-            }
-            for (let newEvent of newEvents) fullEventQueue.push(newEvent);
-        }
-        (this as any).superBasins.forEach((basin: Basin) => {
-            basin.basinFullEvent = null;
-        });
+        processOverflows(this as any, fullEvents, {fillAquifer: false, routeFlow: false});
         this.reconcileRecomputedLakeVolume(targetLakeVolume);
-
-        // Restore flow volumes for river display
-        for (let i = 0; i < this.size; i++) {
-            for (let j = 0; j < this.size; j++) {
-                this.map[i][j].flow.flowVolume = savedFlowVolumes[i][j];
-            }
-        }
     }
 
     getSquare(i: number, j: number): Square {

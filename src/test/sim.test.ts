@@ -26,7 +26,7 @@ describe('Sim structure', () => {
     });
 
     test('every basin has valid structure', () => {
-        sim.basins.forEach((basin, anchor) => {
+        sim.basins.forEach((basin) => {
             expect(basin.members.length).toBeGreaterThan(0);
             expect(basin.basinHold.holdCapacity).toBeGreaterThanOrEqual(0);
         });

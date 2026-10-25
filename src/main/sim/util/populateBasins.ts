@@ -9,7 +9,7 @@ export default function populateBasins(sim: Sim): void {
     let anchors: number[] = Array.from(pingResult['basinList'].keys());
     for (let anchor of anchors) {
         let basinMembers: number[] = traceMembers(sim, anchor);
-        let basin = createBasin(sim, anchor, basinMembers);
+        createBasin(sim, anchor, basinMembers);
     }
 }
 

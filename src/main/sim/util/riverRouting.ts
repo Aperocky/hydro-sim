@@ -219,7 +219,7 @@ export class RiverRouting {
 
     private updateWater(state: RiverState): number {
         let flow = state.square.flow;
-        let snapshot = {...flow, aquifer: state.aquifer};
+        let snapshot = {aquifer: state.aquifer, aquiferMax: flow.aquiferMax};
         let output = FlowUtil.fillAquifer(snapshot, state.incoming + getEffectivePrecipVolume(state.square));
         let increment = output - state.output;
         flow.aquifer = snapshot.aquifer;
@@ -248,7 +248,7 @@ export class RiverRouting {
                 volumes.set(destination.direction, amount);
             });
         }
-        (this.outlets.get(square.location) || new Map<number, number>()).forEach((volume, direction) => {
+        this.outlets.get(square.location)?.forEach((volume, direction) => {
             volumes.set(direction, (volumes.get(direction) || 0) + volume);
         });
         square.flow.outFlows = Array.from(volumes, ([direction, volume]) => ({direction, volume}));

@@ -20,7 +20,6 @@ const HILLSHADE_STRENGTH = 0.35;
 
 
 type Component = {
-    locStr: number;
     square: Square;
     sprite: PIXI.Sprite;
 }
@@ -63,7 +62,6 @@ export class MapContainer {
         this.renderRivers(sim);
         this.createColorMap();
         this.mapContainer.on('mouseout', () => {
-            Console.clearText();
             Console.displayGeneralInfo();
         });
         dataStore.setGeneralInfo(generalInfo(sim));
@@ -94,7 +92,6 @@ export class MapContainer {
                     });
                 this.mapContainer.addChild(sprite);
                 let record: Component = {
-                    locStr: square.location,
                     square: square,
                     sprite: sprite,
                 }
@@ -135,12 +132,10 @@ export class MapContainer {
     }
 
     getBaseTint(mapType: string, square: Square): number[] {
+        if (square.submerged) return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake']);
         let baseConf = COLOR.MAP_CONFIG[mapType];
         switch(mapType) {
             case 'base': {
-                if (square.submerged) {
-                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
-                }
                 let gradient = this.getLocalGradient(square);
                 let darkening = gradient <= 1 ? 0
                     : gradient <= 10 ? 0.08 * (gradient - 1) / 9
@@ -151,21 +146,12 @@ export class MapContainer {
                 return this.applyHillshade(reliefColor, square);
             }
             case 'altitude': {
-                if (square.submerged) {
-                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
-                }
                 return SpriteUtil.getColor(square.altitude, baseConf);
             }
             case 'flora': {
-                if (square.submerged) {
-                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
-                }
                 return COLOR.BIOME_COLORS[getBiome(square)];
             }
             case 'flatness': {
-                if (square.submerged) {
-                    return SpriteUtil.getColor(square.depth, COLOR.MAP_CONFIG['lake'])
-                }
                 let gradient = this.getLocalGradient(square);
                 // Remap: 0-1 -> 0 (green), 1-10 -> 0-1 (green->orange), 10-50 -> 1-2 (orange->brown), 50-200 -> 2-3 (brown->red)
                 let scaled: number;
@@ -193,8 +179,7 @@ export class MapContainer {
             case 'basin': {
                 if (square.edgeOf.size > 0) {
                     return [200, 0, 0];
-                } else if (square.edgeOf.size > 2) {
-                    return [255, 0, 0];
+
                 } else {
                     return [100, 100, 100];
                 }

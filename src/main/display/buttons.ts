@@ -7,9 +7,6 @@ import { GodModeAction } from '../sim/util/godMode';
 export function registerButtons(): void {
     let buttons = PAGE.buttons;
     let baseToggler = true;
-    let precipToggler = true;
-    let basinToggler = true;
-    let aquiferToggler = true;
     let floraToggler = true;
     buttons.loadButton.addEventListener('click', () => {
         controller.reloadMap();
@@ -22,22 +19,16 @@ export function registerButtons(): void {
         }
         baseToggler = !baseToggler;
     });
-    buttons.precipButton.addEventListener('click', () => {
-        if (precipToggler) {
-            controller.changeAlphaDisplayState(AlphaDisplayState.PRECIP);
-        } else {
-            controller.changeAlphaDisplayState(AlphaDisplayState.NONE);
-        }
-        precipToggler = !precipToggler;
-    });
-    buttons.basinButton.addEventListener('click', () => {
-        if (basinToggler) {
-            controller.changeAlphaDisplayState(AlphaDisplayState.BASIN);
-        } else {
-            controller.changeAlphaDisplayState(AlphaDisplayState.NONE);
-        }
-        basinToggler = !basinToggler;
-    });
+    let registerOverlay = (button: HTMLElement, state: AlphaDisplayState): void => {
+        let enabled = false;
+        button.addEventListener('click', () => {
+            controller.changeAlphaDisplayState(enabled ? AlphaDisplayState.NONE : state);
+            enabled = !enabled;
+        });
+    };
+    registerOverlay(buttons.precipButton, AlphaDisplayState.PRECIP);
+    registerOverlay(buttons.basinButton, AlphaDisplayState.BASIN);
+    registerOverlay(buttons.aquiferButton, AlphaDisplayState.AQUIFER);
     buttons.runButton.addEventListener('click', () => {
         controller.runTurn();
     });
@@ -53,14 +44,6 @@ export function registerButtons(): void {
             }
         }
         timer();
-    });
-    buttons.aquiferButton.addEventListener('click', () => {
-        if (aquiferToggler) {
-            controller.changeAlphaDisplayState(AlphaDisplayState.AQUIFER);
-        } else {
-            controller.changeAlphaDisplayState(AlphaDisplayState.NONE);
-        }
-        aquiferToggler = !aquiferToggler;
     });
     buttons.floraButton.addEventListener('click', () => {
         if (floraToggler) {

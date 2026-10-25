@@ -54,23 +54,12 @@ export function depositAtDryAnchor(
     let index = 0;
     let currentElevation = effAlt(members[0]);
 
-    while (index < members.length && effAlt(members[index]) <= currentElevation) {
-        filled.push(members[index]);
-        index++;
-    }
-
-    while (remaining > 0 && filled.length > 0 && currentElevation < targetElevation) {
-        let nextElevation = targetElevation;
-        if (index < members.length) {
-            nextElevation = Math.min(nextElevation, effAlt(members[index]));
+    while (remaining > 0 && currentElevation < targetElevation) {
+        while (index < members.length && effAlt(members[index]) <= currentElevation) {
+            filled.push(members[index++]);
         }
-        if (nextElevation <= currentElevation) {
-            while (index < members.length && effAlt(members[index]) <= currentElevation) {
-                filled.push(members[index]);
-                index++;
-            }
-            continue;
-        }
+        let nextElevation = index < members.length
+            ? Math.min(targetElevation, effAlt(members[index])) : targetElevation;
 
         let needed = (nextElevation - currentElevation) * filled.length * UNIT_SQUARE_VOLUME;
         if (needed > remaining) {
@@ -86,11 +75,6 @@ export function depositAtDryAnchor(
         }
         remaining -= needed;
         currentElevation = nextElevation;
-
-        while (index < members.length && effAlt(members[index]) <= currentElevation) {
-            filled.push(members[index]);
-            index++;
-        }
     }
 
     return remaining;

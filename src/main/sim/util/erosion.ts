@@ -18,7 +18,6 @@ export const EROSION_COEFFICIENT = 0.05;
 export const EROSION_GRADIENT_EXPONENT = 1.5;  // Between linear and quadratic
 export const EROSION_FLOW_EXPONENT = 0.7;     // Exponent for flow.
 export const EROSION_BASE_GRADIENT = 0.5;      // Baseline gradient (meters) so flat terrain still erodes
-export const EROSION_MAX_PER_SQUARE = 5000000; // Max 5m altitude change per square per turn
 
 // Sedimentation: what fraction of carried sediment is dropped per square
 // Base deposit fraction before modifiers
@@ -74,14 +73,15 @@ export function calculateErosion(square: Square, flowVolume: number, sim?: any):
     let g = sim ? getErosionGradient(square, sim) : null;
     let gradient = g ? g.gradient : square.flow.heightDiff;
 
+    return erosionForGradient(flowVolume, gradient, g ? g.downDist : gradient);
+}
+
+function erosionForGradient(flowVolume: number, gradient: number, downDist: number): number {
+    if (flowVolume <= 0) return 0;
     let erosion = EROSION_COEFFICIENT
         * Math.pow(flowVolume, EROSION_FLOW_EXPONENT)
         * Math.pow(EROSION_BASE_GRADIENT + gradient, EROSION_GRADIENT_EXPONENT);
-
-    // Cap erosion below the downstream distance so flow edges do not flatten.
-    // Very flat edges get a minimum allowance so erosion/sedimentation can still act.
-    let capDistance = Math.max(g ? g.downDist : gradient, MIN_SLOPE_CAP_DISTANCE);
-    let cap = capDistance * EROSION_SLOPE_FRACTION * UNIT_SQUARE_VOLUME;
+    let cap = Math.max(downDist, MIN_SLOPE_CAP_DISTANCE) * EROSION_SLOPE_FRACTION * UNIT_SQUARE_VOLUME;
     return Math.min(erosion, cap);
 }
 
@@ -100,10 +100,7 @@ export function calculateDepositionFraction(
     // a. Sediment load ratio (quadratic) - more sediment relative to water = more deposition
     let loadRatio = sedimentCarried / flowVolume * 20;
     // Aggressively dump load if over 5% is sediment
-    let loadFactor = Math.pow(loadRatio, SEDIMENT_LOAD_EXPONENT);
-    if (loadRatio < 1) {
-        loadFactor = loadRatio;
-    }
+    let loadFactor = loadRatio < 1 ? loadRatio : Math.pow(loadRatio, SEDIMENT_LOAD_EXPONENT);
 
     // b. Gradient factor - less gradient = more deposition
     let gradientFactor = SEDIMENT_GRADIENT_DECAY / (gradient + SEDIMENT_GRADIENT_DECAY);
@@ -131,7 +128,7 @@ export function processErosionAtSquare(
     let gradient = g ? g.gradient : square.flow.heightDiff;
 
     // Erosion: pick up sediment
-    let eroded = calculateErosion(square, flowVolume, sim);
+    let eroded = erosionForGradient(flowVolume, gradient, g ? g.downDist : gradient);
     square.flow.erosion = eroded;
 
     // Total sediment in transit after erosion
@@ -188,8 +185,9 @@ export function dumpSedimentAtMouth(
     let visited: Set<number> = new Set([square.location]);
     let remaining = sediment;
 
-    while (remaining > 0 && queue.length > 0) {
-        let current = queue.shift();
+    let index = 0;
+    while (remaining > 0 && index < queue.length) {
+        let current = queue[index++];
         if (!current.submerged) continue;
         // Allow deltas 0.10 m above water, accounting for pending deposits.
         let effectiveDepth = current.depth + 0.10 - current.flow.pendingErosion;

@@ -17,13 +17,7 @@ export class SpriteUtil {
     }
 
     static getColor(n: number, conf: COLOR.MapConfig): number[] {
-        let colors = SpriteUtil.getColorMapColor(conf.name, n, conf.stepSize, conf.subStep)
-        return colors;
-    }
-
-    static getTint(n: number, conf: COLOR.MapConfig): number {
-        let colors = SpriteUtil.getColorMapColor(conf.name, n, conf.stepSize, conf.subStep)
-        return SpriteUtil.getColorCode(colors[0], colors[1], colors[2]);
+        return SpriteUtil.getColorMapColor(conf.name, n, conf.stepSize, conf.subStep);
     }
 
     static getColorMapColor(mapType: string, n: number, stepSize: number, subSteps=100): number[] {

@@ -3,11 +3,10 @@ import { SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import { FlowUtil } from '../../components/flow';
 import { RiverRouting } from './riverRouting';
-import processOverflowEvent from './processOverflowEvent';
+import { processOverflows } from './processOverflowEvent';
 import { fillAquiferWithEffectivePrecip } from './riverUtil';
 import lakebedSmudge from './lakebedSmudge';
 import * as constant from '../../constant/constant';
-import TinyQueue from 'tinyqueue';
 import { updateBiomeState } from './biome';
 
 
@@ -32,7 +31,7 @@ export default function runTurn(sim: Sim): void {
     applyEvaporation(sim);
     let routing = new RiverRouting(sim);
     let fullEvents: BasinFullEvent[] = calculateRivers(sim, routing);
-    processOverflows(sim, fullEvents, routing);
+    processOverflows(sim, fullEvents, {routing});
     routing.runSediment();
     lakebedSmudge(sim);
     updateSedimentationHistory(sim);
@@ -122,7 +121,6 @@ function applyEvaporation(sim: Sim): void {
     for (let i = 0; i < sim.size; i++) {
         for (let j = 0; j < sim.size; j++) {
             if (!sim.map[i][j].submerged) {
-                // aquiferFlow(sim.map[i][j], sim); // Cost way too much
                 FlowUtil.evaporateAquifer(sim.map[i][j].flow);
                 fillAquiferWithEffectivePrecip(sim.map[i][j]);
             }
@@ -143,44 +141,4 @@ function calculateRivers(sim: Sim, routing: RiverRouting): BasinFullEvent[] {
         if (event) fullEvents.push(event);
     });
     return fullEvents;
-}
-
-function processOverflows(sim: Sim, basinFullEvents: BasinFullEvent[], routing: RiverRouting): void {
-    let fullEventComparator = (a, b) => b.holdElevation - a.holdElevation;
-    let processCount = 0;
-    let maxEvents = sim.size * sim.size;
-    let fullEventQueue = new TinyQueue(basinFullEvents, fullEventComparator);
-    let processedOverflowEvents: Set<string> = new Set();
-    while (fullEventQueue.length) {
-        let currentEvent = fullEventQueue.pop();
-        if (!currentEvent.valid) {
-            continue;
-        }
-        let eventKey = [
-            currentEvent.anchor,
-            currentEvent.holdMember,
-            currentEvent.holdElevation,
-            currentEvent.holdBasins.slice().sort().join('|'),
-            Math.round(currentEvent.overflowVolume),
-        ].join('::');
-        if (processedOverflowEvents.has(eventKey)) {
-            let basin = sim.superBasins.get(currentEvent.anchor);
-            if (basin != null) {
-                basin.basinFullEvent = null;
-            }
-            continue;
-        }
-        processedOverflowEvents.add(eventKey);
-        let newEvents = processOverflowEvent(sim, currentEvent, {routing});
-        processCount += 1;
-        if (processCount > maxEvents) {
-            console.warn(`processOverflows hit limit at ${processCount} events, breaking`);
-            break;
-        }
-        for (let newEvent of newEvents) fullEventQueue.push(newEvent);
-    }
-    // Remove all current events from basins.
-    sim.superBasins.forEach((basin) => {
-        basin.basinFullEvent = null;
-    })
 }

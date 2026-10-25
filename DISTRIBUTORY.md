@@ -1,263 +1,88 @@
-# Distributary implementation evaluation
+# Distributary routing
 
-The `distributory` branch retains the single-direction basin tree for basin
-membership, lake geometry, holds, and merges. Actual river transport is separate.
+Basin membership and lake geometry use the original single-direction terrain tree.
+Actual river transport uses separate outgoing edges, with up to two normal branches.
+Lake outlets can add an additional transfer edge.
 
-## Stage 1 — single-channel transport foundation
+## Split rules
 
-- Added a downhill water pass, cumulative late-overflow routing, and a separate
-  downhill sediment pass. The engine is not yet connected to simulation turns.
-- Connections and lake intakes are fixed for a turn. Aquifer exchange is evaluated
-  from the original state against cumulative input, avoiding repeated seepage.
-- Lake infiltration has one allowance per initial lake cell per turn; newly
-  flooded river cells start participating in lake infiltration next turn. This
-  intentionally replaces repeated infiltration on every overflow pulse.
-- Evaluation: baseline suite passed (66 tests); four new focused tests passed:
-  single-channel equivalence, pulse partition invariance and water conservation,
-  fixed lake infiltration, and sediment conservation. Browser bundle builds.
+Use the previous turn's flow to choose connections and fractions once per turn.
+This lets late overflow add water without retracting previously routed water.
 
-## Stage 2 — integrate single-channel transport
+- Below 50M m³/year, do not split.
+- Select only the two lowest downhill neighboring ground/water surfaces.
+- Require positive falls and descending terrain edges; equal/uphill terrain is excluded.
+- Compare that pair only: higher matching alternatives cannot bypass it.
+- No basin-membership check or spacing rule is applied.
 
-- Ordinary river water is collected for all basins before lakes are filled.
-  The existing overflow queue and superbasin merge/split machinery are retained.
-- Overflow routes incremental water through the same transport engine. Outlet
-  connections record actual spill volumes rather than estimating flow from lake
-  storage. Sediment/erosion runs once after all water routing, including outlets.
-- Initial lake intakes remain fixed during routing, even when lakes expand.
-  Channel/lake membership reflects those expansions on the following turn.
-- Evaluation: all 70 tests across 19 suites passed, including long-running
-  stability, outlet erosion, lake reconstruction, and superbasin regressions.
-  Suite time was 62.8 s versus the baseline's 65.6 s (unseeded suite; these are
-  observations, not a controlled performance comparison). Browser bundle builds.
-
-## Stage 3 — initial distributaries and rendering
-
-- Enabled up to two destinations within the same base basin. Both downhill drops
-  must be at most 1 m, and the smaller must be at least 80% of the larger.
-  Submerged neighbors use water surface elevation. Branch shares follow drops.
-- Splitting requires at least 80 million m³ in the previous turn, with each
-  predicted branch above 30 million m³. Fractions stay fixed during the turn;
-  volume changes can activate/deactivate a split on the following turn.
-- River drawing now uses actual per-edge volumes, including recorded outlet
-  transfers. Removed fabricated outlet flows and the obsolete recursive routines.
-- Evaluation: all 84 tests across 20 suites passed. Coverage includes split/rejoin
-  conservation, late overflow, pulse partition/order, eligibility boundaries,
-  lake surface comparisons, actual rendered widths, stale-line clearing, and
-  three complete turns on a controlled flat shelf that develops distributaries.
-- Browser build and project type check (`tsc --noEmit --skipLibCheck`) passed.
-  The raw type check encounters incompatible installed Node Buffer declarations;
-  no dependency versions or compiler settings were changed.
-- Seeded bundled comparison against master: three 120×120 maps, 12 turns per map.
-  Baseline averaged 48–54 ms/turn; this branch averaged 58–67 ms/turn. Neither
-  produced invalid numeric states or overflow-limit warnings. One map developed
-  two simultaneous distributaries. Maximum absolute net pending terrain change
-  on this branch was below 1.8e-13 m summed across tiles, consistent with sediment
-  conservation; baseline was 0.078–0.272 m in the same diagnostic.
-- After the implementation commit, a default-size 200×200 map completed 30 seeded
-  turns at 199 ms/turn. Every turn had finite terrain/water/sediment values,
-  aquifers within capacity, and outgoing edge volumes matching channel totals.
-  No overflow-limit warnings occurred; maximum absolute summed pending terrain
-  change was below 9e-13 m. The rebuilt local test server responded with HTTP 200.
-
-## Stage 4 — local split selection across basin divides
-
-- Removed every basin-membership check from split eligibility. The decision uses
-  only the source's previous flow volume and neighboring ground/water elevations.
-  Raised minimum drop similarity from 80% to 90%; other thresholds are unchanged.
-- Ordinary runoff already records arrivals at the actual receiving basin. Late
-  overflow now does the same, returning arrivals per basin rather than assigning
-  their sum to the first downstream basin. One overflow can enqueue multiple
-  subsequent lake overflow events. Receiving owners are resolved after merges.
-- Added coverage for basin-label-independent selection, runoff and sediment
-  conservation across divides, two receiving overflow events, merged receiving
-  lakes, and the 90% threshold boundary.
-- Evaluation: all 90 tests across 20 suites passed, as did the browser build and
-  project type check with `--skipLibCheck`. A seeded 200×200 map ran 30 turns at
-  194 ms/turn with no invalid values, aquifer-capacity violations, outgoing-volume
-  mismatches, or overflow-limit warnings. It reached seven simultaneous splits
-  with both branches above the drawing threshold, including two crossing base
-  basin divides; maximum absolute summed pending terrain change was below 6e-13 m.
-
-## Stage 5 — volume-dependent elevation gaps and branch weights
-
-Let `q` be previous turn flow in millions of m³/year. Below 50, no splitting.
-Otherwise, allow a destination elevation gap of:
+For `q` in millions of m³/year:
 
 ```
-tolerance = 0.20 + 0.30 * clamp((q - 50) / 950, 0, 1)  // metres
+maximum drop = clamp(1 + log10(q / 50), 1, 3)           // metres
+maximum gap  = 0.20 + 0.30 * clamp((q - 50) / 950, 0, 1)
 ```
 
-Inspect the eight neighboring ground/water surfaces and choose the lowest pair
-whose gap meets this tolerance and whose destinations are both strictly downhill.
-An isolated lower neighbor does not veto two close alternatives. No basin test,
-maximum drop, percentage similarity rule, or minimum branch-volume gate remains.
+The drop to the lowest neighbor must not exceed the maximum drop. The elevation
+separation between the two destinations must not exceed the maximum gap.
+With only one downhill neighbor, flow remains single-channel.
 
-For `d` = drop to the higher destination and `g` = gap between destinations:
+For `d` = fall to the higher destination and `g` = destination elevation gap:
 
 ```
 head = d + 0.004 * q
-higherShare = head / (2 * (head + g))
-lowerShare = 1 - higherShare
+higher share = head / (2 * (head + g))
+lower share  = 1 - higher share
 ```
 
-The added head is a simple volume weighting, not a calibrated hydraulic depth.
-For fixed terrain, larger volume increases the higher branch's share; raising
-the source above both destinations also moves the shares toward 50/50. Equal
-destination elevations split equally. Shares are positive and conserve volume.
+More volume or a larger fall moves the higher branch's share toward one half.
+The volume allowance is a simple weighting, not a calibrated hydraulic depth.
+All parameters and equations are in `src/main/sim/util/riverRouting.ts`.
 
-- Tolerance is 0.20 m at 50M/year, 0.35 m at 525M/year, and 0.50 m at/above 1000M/year.
-- Pair selection needs at most 28 comparisons and no sorting. Weighting uses
-  elementary arithmetic, with no powers, roots, exponentials, or iteration.
-- Thin rivers are now drawn above 10M/year (minimum width one pixel), so the
-  smaller arm of a 50M/year split is not hidden by the old 30M/year cutoff.
-- Evaluation: the complete suite passed 100 of 101 tests. The unseeded erosion
-  test asserting every altitude change is under 50 m failed. A separate seeded
-  comparison reproduced this existing issue before and after this change:
-  seed 64, 150×150, first turn, square (84,86) accumulates exactly the same
-  51.53723857667766 m pending rise in both versions. Its bound was not weakened.
-  All new routing/weighting/rendering tests passed. Build and project type check
-  with `--skipLibCheck` passed.
-- A final seeded 200×200, 30-turn run averaged 204 ms/turn, with no invalid numeric
-  states, aquifer-capacity violations, outgoing-volume mismatches, or overflow
-  warnings. It reached 114 simultaneous splits with each arm above 10M/year,
-  including 26 across basin divides. Summed pending terrain change stayed below
-  6e-13 m in absolute value.
+## Water and sediment
 
-## Stage 6 — narrower river strokes and fewer splits
+Ordinary water is processed downhill before filling lakes. Overflow uses the same
+fixed transport graph and returns arrivals per receiving basin. A shared overflow
+queue handles both normal turns and terrain reconstruction, including lake merges.
 
-- Replaced 1/2/3/4-pixel width steps with
-  `tileSize * (0.125 + 0.275 * volume / (volume + 120M))`.
-  At the current four-pixel tile size, widths approach 0.5–1.6 pixels; even the
-  largest river occupies at most 40% of a tile's width. Enabled canvas antialiasing.
-- Raised split activation from 50M to 75M/year. The tolerance curve and weighting
-  still use the original 50M reference, preserving the accepted equations.
-- The same seeded 200×200, 30-turn run peaked at 96 splits versus 114 previously,
-  about 16% fewer, with no invalid state or overflow warnings. It averaged
-  209 ms/turn; summed pending terrain change stayed below 7e-13 m in absolute value.
-- Rendering/routing checks cover fractional widths, extreme-volume width caps,
-  visibility of small arms, and the new 75M activation boundary.
-- Evaluation: 38 rendering/routing tests plus the 100-turn stability and overflow
-  regression checks passed. Browser build and project type check passed.
+Aquifer exchange uses cumulative input and the original aquifer snapshot, avoiding
+repeated rainfall, infiltration, or seepage on late pulses. Lake infiltration has
+one allowance per starting lake cell; newly flooded cells participate next turn.
 
-## Stage 7 — higher activation threshold and a broader, slower width scale
+After water routing, erosion and sediment are processed once per channel using
+actual outgoing water shares. Terrain changes apply on the next turn. Lake-mouth
+deposition can rise 0.10 m above water; saturated-sink fallback retains its existing
+settlement behavior.
 
-- Split activation is now 100M/year; the tolerance and branch-weight equations
-  retain the original 50M reference.
-- River width is `tileSize * (0.125 + 0.625 * Q / (Q + 2B))`, a continuous
-  0.5–3 pixel scale at the current tile size. Approximate widths: 100M → 0.62 px,
-  1B → 1.33 px, 5B → 2.29 px, 20B → 2.77 px. Reaching 2.9 px takes 48B/year.
-  This provides smooth intermediate widths while reserving the thickest strokes
-  for exceptional flows. The calculation remains simple arithmetic.
-- Evaluation: all 40 rendering, routing, and overflow checks passed, including
-  the 100M activation boundary. Browser build and project type check passed.
+## Rendering
 
-## Stage 8 — drawing begins at 30M and reaches full width at 5B
+For `q` in millions of m³/year, river width is
+`min(4, (q / 100)^(log(4) / log(50)))` pixels at the current tile size. This gives
+0.653 px at 30M, 1 px at 100M, 2.261 px at 1B, and 4 px at/above 5B.
 
-- River drawing now begins at 30M/year, including that boundary. Width follows
-  `0.5 + 2.5 * sqrt(clamp((Q - 30M) / (5B - 30M), 0, 1))` pixels at the current
-  tile size. This gives medium flows more presence and caps width at exactly 3 px
-  for 5B/year and above: 100M → 0.80 px, 1B → 1.60 px, 2B → 2.07 px.
-- Split activation remains 100M/year. Renderer checks, browser build, and project
-  type check passed.
+Visible channels start at 30M/year. Their downstream continuations remain drawn
+below that cutoff, with a 0.4 px minimum, so they reach the water. Unconnected
+sub-threshold streams remain hidden. The shared graphics layer is cleared each
+refresh, and each edge is drawn once.
 
-## Stage 9 — one-pixel minimum strokes and a minimum fall for branching
+Water-facing endpoints overlap the shoreline by half a pixel. Actual outlets on
+dry spillway tiles receive a lake-edge-to-spillway segment; submerged-to-submerged
+segments need no river stroke. Hydrology is unchanged by these rendering bridges.
 
-- Visible rivers from 30M through 100M/year are clamped to 1 px. Above 100M,
-  width is `1 + 2 * sqrt(clamp((Q - 100M) / (5B - 100M), 0, 1))` pixels,
-  reaching the unchanged 3 px cap at 5B/year.
-- Both split destinations must now be at least 1 m below the source, using
-  ground elevation on dry cells and water surface on submerged cells. This
-  suppresses nearly level plain grids; single-channel flow is unchanged.
-- Controlled complete turns verify that a nearly flat plain stays single-channel
-  while a steeper terrain still splits. Tests cover just below/at/above the 1 m
-  threshold, water/sediment conservation, width endpoints, and small-river clamping.
-- Evaluation: all 46 rendering/routing/overflow checks passed; browser build and
-  project type check passed.
+## Verification
 
-## Stage 10 — continuous subpixel-to-four-pixel river widths
+```
+npx jest --runInBand --silent
+npx tsc --noEmit --skipLibCheck --noUnusedLocals --noUnusedParameters
+make tsc
+```
 
-- A single square-root curve now passes through 1 px at 100M/year and 4 px at
-  5B/year, extending below 100M without a flat clamped segment:
-  `1 + 3 * (sqrt(min(Q, 5B) / 100M) - 1) / (sqrt(50) - 1)` pixels.
-  Width at the unchanged 30M drawing cutoff is about 0.777 px; 1B gives 2.068 px,
-  2B gives 2.716 px. Width remains capped at 4 px above 5B. The denominator is
-  calculated once. Split rules are unchanged.
-- All six renderer checks, browser build, and project type check passed.
+Cleanup equivalence was checked on three seeded 120×120 maps (seeds 1, 2, 11),
+20 turns each. Before/after state hashes matched exactly for terrain, water depth,
+basin membership, aquifers, channel volumes, outgoing edges, erosion, deposition,
+and lake volumes/surfaces. No overflow warnings occurred. All 134 tests across
+20 suites passed, as did the browser build and type/unused-code checks.
 
-## Stage 11 — consistent relative width growth
-
-- Removed the additive offset in the square-root curve. Width now follows
-  `(Q / 100M)^p`, where `p = log(4) / log(50) ≈ 0.35436764`, capped at 4 px.
-  This retains both anchors while giving every doubling the same 27.84% increase
-  in width below the cap. Widths: 30M → 0.653 px, 100M → 1 px, 1B → 2.261 px,
-  2B → 2.891 px, 5B → 4 px. The exponent is computed once.
-- The 30M visibility cutoff and all split rules are unchanged. Renderer checks
-  include equal proportional growth for successive doublings.
-
-## Stage 12 — only the two lowest downhill destinations may split
-
-- Removed the 1 m minimum fall. Positive downhill drops qualify again, including
-  on flat plains. Only the two lowest local ground/water surfaces are compared;
-  if their gap fails the existing volume-dependent tolerance, flow stays single.
-  Higher matching pairs cannot bypass an isolated lower neighbor.
-- Selection takes one eight-neighbor scan, removing the pair search and its
-  candidate array. No spacing rule or basin-membership restriction was added.
-- With only one downhill neighbor, no split is possible and all water follows
-  that neighbor. An explicit high-volume routing test checks this and conservation.
-- Controlled complete turns verify splitting on both gentle and steeper terrain.
-  Regression checks also cover mismatched lowest pairs and sub-metre drops.
-- All 50 routing/rendering/overflow checks, the browser build, and project type
-  check passed.
-
-## Stage 13 — split only when the steepest local fall is at most 1 m
-
-- A split is rejected if the drop from the source to the lowest downstream
-  ground/water surface exceeds 1 m. Exactly 1 m is allowed. There is still no
-  positive minimum drop beyond requiring downhill flow, so gentle terrain can
-  split while steeper terrain stays single-channel.
-- Two-lowest selection, 100M activation, destination-gap tolerance, branch shares,
-  and rendering are unchanged. The implementation adds one scalar comparison.
-- All 54 routing/rendering/overflow checks passed, including the 1 m boundary
-  and complete turns on gentle versus steep terrain. Browser build and project
-  type check passed.
-
-## Stage 14 — clean river/lake connections
-
-- Lake-to-land segments are no longer hidden just because both squares belong to
-  the same basin. Only segments with both endpoints submerged are omitted.
-- Lake-facing line endpoints meet the tile boundary with a half-pixel overlap,
-  including diagonal entries. This avoids antialiasing gaps and strokes extending
-  to a lake tile's center.
-- Visible rivers retain their positive-flow downstream continuations below the
-  usual 30M drawing cutoff, with a 0.4 px minimum for those connecting strokes.
-  Unconnected sub-threshold streams remain hidden. Each edge is drawn at most
-  once and each continued square is followed at most once.
-- Renderer regression checks cover wet-to-dry outlets, cardinal/diagonal mouths,
-  and low-flow continuations without unrelated trickles. Routing and split rules
-  are unchanged. Browser build and project type check passed.
-
-## Stage 15 — volume-dependent maximum downhill fall
-
-- Replaced the fixed 1 m drop cap with
-  `clamp(1 + log10(Q / 50M), 1, 3)` metres. Each tenfold flow increase permits
-  one more metre of fall: 50M → 1 m, 500M → 2 m, 5B → 3 m. Below 50M the cap
-  stays 1 m; above 5B it stays 3 m. At the existing 100M activation threshold,
-  the cap is about 1.301 m. It is evaluated once after selecting the lowest pair.
-- The 100M split activation threshold, two-lowest rule, elevation-gap tolerance,
-  branch weights, and sprites are unchanged. Checks cover scale anchors, both
-  sides of the drop boundaries, and the upper clamp at very high flow.
-- All 67 targeted checks, browser build, and project type check passed.
-
-## Current deliberate limits
-
-- Basin membership and lake geometry retain their original primary tree.
-  Distributaries may cross base-basin divides but do not traverse level/uphill cells.
-- Lake expansion and split threshold changes affect transport on the next turn.
-- Lake infiltration is limited to the starting footprint and its fixed allowance.
-  Hydrology/erosion timing therefore differs from master; identical landscapes
-  after many turns are not expected.
-- Saturated lake/dry-sink sediment fallback retains the existing settlement
-  behavior. Normal channel sediment uses the actual branching water network.
-- Thresholds are exported at the top of `src/main/sim/util/riverRouting.ts`.
-  These initial values are conservative; distributaries should be uncommon on
-  steep generated terrain and become more relevant on flat depositional ground.
+The raw type check encounters incompatible installed Node Buffer declarations;
+`--skipLibCheck` checks project code without changing dependencies. An existing
+unseeded erosion test's 50 m altitude-change assertion can fail on some terrain:
+seed 64 produces the same 51.537 m pending rise before and after these changes.

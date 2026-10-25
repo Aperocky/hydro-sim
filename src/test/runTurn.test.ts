@@ -1,5 +1,4 @@
 import { Sim } from '../main/sim/sim';
-import { createDrySim } from './testUtil';
 
 const SIZE = 150;
 
@@ -28,7 +27,6 @@ describe('Simulation turns (with rainfall)', () => {
         let previousCurrent = sim.map.map(row => row.map(square => square.flow.currentSedimentation));
         sim.run();
         let lakeTiles = 0;
-        let beachTiles = 0;
         sim.map.forEach(arr => arr.forEach(square => {
             if (square.submerged) lakeTiles++;
         }));

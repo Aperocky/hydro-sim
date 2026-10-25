@@ -1,5 +1,5 @@
 import { Basin } from '../../components/basin/basin';
-import { BasinHold, HoldUtil } from '../../components/basin/basinHold';
+import { BasinHold } from '../../components/basin/basinHold';
 import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import * as constants from '../../constant/constant';
@@ -19,7 +19,7 @@ function findEdge(sim: Sim): void {
             let adjacents: Map<number, number[]> = SquareUtil.getAdjacentSquares(i, j, sim.size);
             let flowIntoBasins: Set<number> = new Set();
             let currSquare: Square = sim.map[i][j];
-            adjacents.forEach((loc, key) => {
+            adjacents.forEach((loc) => {
                 let adjacentSquare: Square = sim.map[loc[0]][loc[1]];
                 if (currSquare.altitude > adjacentSquare.altitude) {
                     flowIntoBasins.add(adjacentSquare.basin);

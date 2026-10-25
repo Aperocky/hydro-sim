@@ -1,14 +1,7 @@
-import PAGE from './elements';
 import { MapContainer } from './container';
-import { registerButtons } from './buttons';
 import { SimAdapter } from './simAdapter';
 import { Square } from '../components/square';
 import { GodModeAction } from '../sim/util/godMode';
-
-
-//registerButtons();
-//export const mapContainer = new MapContainer();
-//export const simAdapter = new SimAdapter();
 
 
 export enum DisplayState {

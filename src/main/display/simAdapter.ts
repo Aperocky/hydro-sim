@@ -34,7 +34,6 @@ export class SimAdapter {
     shiftPrecipitation(): void {
         shiftPrecipitation(this.sim);
         dataStore.setGeneralInfo(generalInfo(this.sim));
-        Console.clearText();
         Console.displayGeneralInfo();
     }
 
@@ -49,7 +48,6 @@ export class SimAdapter {
     run() {
         this.sim.run();
         dataStore.setGeneralInfo(generalInfo(this.sim));
-        Console.clearText();
         Console.displayGeneralInfo();
     }
 }

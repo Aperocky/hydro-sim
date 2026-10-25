@@ -1,7 +1,7 @@
 import { Basin } from './basin';
 import LakeFormation from './lakeFormation';
 import { Square, SquareUtil } from '../square';
-import { BasinHold, HoldUtil } from './basinHold';
+import { HoldUtil } from './basinHold';
 import { Sim } from '../../sim/sim';
 import * as constants from '../../constant/constant';
 
@@ -26,21 +26,13 @@ export default class SuperBasin extends Basin {
         superBasin.divideElevation = divideElevation;
         superBasin.populateBasinBasics(basinA, basinB);
         superBasin.populateBasinHold(sim, basinA, basinB);
-        superBasin.populateLakeFormation(sim, basinA, basinB);
+        superBasin.populateLakeFormation(sim);
 
         for (let anchor of superBasin.memberBasins) {
             sim.superBasins.set(anchor, superBasin);
         }
         superBasin.originalBasinA = basinA;
         superBasin.originalBasinB = basinB;
-
-        // Sanity logging
-        //let logs = [];
-        //logs.push(`Created superbasin: ${superBasin.anchor}`);
-        //logs.push(`From basins: ${basinA.anchor}, ${basinB.anchor}`);
-        //logs.push(`Divide elevation: ${superBasin.divideElevation}`);
-        //console.log(logs.join('\n'));
-        // Sanity logging
 
         return superBasin;
     }
@@ -116,17 +108,16 @@ export default class SuperBasin extends Basin {
         this.basinHold = hold;
     }
 
-    populateLakeFormation(sim: Sim, basinA: Basin, basinB: Basin): void {
+    populateLakeFormation(sim: Sim): void {
         let lake = new LakeFormation();
         let anchorLoc = SquareUtil.locFromId(this.anchor);
         let anchorSquare = sim.map[anchorLoc.i][anchorLoc.j];
-        lake.initiateFromSuperBasin(anchorSquare, [], [], 0, anchorSquare.altitude);
+        lake.initiateFromSuperBasin(anchorSquare);
         lake.resetToElevationFromMembers(sim, this.members, this.divideElevation);
         this.lake = lake;
     }
 
     divideBasin(sim: Sim, newElevation: number): void {
-        // console.log(`dividing superbasin into subbasins: ${this.anchor}, ${newElevation}`)
         this.lake.clearLakeStateToSim();
         this.rehabilitateMemberBasins(sim);
         this.rebuildSubBasinAtElevation(sim, this.originalBasinA, newElevation);
