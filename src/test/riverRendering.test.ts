@@ -71,6 +71,26 @@ test('lake outlets remain connected to dry land within the same basin', () => {
     expect((manager.graphics as any).segments).toEqual([[2, 6]]);
 });
 
+test.each([1, 2])('dry spillway joins the lake edge even when its basin label is %s', holdBasin => {
+    let sim = shorelineScene();
+    let water = sim.map[0][0], hold = sim.map[0][1];
+    Object.assign(water, {submerged: true, basin: 1});
+    Object.assign(hold, {location: 1, basin: holdBasin});
+    sim.superBasins.set(1, {isFull: true, basinHold: {holdMember: 1}});
+    sim.superBasins.set(2, {isFull: false});
+    hold.flow.outFlows = [{direction: 4, volume: 100000000}];
+    let manager = new RiverManager();
+    manager.getRivers(sim);
+    expect(manager.currentRivers).toHaveLength(2);
+    expect(manager.currentRivers.some(river => river.loc === water && river.flowTo === hold)).toBe(true);
+    manager.draw({addChild() {}} as any);
+    expect((manager.graphics as any).starts).toContainEqual([2, 3.5]);
+    expect((manager.graphics as any).segments).toContainEqual([2, 6]);
+    hold.flow.outFlows = [];
+    manager.getRivers(sim);
+    expect(manager.currentRivers).toHaveLength(0);
+});
+
 test.each([[4, 0, 1, 2, 4.5], [5, 1, 1, 4 + Math.SQRT1_2 / 2, 4 + Math.SQRT1_2 / 2]])(
     'river mouths overlap water at direction %s without extending to its center', (direction, i, j, x, y) => {
         let sim = shorelineScene();

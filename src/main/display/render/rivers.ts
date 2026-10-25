@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { Sim } from '../../sim/sim';
 import { RiverOutflow } from '../../components/flow';
-import { Square } from '../../components/square';
+import { Square, SquareUtil } from '../../components/square';
 import * as constants from '../../constant/constant';
 
 
@@ -73,6 +73,30 @@ export class RiverManager {
             if (followed.has(key)) continue;
             followed.add(key);
             for (let outflow of square.flow.outFlows) append(square, outflow);
+        }
+        // A spillway can be a dry shoreline tile: connect the lake edge to the
+        // channel's starting center rather than leaving half a tile of bare land.
+        for (let basin of Array.from(new Set(sim.superBasins.values()))) {
+            if (!basin.isFull || !basin.basinHold || basin.basinHold.holdMember < 0) continue;
+            let loc = SquareUtil.locFromId(basin.basinHold.holdMember);
+            let hold = sim.map[loc.i][loc.j];
+            if (hold.submerged) continue;
+            let outlet = hold.flow.outFlows.find(flow => drawn.has((hold.i * sim.size + hold.j) * 10 + flow.direction));
+            if (!outlet) continue;
+            let direction = constants.DIRECTIONS.get(outlet.direction);
+            let shore: Square | null = null;
+            let bestAlignment = -Infinity;
+            SquareUtil.getAdjacentSquares(hold.i, hold.j, sim.size).forEach((coords, key) => {
+                let square = sim.map[coords[0]][coords[1]];
+                if (!square.submerged || sim.superBasins.get(square.basin) !== basin) return;
+                let offset = constants.DIRECTIONS.get(key);
+                let alignment = -(offset[0] * direction[0] + offset[1] * direction[1]) / Math.hypot(...offset);
+                if (alignment > bestAlignment) {
+                    shore = square;
+                    bestAlignment = alignment;
+                }
+            });
+            if (shore) this.currentRivers.push({loc: shore, flowTo: hold, width: Math.max(0.4, getLineWidth(outlet.volume))});
         }
     }
 
