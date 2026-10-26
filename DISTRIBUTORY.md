@@ -22,9 +22,17 @@ maximum drop = clamp(1 + log10(q / 50), 1, 3)           // metres
 maximum gap  = 0.20 + 0.30 * clamp((q - 50) / 950, 0, 1)
 ```
 
-The drop to the lowest neighbor must not exceed the maximum drop. The elevation
-separation between the two destinations must not exceed the maximum gap.
+The drop to the lowest neighbor must not exceed the maximum drop, except at a
+sharp flattening: it may also be at most 0.4 times the fall from the strongest
+incoming river edge. The strongest feeder is selected by its actual incoming edge
+volume, including the share after a fork, rather than its total neighboring flow.
+The elevation separation between destinations must still meet the maximum gap.
 With only one downhill neighbor, flow remains single-channel.
+
+The feeder lookup shares the same eight-neighbor scan. Decisions read the existing
+previous-turn edges before a second pass clears flow. No additional persistent
+state, upstream traversal, basin lookup, or atomic operation is introduced. Equal
+incoming volumes retain the first feeder in the fixed neighbor order.
 
 For `d` = fall to the higher destination and `g` = destination elevation gap:
 
@@ -79,8 +87,14 @@ make tsc
 Cleanup equivalence was checked on three seeded 120×120 maps (seeds 1, 2, 11),
 20 turns each. Before/after state hashes matched exactly for terrain, water depth,
 basin membership, aquifers, channel volumes, outgoing edges, erosion, deposition,
-and lake volumes/surfaces. No overflow warnings occurred. All 134 tests across
-20 suites passed, as did the browser build and type/unused-code checks.
+and lake volumes/surfaces. No overflow warnings occurred.
+
+The initial fan implementation passed all 142 tests across 20 suites, plus the browser build and
+strict project type/unused-code checks. The ratio was tuned to 0.4 with updated
+routing boundary tests. A seeded 200×200, 20-turn comparison measured
+158 ms/turn before and 150 ms/turn after (a small comparison, not a speedup claim).
+Both runs had finite state, bounded aquifers, matching outgoing water totals, no
+overflow warnings, and absolute summed pending terrain changes below 5e-13 m.
 
 The raw type check encounters incompatible installed Node Buffer declarations;
 `--skipLibCheck` checks project code without changing dependencies. An existing

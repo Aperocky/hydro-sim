@@ -327,6 +327,72 @@ test.each([[100000000, 1.3, 2], [100000000, 1.31, 1], [500000000, 2, 2],
         expect(riverDestinations(head, sim)).toHaveLength(count);
     });
 
+function fanFixture(drop = 6) {
+    let scene = distributaryFixture();
+    let feeder = scene.sim.map[0][0] as Square;
+    let tributary = scene.sim.map[1][1] as Square;
+    scene.hold.altitude = 100;
+    scene.head.altitude = 10;
+    scene.right.altitude = scene.head.altitude - drop;
+    scene.left.altitude = scene.right.altitude + 0.1;
+    feeder.altitude = 30;
+    feeder.precipitation = 125100;
+    feeder.flow.flowDirection = 4;
+    feeder.flow.flowVolume = 100000000;
+    feeder.flow.outFlows = [{direction: 4, volume: 100000000}];
+    return {...scene, feeder, tributary};
+}
+
+test.each([[7.999, 2], [8, 2], [8.001, 1]])(
+    'a 20 m feeder fall permits a fan fall of %s m: %s destinations', (drop, count) => {
+        let {sim, head} = fanFixture(drop);
+        expect(riverDestinations(head, sim)).toHaveLength(count);
+    });
+
+test('uniform steep flow and steep neighbors without incoming water cannot trigger the fan exception', () => {
+    let {sim, head, feeder} = fanFixture();
+    feeder.altitude = 16;
+    expect(riverDestinations(head, sim)).toHaveLength(1);
+    feeder.altitude = 30;
+    feeder.flow.outFlows = [{direction: 5, volume: 100000000}];
+    expect(riverDestinations(head, sim)).toHaveLength(1);
+});
+
+test.each([[10000000, 1], [110000000, 2]])(
+    'main feeder selection uses incoming branch volume %s, not total neighbor volume', (volume, count) => {
+        let {sim, head, feeder, tributary} = fanFixture();
+        feeder.flow.flowVolume = 500000000;
+        feeder.flow.outFlows = [{direction: 4, volume}, {direction: 5, volume: 500000000 - volume}];
+        tributary.altitude = 16;
+        tributary.flow.outFlows = [{direction: 2, volume: 100000000}];
+        expect(riverDestinations(head, sim)).toHaveLength(count);
+    });
+
+test('fan selection retains previous upstream edges until every destination has been chosen', () => {
+    let {sim, head, feeder, left, right, sink} = fanFixture();
+    let router = new RiverRouting(sim);
+    expect(feeder.flow.outFlows).toEqual([]);
+    let arrivals = router.runWater();
+    expect(head.flow.outFlows).toHaveLength(2);
+    expect(left.flow.flowVolume).toBeGreaterThan(0);
+    expect(right.flow.flowVolume).toBeGreaterThan(0);
+    expect(arrivals.get(sink.basin)).toBeCloseTo(100000000, 6);
+    router.runSediment();
+    let net = ([] as Square[]).concat(...sim.map).reduce((sum, square) => sum + square.flow.pendingErosion, 0);
+    expect(net * constants.UNITS.get('squareToVolume')).toBeCloseTo(0, 6);
+});
+
+test('the fan exception keeps the volume, two-neighbor, and elevation-gap requirements', () => {
+    let {sim, head, left} = fanFixture();
+    head.flow.flowVolume = 49000000;
+    expect(riverDestinations(head, sim)).toHaveLength(1);
+    head.flow.flowVolume = 100000000;
+    left.altitude = head.altitude;
+    expect(riverDestinations(head, sim)).toHaveLength(1);
+    left.altitude = 4.6;
+    expect(riverDestinations(head, sim)).toHaveLength(1);
+});
+
 test('a mismatched lowest pair vetoes splitting even when higher alternatives match', () => {
     let {sim, head, hold, left, right} = distributaryFixture();
     head.altitude = 10;
