@@ -26,10 +26,9 @@ export const SEDIMENT_BASE_DEPOSIT = 0.05;
 export const SEDIMENT_LOAD_EXPONENT = 3.0;
 // How strongly low gradient increases deposition
 export const SEDIMENT_GRADIENT_DECAY = 1.0;   // gradient reference point in meters
-// Keep erosion/deposition from removing the active flow edge.
-// Erosion is conservative, while sedimentation can fill more of the available headroom.
+// Limit bed lowering by slope and bed rise by a fixed amount per turn.
 export const EROSION_SLOPE_FRACTION = 0.2;
-export const SEDIMENTATION_SLOPE_FRACTION = 0.75;
+export const MAX_CHANNEL_RISE_METERS = 1;
 export const MIN_SLOPE_CAP_DISTANCE = 1;
 
 // Altitude change conversion: sediment volume to altitude change
@@ -42,8 +41,8 @@ export const MIN_SLOPE_CAP_DISTANCE = 1;
 
 // Calculate erosion gradient for a square: lowest upstream - lowest downstream
 // Accounts for water surface on submerged squares
-// Returns { gradient, upDist, downDist } for directional caps
-function getErosionGradient(square: Square, sim: any): { gradient: number, upDist: number, downDist: number } {
+// Return the downstream drop separately for the erosion cap.
+function getErosionGradient(square: Square, sim: any): { gradient: number, downDist: number } {
     let adjacents = SquareUtil.getAdjacentMapFromSquare(square, sim.size);
     let lowestUp = Infinity;
     let lowestDown = Infinity;
@@ -58,11 +57,10 @@ function getErosionGradient(square: Square, sim: any): { gradient: number, upDis
     });
     if (!isFinite(lowestUp) || !isFinite(lowestDown)) {
         let hd = square.flow.heightDiff;
-        return { gradient: hd, upDist: hd, downDist: hd };
+        return { gradient: hd, downDist: hd };
     }
     return {
         gradient: Math.max(0, lowestUp - lowestDown),
-        upDist: Math.max(0, lowestUp - square.altitude),
         downDist: Math.max(0, square.altitude - lowestDown),
     };
 }
@@ -138,16 +136,11 @@ export function processErosionAtSquare(
     let depositFraction = calculateDepositionFraction(totalSediment, flowVolume, gradient);
     let deposited = totalSediment * depositFraction;
     
-    // Directional metastable caps:
-    // Sedimentation (rising) and erosion (dropping) use separate directional caps
-    // so active flow edges do not flatten.
+    // Excess sediment stays in transport. Erosion retains its slope-based limit.
     let netChange = deposited - eroded;
-    if (netChange > 0) {
-        let riseDistance = Math.max(g ? g.upDist : gradient, MIN_SLOPE_CAP_DISTANCE);
-        let maxRise = riseDistance * SEDIMENTATION_SLOPE_FRACTION * UNIT_SQUARE_VOLUME;
-        if (netChange > maxRise) {
-            deposited = eroded + maxRise;
-        }
+    let maxRise = MAX_CHANNEL_RISE_METERS * UNIT_SQUARE_VOLUME;
+    if (netChange > maxRise) {
+        deposited = eroded + maxRise;
     } else if (netChange < 0) {
         let dropDistance = Math.max(g ? g.downDist : gradient, MIN_SLOPE_CAP_DISTANCE);
         let maxDrop = dropDistance * EROSION_SLOPE_FRACTION * UNIT_SQUARE_VOLUME;

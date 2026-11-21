@@ -12,7 +12,7 @@ describe('Sim structure', () => {
     test('every square is assigned to a basin', () => {
         let count = 0;
         sim.map.forEach(arr => arr.forEach(square => {
-            if (square.basin) count++;
+            if (sim.basins.has(square.basin)) count++;
         }));
         expect(count).toBe(SIZE * SIZE);
     });

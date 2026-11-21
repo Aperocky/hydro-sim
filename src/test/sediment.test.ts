@@ -6,7 +6,6 @@ import {
     dumpSedimentAtMouth,
     EROSION_SLOPE_FRACTION,
     MIN_SLOPE_CAP_DISTANCE,
-    SEDIMENTATION_SLOPE_FRACTION,
 } from '../main/sim/util/erosion';
 import { settleOrRouteSediment } from '../main/sim/util/sedimentRouting';
 
@@ -204,26 +203,18 @@ describe('Sediment carrying downstream', () => {
             .toBeCloseTo(1.5, 9);
     });
 
-    test('erosion and deposition caps cannot flatten an active slope edge', () => {
-        let up = makeSquare(10, 0, 0);
-        let down = makeSquare(8, 0, 1);
+    test.each([0.1, 2, 10])('channel rise is capped at 1 m with a %s m drop', (drop) => {
+        let channel = makeSquare(10, 0, 0);
+        channel.flow.heightDiff = drop;
+        let incoming = 100000000;
+        let outgoing = processErosionAtSquare(channel, incoming, 500000000);
 
-        up.flow.heightDiff = 2;
-        down.flow.heightDiff = 2;
-
-        // Force each operation past its cap so the cap value is the behavior under test.
-        processErosionAtSquare(up, 0, Number.MAX_SAFE_INTEGER);
-        processErosionAtSquare(down, Number.MAX_SAFE_INTEGER, 1);
-
-        let upAfter = up.altitude + up.flow.pendingErosion;
-        let downAfter = down.altitude + down.flow.pendingErosion;
-        let expectedGap = 2 * (1 - EROSION_SLOPE_FRACTION - SEDIMENTATION_SLOPE_FRACTION);
-
-        expect(upAfter - downAfter).toBeGreaterThanOrEqual(expectedGap);
-        expect(upAfter).toBeGreaterThan(downAfter);
+        expect(channel.flow.erosion).toBeGreaterThan(0);
+        expect(channel.flow.pendingErosion).toBeCloseTo(1, 9);
+        expect(outgoing).toBeCloseTo(incoming - 1000000, 5);
     });
 
-    test('sub-meter slopes use minimum erosion and sedimentation cap distances', () => {
+    test('sub-meter slopes use the minimum erosion cap distance', () => {
         let eroding = makeSquare(10, 0, 0);
         eroding.flow.heightDiff = 0.1;
 
@@ -231,16 +222,6 @@ describe('Sediment carrying downstream', () => {
 
         expect(eroded).toBeCloseTo(
             MIN_SLOPE_CAP_DISTANCE * EROSION_SLOPE_FRACTION * 1000000,
-            5
-        );
-
-        let depositing = makeSquare(10, 0, 1);
-        depositing.flow.heightDiff = 0.1;
-
-        processErosionAtSquare(depositing, Number.MAX_SAFE_INTEGER, 1);
-
-        expect(depositing.flow.pendingErosion).toBeCloseTo(
-            MIN_SLOPE_CAP_DISTANCE * SEDIMENTATION_SLOPE_FRACTION,
             5
         );
     });
