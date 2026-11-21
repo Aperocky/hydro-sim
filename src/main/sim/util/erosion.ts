@@ -191,9 +191,8 @@ export function dumpSedimentAtMouth(
         if (!current.submerged) continue;
         // Allow deltas 0.10 m above water, accounting for pending deposits.
         let effectiveDepth = current.depth + 0.10 - current.flow.pendingErosion;
-        if (effectiveDepth <= 0) continue;
-
-        let capacity = effectiveDepth * UNIT_SQUARE_VOLUME;
+        // A full mouth is still a path to unfilled water farther into the lake.
+        let capacity = Math.max(0, effectiveDepth) * UNIT_SQUARE_VOLUME;
         let deposit = Math.min(remaining, capacity);
         current.flow.pendingErosion += deposit / UNIT_SQUARE_VOLUME;
         remaining -= deposit;

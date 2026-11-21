@@ -58,8 +58,11 @@ one allowance per starting lake cell; newly flooded cells participate next turn.
 
 After water routing, erosion and sediment are processed once per channel using
 actual outgoing water shares. Terrain changes apply on the next turn. Lake-mouth
-deposition can rise 0.10 m above water; saturated-sink fallback retains its existing
-settlement behavior.
+deposition can rise 0.10 m above water, and already-filled mouth cells remain
+traversable so later arrivals can reach unfilled lake cells. If basin outlets end
+or cycle after ponds fill, excess sediment fills the lowest effective terrain,
+expanding over neighboring rims instead of piling onto the last basin. This
+includes pending deposits and conserves sediment across multiple arrivals.
 
 ## Rendering
 

@@ -1,8 +1,9 @@
 import { Basin } from '../../components/basin/basin';
+import TinyQueue from 'tinyqueue';
 import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 import { dumpSedimentAtMouth } from './erosion';
-import { depositAtDryAnchor } from './dryDeposit';
+import { depositAtDryAnchor, effectiveAltitude, fillSedimentToElevation } from './dryDeposit';
 import * as constants from '../../constant/constant';
 
 const UNIT_SQUARE_VOLUME = constants.UNITS.get('squareToVolume');
@@ -28,15 +29,10 @@ export function settleOrRouteSediment(
         steps++;
         last = current;
 
-        if (current.submerged) {
-            remaining = dumpSedimentAtMouth(current, remaining, sim);
-            if (remaining <= 0) return 0;
-            current = getBasinOutflowTarget(current, sim, visitedBasins);
-            continue;
-        }
-
-        if (current.flow.flowDirection === 0) {
-            remaining = depositAtDryAnchor(current, remaining, sim);
+        if (current.submerged || current.flow.flowDirection === 0) {
+            remaining = current.submerged
+                ? dumpSedimentAtMouth(current, remaining, sim)
+                : depositAtDryAnchor(current, remaining, sim);
             if (remaining <= 0) return 0;
             current = getBasinOutflowTarget(current, sim, visitedBasins);
             continue;
@@ -56,9 +52,55 @@ export function settleOrRouteSediment(
         return sim.map[loc.i][loc.j];
     }) : [last];
     if (members.length === 0) members = [last];
-    let rise = remaining / (members.length * UNIT_SQUARE_VOLUME);
-    for (let square of members) square.flow.pendingErosion += rise;
+    let lowest = members.reduce((a, b) => effectiveAltitude(a) < effectiveAltitude(b) ? a : b);
+    spreadExcessSediment(lowest, remaining, sim);
     return 0;
+}
+
+// Stale basin outlets can end or cycle once this turn's deposits fill the ponds.
+// Continue across the effective terrain instead of piling the excess onto the
+// last basin. Raise a connected footprint to its lowest rim, then expand over it.
+function spreadExcessSediment(start: Square, sediment: number, sim: Sim): void {
+    let frontier = new TinyQueue<Square>([start], (a, b) => effectiveAltitude(a) - effectiveAltitude(b));
+    let visited = new Set<number>([start.location]);
+    let filled: Square[] = [];
+    let level = effectiveAltitude(start);
+    let remaining = sediment;
+
+    while (remaining > 0) {
+        let reached: Square[] = [];
+        // Crossing a rim can expose a lower pond. Discover all of it before
+        // filling, so its lowest cells receive sediment before its slopes do.
+        while (frontier.length && effectiveAltitude(frontier.peek()) <= level) {
+            let square = frontier.pop();
+            reached.push(square);
+            SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach(coords => {
+                let neighbor = sim.map[coords[0]][coords[1]];
+                if (visited.has(neighbor.location)) return;
+                visited.add(neighbor.location);
+                frontier.push(neighbor);
+            });
+        }
+        remaining = fillSedimentToElevation(reached, remaining, level);
+        if (remaining <= 0) break;
+        for (let square of reached) filled.push(square);
+
+        if (!frontier.length) {
+            level += remaining / (filled.length * UNIT_SQUARE_VOLUME);
+            break;
+        }
+        let nextLevel = effectiveAltitude(frontier.peek());
+        let needed = (nextLevel - level) * filled.length * UNIT_SQUARE_VOLUME;
+        if (remaining <= needed) {
+            level += remaining / (filled.length * UNIT_SQUARE_VOLUME);
+            break;
+        }
+        remaining -= needed;
+        level = nextLevel;
+    }
+
+    // Defer writes for the rising footprint until its final level is known.
+    for (let square of filled) square.flow.pendingErosion += level - effectiveAltitude(square);
 }
 
 function getBasinOutflowTarget(
@@ -90,7 +132,7 @@ function getBasinOutflowTarget(
         if (sim.superBasins && sim.superBasins.get(adj.basin) === basin) {
             return;
         }
-        let elevation = adj.altitude + adj.flow.pendingErosion;
+        let elevation = effectiveAltitude(adj);
         if (elevation < targetElevation) {
             targetElevation = elevation;
             target = adj;

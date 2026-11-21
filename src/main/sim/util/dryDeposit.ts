@@ -7,6 +7,10 @@ import * as constant from '../../constant/constant';
 
 const UNIT_SQUARE_VOLUME = constant.UNITS.get('squareToVolume');
 
+export function effectiveAltitude(square: Square): number {
+    return square.altitude + square.flow.pendingErosion;
+}
+
 export function depositAtDryAnchor(
     anchor: Square,
     sediment: number,
@@ -14,13 +18,9 @@ export function depositAtDryAnchor(
 ): number {
     if (sediment <= 0 || !isFinite(sediment)) return 0;
 
-    function effAlt(sq: Square): number {
-        return sq.altitude + sq.flow.pendingErosion;
-    }
-
     let basin = sim.superBasins ? sim.superBasins.get(anchor.basin >= 0 ? anchor.basin : anchor.location) : null;
     let memberLocations = basin ? basin.members : traceDryMembers(anchor, sim);
-    let targetElevation = basin ? basin.basinHold.holdElevation : findFallbackHoldElevation(memberLocations, sim, effAlt);
+    let targetElevation = basin ? basin.basinHold.holdElevation : findFallbackHoldElevation(memberLocations, sim);
 
     let members: Square[] = [];
     for (let locStr of memberLocations) {
@@ -34,32 +34,36 @@ export function depositAtDryAnchor(
     }
 
     if (!isFinite(targetElevation)) {
-        let highest = members.reduce((max, sq) => Math.max(max, effAlt(sq)), -Infinity);
+        let highest = members.reduce((max, sq) => Math.max(max, effectiveAltitude(sq)), -Infinity);
         targetElevation = highest + sediment / (members.length * UNIT_SQUARE_VOLUME);
     }
 
-    if (!basin && targetElevation <= effAlt(anchor)) {
-        targetElevation = effAlt(anchor) + sediment / (members.length * UNIT_SQUARE_VOLUME);
+    let anchorElevation = effectiveAltitude(anchor);
+    if (!basin && targetElevation <= anchorElevation) {
+        targetElevation = anchorElevation + sediment / (members.length * UNIT_SQUARE_VOLUME);
     }
 
-    members = members.filter((sq) => effAlt(sq) < targetElevation);
-    if (members.length === 0 || targetElevation <= effAlt(anchor)) {
-        return sediment;
-    }
+    if (targetElevation <= anchorElevation) return sediment;
+    return fillSedimentToElevation(members, sediment, targetElevation);
+}
 
-    members.sort((a, b) => effAlt(a) - effAlt(b));
+// Fill the lowest terrain first, including deposits already scheduled this turn.
+export function fillSedimentToElevation(members: Square[], sediment: number, targetElevation: number): number {
+    members = members.filter(sq => effectiveAltitude(sq) < targetElevation);
+    if (members.length === 0) return sediment;
+    members.sort((a, b) => effectiveAltitude(a) - effectiveAltitude(b));
 
     let remaining = sediment;
     let filled: Square[] = [];
     let index = 0;
-    let currentElevation = effAlt(members[0]);
+    let currentElevation = effectiveAltitude(members[0]);
 
     while (remaining > 0 && currentElevation < targetElevation) {
-        while (index < members.length && effAlt(members[index]) <= currentElevation) {
+        while (index < members.length && effectiveAltitude(members[index]) <= currentElevation) {
             filled.push(members[index++]);
         }
         let nextElevation = index < members.length
-            ? Math.min(targetElevation, effAlt(members[index])) : targetElevation;
+            ? Math.min(targetElevation, effectiveAltitude(members[index])) : targetElevation;
 
         let needed = (nextElevation - currentElevation) * filled.length * UNIT_SQUARE_VOLUME;
         if (needed > remaining) {
@@ -99,8 +103,7 @@ function traceDryMembers(anchor: Square, sim: Sim): number[] {
 
 function findFallbackHoldElevation(
     memberLocations: number[],
-    sim: Sim,
-    effAlt: (sq: Square) => number
+    sim: Sim
 ): number {
     let members = new Set(memberLocations);
     let holdElevation = Infinity;
@@ -111,7 +114,7 @@ function findFallbackHoldElevation(
         adjacents.forEach((coords) => {
             let adj = sim.map[coords[0]][coords[1]];
             if (!members.has(adj.location)) {
-                holdElevation = Math.min(holdElevation, effAlt(adj));
+                holdElevation = Math.min(holdElevation, effectiveAltitude(adj));
             }
         });
     }

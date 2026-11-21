@@ -132,8 +132,76 @@ describe('Sediment carrying downstream', () => {
         let remaining = settleOrRouteSediment(lake, 500000, sim);
 
         expect(remaining).toBe(0);
-        expect(lake.flow.pendingErosion).toBeCloseTo(0.30, 9);
-        expect(basinMember.flow.pendingErosion).toBeCloseTo(0.20, 9);
+        expect(lake.flow.pendingErosion).toBeCloseTo(0.50, 9);
+        expect(basinMember.flow.pendingErosion).toBeCloseTo(0, 9);
+    });
+
+    test('a filled mouth still spreads later sediment into the rest of the lake', () => {
+        let map = Array.from({length: 3}, (_, i) =>
+            Array.from({length: 3}, (_, j) => makeSquare(10, i, j)));
+        let mouth = map[1][0];
+        let middle = map[1][1];
+        let far = map[1][2];
+        for (let square of [mouth, middle, far]) {
+            square.submerged = true;
+            square.depth = 0.1;
+        }
+        let sim = {size: 3, map} as any;
+        dumpSedimentAtMouth(mouth, 200000, sim);
+        dumpSedimentAtMouth(middle, 200000, sim);
+
+        expect(dumpSedimentAtMouth(mouth, 200000, sim)).toBeCloseTo(0, 6);
+        expect(far.flow.pendingErosion).toBeCloseTo(0.2, 9);
+        for (let square of [mouth, middle, far]) {
+            expect(square.flow.pendingErosion).toBeCloseTo(0.2, 9);
+        }
+    });
+
+    test('excess sediment spreads beyond a tiny saturated pond without forming a spire', () => {
+        let size = 21;
+        let map = Array.from({length: size}, (_, i) =>
+            Array.from({length: size}, (_, j) => makeSquare(10, i, j)));
+        let pond = map[10][10];
+        pond.submerged = true;
+        pond.depth = 0.1;
+        pond.basin = pond.location;
+        let basin = {members: [pond.location], basinHold: null};
+        let sim = {size, map, superBasins: new Map([[pond.location, basin]])} as any;
+
+        // The old fallback put almost all 200 million m³ on the one pond tile:
+        // a 200 m column on an otherwise flat plain.
+        expect(settleOrRouteSediment(pond, 200000000, sim)).toBe(0);
+        let squares = ([] as Square[]).concat(...map);
+        expect(Math.max(...squares.map(sq => sq.flow.pendingErosion))).toBeLessThan(0.5);
+        expect(squares.reduce((sum, sq) => sum + sq.flow.pendingErosion * 1000000, 0))
+            .toBeCloseTo(200000000, 3);
+
+        // Multiple arrivals must share the new effective terrain this turn.
+        settleOrRouteSediment(pond, 200000000, sim);
+        expect(Math.max(...squares.map(sq => sq.flow.pendingErosion))).toBeLessThan(1);
+        expect(squares.reduce((sum, sq) => sum + sq.flow.pendingErosion * 1000000, 0))
+            .toBeCloseTo(400000000, 3);
+    });
+
+    test('excess crosses a low rim and fills a lower pond before raising that rim', () => {
+        let map = Array.from({length: 5}, (_, i) =>
+            Array.from({length: 5}, (_, j) => makeSquare(20, i, j)));
+        let mouth = map[2][1];
+        let rim = map[2][2];
+        let lower = map[2][3];
+        mouth.altitude = 10;
+        mouth.submerged = true;
+        rim.altitude = 11;
+        lower.altitude = 9;
+        let sim = {size: 5, map} as any;
+
+        settleOrRouteSediment(mouth, 1500000, sim);
+
+        expect(mouth.altitude + mouth.flow.pendingErosion).toBeCloseTo(11, 9);
+        expect(rim.flow.pendingErosion).toBe(0);
+        expect(lower.altitude + lower.flow.pendingErosion).toBeCloseTo(9.5, 9);
+        expect(([] as Square[]).concat(...map).reduce((sum, sq) => sum + sq.flow.pendingErosion, 0))
+            .toBeCloseTo(1.5, 9);
     });
 
     test('erosion and deposition caps cannot flatten an active slope edge', () => {
