@@ -42,6 +42,8 @@ export class Basin {
 
     // keep basin full event in instance before it gets processed
     basinFullEvent: BasinFullEvent | null;
+    // Present only when overflow reaches a downstream catchment this turn.
+    displaySpillTarget?: number;
 
     // State flags
     evaporationProcessed: boolean;

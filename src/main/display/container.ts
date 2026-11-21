@@ -4,6 +4,7 @@ import { Sim } from '../sim/sim';
 import { Square, SquareUtil } from '../components/square';
 import { SpriteUtil } from './render/sprite';
 import { RiverManager } from './render/rivers';
+import { basinBoundaryTest } from './render/basinBoundaries';
 import { Console } from './console';
 import * as COLOR from '../constant/colors';
 import dataStore from './helper/dataStore';
@@ -31,6 +32,7 @@ export class MapContainer {
     mapComponents: Map<number, Component>;
     riverManager: RiverManager;
     simMap: Square[][];
+    private sim: Sim;
     simSize: number;
     godModeHandler: ((square: Square) => boolean) | null;
     godModeSquare: Square | null;
@@ -56,6 +58,7 @@ export class MapContainer {
     }
 
     initialize(sim: Sim): void {
+        this.sim = sim;
         this.simMap = sim.map;
         this.simSize = sim.size;
         this.initializeComponents(sim);
@@ -176,14 +179,6 @@ export class MapContainer {
             case 'precip': {
                 return SpriteUtil.getColor(square.precipitation, alphaConf);
             }
-            case 'basin': {
-                if (square.edgeOf.size > 0) {
-                    return [200, 0, 0];
-
-                } else {
-                    return [100, 100, 100];
-                }
-            }
             case 'aquifer': {
                 if (square.submerged) {
                     return [255, 255, 255];
@@ -207,9 +202,12 @@ export class MapContainer {
     }
 
     createAlphaColorMap(baseMapType: string, alphaMapType: string): void {
+        const isBasinBoundary = alphaMapType === 'basin' ? basinBoundaryTest(this.sim.superBasins) : undefined;
         this.mapComponents.forEach((val) => {
             let baseColor = this.getBaseTint(baseMapType, val.square);
-            let alphaColor = this.getAlphaTint(alphaMapType, val.square);
+            let alphaColor = isBasinBoundary
+                ? (isBasinBoundary(val.square.edgeOf) ? [200, 0, 0] : [100, 100, 100])
+                : this.getAlphaTint(alphaMapType, val.square);
             let alpha = alphaMapType === 'flora' ? 0.4 : COLOR.OVERLAY_ALPHA;
             if (alphaMapType === 'sedimentation') {
                 let sedimentation = val.square.flow.currentSedimentation > 0

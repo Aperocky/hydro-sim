@@ -255,6 +255,8 @@ test('one overflow can fill two receiving lakes and emit both subsequent events'
     expect(targetBasin.processInflow.mock.calls[0][0]).toBeCloseTo(right.flow.flowVolume, 6);
     expect(otherBasin.processInflow.mock.calls[0][0]).toBeCloseTo(left.flow.flowVolume, 6);
     expect(left.flow.flowVolume + right.flow.flowVolume).toBeCloseTo(100000000, 6);
+    expect(sourceBasin.displaySpillTarget).toBe(
+        right.flow.flowVolume > left.flow.flowVolume ? targetBasin.anchor : otherBasin.anchor);
 });
 
 test('overflow resolves receiving basins after their lakes merge', () => {

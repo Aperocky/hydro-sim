@@ -71,6 +71,15 @@ export default function processOverflowEvent(sim: Sim, event: BasinFullEvent, op
         if (!options.routing) throw new Error('River routing is required for channel overflow');
         options.routing.recordOutlet(sim.map[holdLoc.i][holdLoc.j], outlet.direction, event.overflowVolume);
         arrivals = options.routing.routeOverflow(outlet.square, event.overflowVolume);
+        // The overlay gives a spilling lake one downstream group, using the
+        // branch with the most arriving water when the channel splits.
+        let largestArrival = 0;
+        arrivals.forEach((volume, anchor) => {
+            if (volume > largestArrival && sim.superBasins.get(anchor) !== source) {
+                largestArrival = volume;
+                source.displaySpillTarget = anchor;
+            }
+        });
     }
     source.basinFullEvent = null;
     let events: BasinFullEvent[] = [];
