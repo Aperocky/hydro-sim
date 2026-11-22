@@ -1,43 +1,44 @@
-import { SquareUtil } from '../../components/square';
+import { Square, SquareUtil } from '../../components/square';
 import { Sim } from '../sim';
 
 const SMUDGE_RATE = 0.05;
 const SHORE_SMUDGE_MULTIPLIER = 0.1;
 const NEIGHBOR_DIVISOR = 8;
 
+function smoothingCap(square: Square): number {
+    const depth = square.submerged ? Math.min(20, Math.max(0, square.depth)) : 0;
+    return (1 - depth / 20) * 0.9 + 0.1;
+}
+
 export default function lakebedSmudge(sim: Sim): void {
-    let deltas: number[][] = [];
     let {activeSquares, shoreSquares} = getSubmergedOrShoreSquares(sim);
+    const transfers: {from: Square; to: Square; amount: number}[] = [];
+    const totals = new Map<Square, number>();
 
-    for (let i = 0; i < sim.size; i++) {
-        deltas.push([]);
-        for (let j = 0; j < sim.size; j++) {
-            let square = sim.map[i][j];
-            if (!activeSquares.has(square.location)) {
-                deltas[i][j] = 0;
-                continue;
-            }
+    activeSquares.forEach(location => {
+        const {i, j} = SquareUtil.locFromId(location);
+        const square = sim.map[i][j];
+        SquareUtil.getAdjacentSquares(i, j, sim.size).forEach(([ni, nj]) => {
+            const neighbor = sim.map[ni][nj];
+            // Visit each downhill pair once, using the unchanged bed elevations.
+            const drop = square.altitude - neighbor.altitude;
+            if (drop <= 0 || !activeSquares.has(neighbor.location)) return;
+            const multiplier = shoreSquares.has(location) || shoreSquares.has(neighbor.location)
+                ? SHORE_SMUDGE_MULTIPLIER : 1;
+            const amount = SMUDGE_RATE * multiplier * drop / NEIGHBOR_DIVISOR;
+            transfers.push({from: square, to: neighbor, amount});
+            totals.set(square, (totals.get(square) || 0) + amount);
+            totals.set(neighbor, (totals.get(neighbor) || 0) + amount);
+        });
+    });
 
-            let sumDiff = 0;
-            let adjacents = SquareUtil.getAdjacentSquares(i, j, sim.size);
-            adjacents.forEach((loc) => {
-                let neighbor = sim.map[loc[0]][loc[1]];
-                if (activeSquares.has(neighbor.location)) {
-                    let multiplier = shoreSquares.has(square.location)
-                            || shoreSquares.has(neighbor.location) ? SHORE_SMUDGE_MULTIPLIER : 1;
-                    sumDiff += multiplier * (neighbor.altitude - square.altitude);
-                }
-            });
-            deltas[i][j] = SMUDGE_RATE * sumDiff / NEIGHBOR_DIVISOR;
-        }
-    }
-
-    for (let i = 0; i < sim.size; i++) {
-        for (let j = 0; j < sim.size; j++) {
-            if (deltas[i][j] !== 0) {
-                sim.map[i][j].flow.pendingErosion += deltas[i][j];
-            }
-        }
+    // Limit total movement per tile and apply the smaller scale to both ends.
+    const scales = new Map<Square, number>();
+    totals.forEach((total, square) => scales.set(square, Math.min(1, smoothingCap(square) / total)));
+    for (const {from, to, amount} of transfers) {
+        const moved = amount * Math.min(scales.get(from), scales.get(to));
+        from.flow.pendingErosion -= moved;
+        to.flow.pendingErosion += moved;
     }
 }
 

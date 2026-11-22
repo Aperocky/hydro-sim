@@ -71,3 +71,34 @@ test('lakebed smudge applies one tenth strength to shore interactions without al
     expect(dry.flow.pendingErosion).toBe(0);
     expect(submerged.flow.pendingErosion + shore.flow.pendingErosion).toBeCloseTo(0, 9);
 });
+
+test.each([[0, 1], [10, 0.55], [20, 0.1], [60, 0.1]])(
+    'a submerged tile at %s m depth can gain at most %s m from all neighbors combined',
+    (depth, cap) => {
+        let sim = createFlatSim(3);
+        let center = sim.map[1][1];
+        center.altitude = -100;
+        center.depth = depth;
+        for (let row of sim.map) for (let square of row) square.submerged = true;
+
+        lakebedSmudge(sim);
+
+        expect(center.flow.pendingErosion).toBeCloseTo(cap, 9);
+        let total = 0;
+        for (let row of sim.map) for (let square of row) total += square.flow.pendingErosion;
+        expect(total).toBeCloseTo(0, 9);
+    }
+);
+
+test('an underwater shelf cannot lose more than its own smoothing cap', () => {
+    let sim = createFlatSim(3);
+    let shelf = sim.map[1][1];
+    shelf.altitude = 500;
+    shelf.depth = 20;
+    for (let row of sim.map) for (let square of row) square.submerged = true;
+    shelf.flow.pendingErosion = -0.2;
+
+    lakebedSmudge(sim);
+
+    expect(shelf.flow.pendingErosion).toBeCloseTo(-0.3, 9);
+});
