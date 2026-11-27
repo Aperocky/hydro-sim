@@ -329,6 +329,48 @@ test.each([[100000000, 1.3, 2], [100000000, 1.31, 1], [500000000, 2, 2],
         expect(riverDestinations(head, sim)).toHaveLength(count);
     });
 
+test.each([
+    ['net channel deposition on a flat reach', 10, 1.25, 0.25, 2],
+    ['channel deposition offset by erosion', 10, 1, 1, 1],
+    ['net channel deposition on a steeper reach', 11, 1.25, 0.25, 1],
+])('distributary eligibility after a 1 m bed rise with %s',
+    (_description, elevation, deposited, eroded, count) => {
+        let sim: any = new SimBase(3);
+        sim.superBasins = new Map();
+        sim.altitude = [[elevation, 9.45, 9], [15, 9.4, 8], [14, 7, 6]]
+            .map(row => row.map(height => height / constants.UNITS.get('altitude')));
+        sim.precip = [[0.5, 0, 0], [0, 0, 0], [0, 0, 0]];
+        sim.createMap();
+        let head = sim.map[0][0];
+        let tileArea = constants.UNITS.get('squareToVolume');
+        head.flow.flowVolume = 50000000;
+        head.flow.pendingErosion = 1;
+        head.flow.sedimentation = deposited * tileArea;
+        head.flow.erosion = eroded * tileArea;
+
+        runTurn(sim);
+
+        expect(head.altitude).toBeCloseTo(elevation + 1);
+        expect(head.flow.outFlows).toHaveLength(count);
+    });
+
+test.each([[0, 1], [0.5, 1], [1, 2]])(
+    '%s m of net channel deposition with a 0.85 m exit gap yields %s destinations', (rise, count) => {
+        let {sim, head, left, right} = distributaryFixture();
+        head.altitude = 2.2;
+        left.altitude = 1.85;
+        let tileArea = constants.UNITS.get('squareToVolume');
+        head.flow.sedimentation = (rise + 0.1) * tileArea;
+        head.flow.erosion = 0.1 * tileArea;
+
+        let destinations = riverDestinations(head, sim);
+        expect(destinations).toHaveLength(count);
+        if (count === 2) {
+            expect(destinations.map(destination => destination.square)).toEqual([right, left]);
+            expect(destinations[1].fraction).toBeCloseTo(higherBranchFraction(head.flow.flowVolume, 0.35, 0.85));
+        }
+    });
+
 function fanFixture(drop = 6) {
     let scene = distributaryFixture();
     let feeder = scene.sim.map[0][0] as Square;

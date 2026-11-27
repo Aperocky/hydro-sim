@@ -74,10 +74,15 @@ export function riverDestinations(square: Square, sim: Sim, allowSplit = true): 
             higherDrop = drop;
         }
     });
+    if (!higher) return single;
+    // A raised bed makes an uneven pair of exits easier to split between.
+    // Use net channel deposition from last turn so lakebed smoothing contributes no allowance.
+    let netChannelRise = Math.max(0,
+        (square.flow.sedimentation - square.flow.erosion) / constants.UNITS.get('squareToVolume'));
     let gap = lowerDrop - higherDrop;
-    if (!higher || gap > distributaryTolerance(volume) + 1e-9) return single;
+    if (gap > distributaryTolerance(volume) + netChannelRise + 1e-9) return single;
     let maxDrop = Math.max(distributaryMaxDrop(volume), DISTRIBUTARY_FAN_RATIO * incomingDrop);
-    if (lowerDrop > maxDrop + 1e-9) return single;
+    if (lowerDrop - netChannelRise > maxDrop + 1e-9) return single;
     let fraction = higherBranchFraction(volume, higherDrop, gap);
     return [
         {square: lower, direction: lowerDirection, fraction: 1 - fraction},
