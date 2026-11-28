@@ -31,6 +31,9 @@ export const EROSION_SLOPE_FRACTION = 0.2;
 export const MAX_CHANNEL_RISE_METERS = 1;
 export const MIN_SLOPE_CAP_DISTANCE = 1;
 
+const DELTA_MOUTH_CAP_METERS = 1;
+const DELTA_CAP_DROP_PER_TILE_METERS = 0.3;
+
 // Altitude change conversion: sediment volume to altitude change
 // 1 m^3 sediment over 1 km^2 = 0.000001 m altitude change
 // So altitude_change = sediment_volume / UNIT_SQUARE_VOLUME
@@ -165,8 +168,7 @@ export function processErosionAtSquare(
 // DELTA FORMATION: dump sediment at river mouth
 // ============================================================
 
-// When a river meets a body of water, dump remaining sediment.
-// Spreads to adjacent water squares if current square fills above water.
+// Fill from the mouth outward, lowering the deposition ceiling at each step.
 export function dumpSedimentAtMouth(
     square: Square,
     sediment: number,
@@ -174,16 +176,16 @@ export function dumpSedimentAtMouth(
 ): number {
     if (sediment <= 0 || !isFinite(sediment)) return 0;
 
-    let queue: Square[] = [square];
+    let queue = [{square, distance: 0}];
     let visited: Set<number> = new Set([square.location]);
     let remaining = sediment;
 
     let index = 0;
     while (remaining > 0 && index < queue.length) {
-        let current = queue[index++];
+        let {square: current, distance} = queue[index++];
         if (!current.submerged) continue;
-        // Allow deltas 0.10 m above water, accounting for pending deposits.
-        let effectiveDepth = current.depth + 0.10 - current.flow.pendingErosion;
+        let allowance = DELTA_MOUTH_CAP_METERS - distance * DELTA_CAP_DROP_PER_TILE_METERS;
+        let effectiveDepth = current.depth + allowance - current.flow.pendingErosion;
         // A full mouth is still a path to unfilled water farther into the lake.
         let capacity = Math.max(0, effectiveDepth) * UNIT_SQUARE_VOLUME;
         let deposit = Math.min(remaining, capacity);
@@ -196,7 +198,7 @@ export function dumpSedimentAtMouth(
                 let adj = sim.map[loc.i][loc.j];
                 if (adj.submerged && !visited.has(adj.location)) {
                     visited.add(adj.location);
-                    queue.push(adj);
+                    queue.push({square: adj, distance: distance + 1});
                 }
             });
         }

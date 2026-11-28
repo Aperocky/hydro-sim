@@ -210,6 +210,9 @@ export class RiverRouting {
     runSediment(): void {
         let incoming = new Map<number, number>();
         for (let square of this.ordered) {
+            if (square.flow.unsettledSediment > 0) {
+                square.flow.unsettledSediment = settleOrRouteSediment(square, square.flow.unsettledSediment, this.sim);
+            }
             if (square.flow.flowVolume <= 0 || square.flow.outFlows.length === 0) continue;
             let sediment = this.submerged.has(square.location) ? 0
                 : processErosionAtSquare(square, incoming.get(square.location) || 0, square.flow.flowVolume, this.sim);
@@ -223,7 +226,8 @@ export class RiverRouting {
                 if (this.states.has(target.location)) {
                     incoming.set(target.location, (incoming.get(target.location) || 0) + amount);
                 } else {
-                    settleOrRouteSediment(target, amount, this.sim);
+                    let unsettled = settleOrRouteSediment(target, amount, this.sim);
+                    if (unsettled > 0) target.flow.unsettledSediment = (target.flow.unsettledSediment || 0) + unsettled;
                 }
             });
         }

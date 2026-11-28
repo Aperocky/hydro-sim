@@ -8,6 +8,7 @@ import {
     MIN_SLOPE_CAP_DISTANCE,
 } from '../main/sim/util/erosion';
 import { settleOrRouteSediment } from '../main/sim/util/sedimentRouting';
+import { RiverRouting } from '../main/sim/util/riverRouting';
 
 // Build a minimal 2x2 grid:
 //  A(0,0)  B(0,1)
@@ -110,11 +111,11 @@ describe('Sediment carrying downstream', () => {
             map: [[lake]],
         } as any;
 
-        let remaining = dumpSedimentAtMouth(lake, 1500000, sim);
+        let remaining = dumpSedimentAtMouth(lake, 2500000, sim);
 
-        expect(lake.flow.pendingErosion).toBeCloseTo(1.1, 5);
+        expect(lake.flow.pendingErosion).toBeCloseTo(2, 5);
         expect(lake.flow.sedimentation).toBeCloseTo(0, 5);
-        expect(remaining).toBeCloseTo(400000, -2);
+        expect(remaining).toBeCloseTo(500000, -2);
     });
 
     test('sediment with no remaining route settles instead of disappearing', () => {
@@ -146,14 +147,49 @@ describe('Sediment carrying downstream', () => {
             square.depth = 0.1;
         }
         let sim = {size: 3, map} as any;
-        dumpSedimentAtMouth(mouth, 200000, sim);
-        dumpSedimentAtMouth(middle, 200000, sim);
+        dumpSedimentAtMouth(mouth, 1100000, sim);
+        dumpSedimentAtMouth(middle, 800000, sim);
 
-        expect(dumpSedimentAtMouth(mouth, 200000, sim)).toBeCloseTo(0, 6);
-        expect(far.flow.pendingErosion).toBeCloseTo(0.2, 9);
-        for (let square of [mouth, middle, far]) {
-            expect(square.flow.pendingErosion).toBeCloseTo(0.2, 9);
+        expect(dumpSedimentAtMouth(mouth, 500000, sim)).toBeCloseTo(0, 6);
+        expect(mouth.flow.pendingErosion).toBeCloseTo(1.1, 9);
+        expect(middle.flow.pendingErosion).toBeCloseTo(0.8, 9);
+        expect(far.flow.pendingErosion).toBeCloseTo(0.5, 9);
+    });
+
+    test('the mouth ceiling drops below water and excess settles beyond the capped tiles', () => {
+        let size = 7;
+        let map = Array.from({length: size}, (_, i) =>
+            Array.from({length: size}, (_, j) => makeSquare(12, i, j)));
+        for (let square of map[0]) {
+            square.altitude = 10;
+            square.submerged = true;
+            square.depth = 1;
         }
+        let shallow = map[0][5];
+        shallow.altitude = 10.8;
+        shallow.depth = 0.2;
+        let sim = {size, map} as any;
+
+        expect(settleOrRouteSediment(map[0][0], 10000000, sim)).toBe(0);
+        expect(map[0][0].flow.pendingErosion).toBeCloseTo(2, 9);
+        expect(map[0][3].flow.pendingErosion).toBeCloseTo(1.1, 9);
+        expect(map[0][4].flow.pendingErosion).toBeCloseTo(0.8, 9);
+        expect(shallow.flow.pendingErosion).toBe(0);
+        expect(map[0][6].flow.pendingErosion).toBeCloseTo(0.2, 9);
+        let totalRise = ([] as Square[]).concat(...map).reduce((sum, square) => sum + square.flow.pendingErosion, 0);
+        expect(totalRise).toBeCloseTo(10, 9);
+    });
+
+    test('excess stays available next turn when every tile is submerged', () => {
+        let lake = makeSquare(10, 0, 0);
+        lake.submerged = true;
+        lake.flow.unsettledSediment = 1500000;
+        let sim = {size: 1, map: [[lake]], superBasins: new Map()} as any;
+
+        new RiverRouting(sim).runSediment();
+
+        expect(lake.flow.pendingErosion).toBe(1);
+        expect(lake.flow.unsettledSediment).toBe(500000);
     });
 
     test('excess sediment spreads beyond a tiny saturated pond without forming a spire', () => {
@@ -171,13 +207,16 @@ describe('Sediment carrying downstream', () => {
         // a 200 m column on an otherwise flat plain.
         expect(settleOrRouteSediment(pond, 200000000, sim)).toBe(0);
         let squares = ([] as Square[]).concat(...map);
-        expect(Math.max(...squares.map(sq => sq.flow.pendingErosion))).toBeLessThan(0.5);
+        let drySquares = squares.filter(sq => !sq.submerged);
+        expect(pond.flow.pendingErosion).toBeCloseTo(1.1, 9);
+        expect(Math.max(...drySquares.map(sq => sq.flow.pendingErosion))).toBeLessThan(0.5);
         expect(squares.reduce((sum, sq) => sum + sq.flow.pendingErosion * 1000000, 0))
             .toBeCloseTo(200000000, 3);
 
         // Multiple arrivals must share the new effective terrain this turn.
         settleOrRouteSediment(pond, 200000000, sim);
-        expect(Math.max(...squares.map(sq => sq.flow.pendingErosion))).toBeLessThan(1);
+        expect(pond.flow.pendingErosion).toBeCloseTo(1.1, 9);
+        expect(Math.max(...drySquares.map(sq => sq.flow.pendingErosion))).toBeLessThan(1);
         expect(squares.reduce((sum, sq) => sum + sq.flow.pendingErosion * 1000000, 0))
             .toBeCloseTo(400000000, 3);
     });

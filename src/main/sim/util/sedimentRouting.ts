@@ -53,14 +53,12 @@ export function settleOrRouteSediment(
     }) : [last];
     if (members.length === 0) members = [last];
     let lowest = members.reduce((a, b) => effectiveAltitude(a) < effectiveAltitude(b) ? a : b);
-    spreadExcessSediment(lowest, remaining, sim);
-    return 0;
+    return spreadExcessSediment(lowest, remaining, sim);
 }
 
 // Stale basin outlets can end or cycle once this turn's deposits fill the ponds.
-// Continue across the effective terrain instead of piling the excess onto the
-// last basin. Raise a connected footprint to its lowest rim, then expand over it.
-function spreadExcessSediment(start: Square, sediment: number, sim: Sim): void {
+// Cross the lakebed to reach dry terrain without exceeding lake deposition caps.
+function spreadExcessSediment(start: Square, sediment: number, sim: Sim): number {
     let frontier = new TinyQueue<Square>([start], (a, b) => effectiveAltitude(a) - effectiveAltitude(b));
     let visited = new Set<number>([start.location]);
     let filled: Square[] = [];
@@ -73,7 +71,7 @@ function spreadExcessSediment(start: Square, sediment: number, sim: Sim): void {
         // filling, so its lowest cells receive sediment before its slopes do.
         while (frontier.length && effectiveAltitude(frontier.peek()) <= level) {
             let square = frontier.pop();
-            reached.push(square);
+            if (!square.submerged) reached.push(square);
             SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach(coords => {
                 let neighbor = sim.map[coords[0]][coords[1]];
                 if (visited.has(neighbor.location)) return;
@@ -86,6 +84,7 @@ function spreadExcessSediment(start: Square, sediment: number, sim: Sim): void {
         for (let square of reached) filled.push(square);
 
         if (!frontier.length) {
+            if (!filled.length) return remaining;
             level += remaining / (filled.length * UNIT_SQUARE_VOLUME);
             break;
         }
@@ -101,6 +100,7 @@ function spreadExcessSediment(start: Square, sediment: number, sim: Sim): void {
 
     // Defer writes for the rising footprint until its final level is known.
     for (let square of filled) square.flow.pendingErosion += level - effectiveAltitude(square);
+    return 0;
 }
 
 function getBasinOutflowTarget(

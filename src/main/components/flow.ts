@@ -23,6 +23,7 @@ export type Flow = {
     aquiferDrain: number;
     // Sediment carried by flow (m^3)
     sediment: number;
+    unsettledSediment?: number; // Excess to retry next turn when no dry terrain could receive it (m^3)
     // Erosion/sedimentation tracking for display
     erosion: number;       // m^3 eroded from this square this turn
     sedimentation: number; // m^3 deposited on this square this turn
