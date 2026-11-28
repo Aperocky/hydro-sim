@@ -13,27 +13,25 @@ type Destination = { square: Square; direction: number; fraction: number };
 // Per turn volumes (m³); each tile is 1 km². Freeze splits using last turn's
 // volume so late overflow never requires retracting water from filled lakes.
 export const DISTRIBUTARY_MIN_FLOW = 50000000;
-export const DISTRIBUTARY_FULL_FLOW = 1000000000;
-export const DISTRIBUTARY_MIN_GAP = 0.2;
-export const DISTRIBUTARY_MAX_GAP = 0.5;
-export const DISTRIBUTARY_FAN_RATIO = 0.4;
+const DISTRIBUTARY_FULL_FLOW = 5000000000;
+const DISTRIBUTARY_MIN_GAP_CEILING = 0.25;
+const DISTRIBUTARY_MAX_GAP_SHARE = 0.8;
+const DISTRIBUTARY_HEAD_AT_MIN_FLOW = 0.2;
 
-export function distributaryMaxDrop(volume: number): number {
-    // Each tenfold increase in flow allows one additional metre of fall.
-    return 1 + Math.log10(Math.min(100, Math.max(1, volume / DISTRIBUTARY_MIN_FLOW)));
-}
-
-export function distributaryTolerance(volume: number): number {
-    let strength = Math.min(1, Math.max(0,
-        (volume - DISTRIBUTARY_MIN_FLOW) / (DISTRIBUTARY_FULL_FLOW - DISTRIBUTARY_MIN_FLOW)));
-    return DISTRIBUTARY_MIN_GAP + (DISTRIBUTARY_MAX_GAP - DISTRIBUTARY_MIN_GAP) * strength;
+export function distributaryTolerance(volume: number, drop: number, netChannelRise = 0): number {
+    let flowRange = Math.log10(DISTRIBUTARY_FULL_FLOW / DISTRIBUTARY_MIN_FLOW);
+    let flowFactor = Math.min(1, Math.max(0, Math.log10(volume / DISTRIBUTARY_MIN_FLOW) / flowRange));
+    let ceiling = DISTRIBUTARY_MIN_GAP_CEILING * (1 + flowFactor + 2 * flowFactor ** 2);
+    let relativeLimit = DISTRIBUTARY_MAX_GAP_SHARE * drop;
+    let gapWithDeposition = relativeLimit + netChannelRise;
+    return Math.min(relativeLimit, ceiling * gapWithDeposition / (ceiling + gapWithDeposition));
 }
 
 // gap is the elevation difference between destinations; drop is the fall to the
 // higher destination. Volume supplies a simple head allowance (0.2 m per 50M m³),
 // moving the higher branch's share toward one half. Both terms favor equal shares.
 export function higherBranchFraction(volume: number, drop: number, gap: number): number {
-    let head = drop + DISTRIBUTARY_MIN_GAP * (volume / DISTRIBUTARY_MIN_FLOW);
+    let head = drop + DISTRIBUTARY_HEAD_AT_MIN_FLOW * (volume / DISTRIBUTARY_MIN_FLOW);
     return 0.5 * head / (head + gap);
 }
 
@@ -48,18 +46,9 @@ export function riverDestinations(square: Square, sim: Sim, allowSplit = true): 
     let lower: Square | null = null, higher: Square | null = null;
     let lowerDirection = 0, higherDirection = 0;
     let lowerDrop = 0, higherDrop = 0;
-    let incomingVolume = 0, incomingDrop = 0;
     SquareUtil.getAdjacentSquares(square.i, square.j, sim.size).forEach((loc, direction) => {
         let target = sim.map[loc[0]][loc[1]];
         let drop = square.altitude - target.altitude - (target.submerged ? target.depth : 0);
-        // Read the actual incoming edge, including its share after any fork.
-        let fromDirection = constants.REVERSE.get(direction);
-        for (let edge of target.flow.outFlows) {
-            if (edge.direction === fromDirection && edge.volume > incomingVolume) {
-                incomingVolume = edge.volume;
-                incomingDrop = Math.max(0, -drop);
-            }
-        }
         if (drop <= 0 || target.altitude >= square.altitude) return;
         if (drop > lowerDrop) {
             higher = lower;
@@ -80,9 +69,7 @@ export function riverDestinations(square: Square, sim: Sim, allowSplit = true): 
     let netChannelRise = Math.max(0,
         (square.flow.sedimentation - square.flow.erosion) / constants.UNITS.get('squareToVolume'));
     let gap = lowerDrop - higherDrop;
-    if (gap > distributaryTolerance(volume) + netChannelRise + 1e-9) return single;
-    let maxDrop = Math.max(distributaryMaxDrop(volume), DISTRIBUTARY_FAN_RATIO * incomingDrop);
-    if (lowerDrop - netChannelRise > maxDrop + 1e-9) return single;
+    if (gap > distributaryTolerance(volume, lowerDrop, netChannelRise) + 1e-9) return single;
     let fraction = higherBranchFraction(volume, higherDrop, gap);
     return [
         {square: lower, direction: lowerDirection, fraction: 1 - fraction},
@@ -122,10 +109,8 @@ export class RiverRouting {
                     destinations: riverDestinations(square, sim, options.allowDistributaries !== false),
                 });
             }
+            FlowUtil.clearFlow(square.flow);
         }
-        // Choose every destination before clearing previous-turn edges. A second
-        // pass over the ordered squares avoids any additional snapshot/state.
-        for (let square of this.ordered) FlowUtil.clearFlow(square.flow);
         let seen = new Set<Basin>();
         sim.superBasins.forEach(basin => {
             if (seen.has(basin)) return;

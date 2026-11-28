@@ -1,6 +1,6 @@
 import { Square, SquareUtil } from '../main/components/square';
 import { FlowUtil } from '../main/components/flow';
-import { RiverRouting, riverDestinations, distributaryTolerance, higherBranchFraction, distributaryMaxDrop } from '../main/sim/util/riverRouting';
+import { RiverRouting, riverDestinations, distributaryTolerance, higherBranchFraction } from '../main/sim/util/riverRouting';
 import processOverflowEvent from '../main/sim/util/processOverflowEvent';
 import * as constants from '../main/constant/constant';
 import { SimBase } from '../main/sim/simBase';
@@ -275,22 +275,37 @@ test('overflow resolves receiving basins after their lakes merge', () => {
     expect(otherBasin.processInflow).not.toHaveBeenCalled();
 });
 
-test.each([[50, 0.2], [525, 0.35], [1000, 0.5], [2000, 0.5]])(
-    '%s million m³/year allows a %s m elevation gap', (volume, tolerance) => {
-        expect(distributaryTolerance(volume * 1000000)).toBeCloseTo(tolerance, 12);
+test.each([
+    [50, 0.2, 0.04 / 0.41], [500, 1, 0.4 / 1.3], [5000, 5, 0.8],
+    [5000, 10, 8 / 9], [50000, 10, 8 / 9],
+])('flow %s million m³/year and a %s m drop give the expected gap allowance', (volume, drop, allowance) => {
+    expect(distributaryTolerance(volume * 1000000, drop)).toBeCloseTo(allowance, 12);
+});
+
+test.each([[50, 0.25], [500, 0.5], [5000, 1]])(
+    'flow %s million m³/year approaches a %s m gap ceiling on steep terrain', (volume, ceiling) => {
+        let allowance = distributaryTolerance(volume * 1000000, 1000000, 1);
+        expect(allowance).toBeLessThan(ceiling);
+        expect(allowance).toBeCloseTo(ceiling, 5);
     });
 
-test.each([[49, 0.1, 1], [50, 0.1, 2], [75, 0.1, 2], [99.9, 0.1, 2], [100, 0.2, 2], [100, 0.216, 1], [525, 0.35, 2],
-    [525, 0.351, 1], [1000, 0.5, 2], [1000, 0.501, 1]])(
-    '%s million m³/year with gap %s produces %s destinations', (volume, gap, count) => {
-        let {sim, head, left, right, hold} = distributaryFixture();
-        hold.altitude = 20;
-        head.altitude = 10;
-        head.flow.flowVolume = volume * 1000000;
-        right.altitude = 9;
-        left.altitude = 9 + gap;
-        expect(riverDestinations(head, sim)).toHaveLength(count);
-    });
+test.each([
+    [49, 1, 0.1, 1], [50, 1, 0.190, 2], [50, 1, 0.191, 1],
+    [500, 1, 0.307, 2], [500, 1, 0.309, 1], [500, 10, 0.1, 2],
+    [5000, 10, 0.88, 2], [5000, 10, 8 / 9, 2], [5000, 10, 0.9, 1],
+])('flow %s million m³/year, a %s m drop, and a %s m gap yield %s destinations', (volume, drop, gap, count) => {
+    let {sim, head, left, right, hold} = distributaryFixture();
+    head.altitude = 12;
+    head.flow.flowVolume = volume * 1000000;
+    right.altitude = head.altitude - drop;
+    left.altitude = right.altitude + gap;
+    hold.altitude = 20;
+    expect(riverDestinations(head, sim)).toHaveLength(count);
+});
+
+test('deposition cannot push the gap past 80% of a small downhill drop', () => {
+    expect(distributaryTolerance(5000000000, 0.2, 1)).toBeCloseTo(0.16, 12);
+});
 
 test('higher branch gains share with volume and larger drops approach equality', () => {
     let low = higherBranchFraction(50000000, 0.1, 0.2);
@@ -302,150 +317,48 @@ test('higher branch gains share with volume and larger drops approach equality',
     expect(higherBranchFraction(50000000, 0.1, 0)).toBe(0.5);
 });
 
-test.each([[-0.001, 1], [0, 1], [0.001, 2], [0.5, 2], [0.95, 2], [1, 2]])('split destinations require only a positive drop: %s m', (drop, count) => {
-    let {sim, head, hold, left, right} = distributaryFixture();
-    hold.altitude = 20;
+test.each([[-0.001, 1], [0, 1], [0.001, 2]])('a higher exit with a %s m drop yields %s destinations', (drop, count) => {
+    let {sim, head, left, right, hold} = distributaryFixture();
     head.altitude = 10;
-    right.altitude = 10 - drop - 0.05;
+    hold.altitude = 20;
+    right.altitude = 10 - drop - 0.0005;
     left.altitude = 10 - drop;
     expect(riverDestinations(head, sim)).toHaveLength(count);
 });
 
-test.each([[10000000, 1], [50000000, 1], [100000000, 1.301029995664],
-    [500000000, 2], [5000000000, 3], [50000000000, 3]])(
-    'flow %s permits a maximum drop of %s metres', (volume, expected) => {
-        expect(distributaryMaxDrop(volume)).toBeCloseTo(expected, 10);
-    });
-
-test.each([[100000000, 1.3, 2], [100000000, 1.31, 1], [500000000, 2, 2],
-    [500000000, 2.001, 1], [5000000000, 3, 2], [5000000000, 3.001, 1], [50000000000, 3.001, 1]])(
-    'flow %s and lowest-neighbor drop %s m yield %s destinations', (volume, drop, count) => {
-        let {sim, head, hold, right, left} = distributaryFixture();
-        hold.altitude = 100;
-        head.altitude = 50;
-        head.flow.flowVolume = volume;
-        right.altitude = head.altitude - drop;
-        left.altitude = right.altitude + 0.05;
-        expect(riverDestinations(head, sim)).toHaveLength(count);
-    });
-
 test.each([
-    ['net channel deposition on a flat reach', 10, 1.25, 0.25, 2],
-    ['channel deposition offset by erosion', 10, 1, 1, 1],
-    ['net channel deposition on a steeper reach', 11, 1.25, 0.25, 1],
-])('distributary eligibility after a 1 m bed rise with %s',
-    (_description, elevation, deposited, eroded, count) => {
-        let sim: any = new SimBase(3);
-        sim.superBasins = new Map();
-        sim.altitude = [[elevation, 9.45, 9], [15, 9.4, 8], [14, 7, 6]]
-            .map(row => row.map(height => height / constants.UNITS.get('altitude')));
-        sim.precip = [[0.5, 0, 0], [0, 0, 0], [0, 0, 0]];
-        sim.createMap();
-        let head = sim.map[0][0];
-        let tileArea = constants.UNITS.get('squareToVolume');
-        head.flow.flowVolume = 50000000;
-        head.flow.pendingErosion = 1;
-        head.flow.sedimentation = deposited * tileArea;
-        head.flow.erosion = eroded * tileArea;
+    ['net channel deposition', 1.25, 0.25, 2],
+    ['channel deposition offset by erosion', 1, 1, 1],
+])('distributary eligibility after a 1 m bed rise with %s', (_description, deposited, eroded, count) => {
+    let sim: any = new SimBase(3);
+    sim.superBasins = new Map();
+    sim.altitude = [[10, 9.62, 9], [15, 9.4, 8], [14, 7, 6]]
+        .map(row => row.map(height => height / constants.UNITS.get('altitude')));
+    sim.precip = [[0.5, 0, 0], [0, 0, 0], [0, 0, 0]];
+    sim.createMap();
+    let head = sim.map[0][0];
+    let tileArea = constants.UNITS.get('squareToVolume');
+    head.flow.flowVolume = 50000000;
+    head.flow.pendingErosion = 1;
+    head.flow.sedimentation = deposited * tileArea;
+    head.flow.erosion = eroded * tileArea;
 
-        runTurn(sim);
+    runTurn(sim);
 
-        expect(head.altitude).toBeCloseTo(elevation + 1);
-        expect(head.flow.outFlows).toHaveLength(count);
-    });
-
-test.each([[0, 1], [0.5, 1], [1, 2]])(
-    '%s m of net channel deposition with a 0.85 m exit gap yields %s destinations', (rise, count) => {
-        let {sim, head, left, right} = distributaryFixture();
-        head.altitude = 2.2;
-        left.altitude = 1.85;
-        let tileArea = constants.UNITS.get('squareToVolume');
-        head.flow.sedimentation = (rise + 0.1) * tileArea;
-        head.flow.erosion = 0.1 * tileArea;
-
-        let destinations = riverDestinations(head, sim);
-        expect(destinations).toHaveLength(count);
-        if (count === 2) {
-            expect(destinations.map(destination => destination.square)).toEqual([right, left]);
-            expect(destinations[1].fraction).toBeCloseTo(higherBranchFraction(head.flow.flowVolume, 0.35, 0.85));
-        }
-    });
-
-function fanFixture(drop = 6) {
-    let scene = distributaryFixture();
-    let feeder = scene.sim.map[0][0] as Square;
-    let tributary = scene.sim.map[1][1] as Square;
-    scene.hold.altitude = 100;
-    scene.head.altitude = 10;
-    scene.right.altitude = scene.head.altitude - drop;
-    scene.left.altitude = scene.right.altitude + 0.1;
-    feeder.altitude = 30;
-    feeder.precipitation = 125100;
-    feeder.flow.flowDirection = 4;
-    feeder.flow.flowVolume = 100000000;
-    feeder.flow.outFlows = [{direction: 4, volume: 100000000}];
-    return {...scene, feeder, tributary};
-}
-
-test.each([[7.999, 2], [8, 2], [8.001, 1]])(
-    'a 20 m feeder fall permits a fan fall of %s m: %s destinations', (drop, count) => {
-        let {sim, head} = fanFixture(drop);
-        expect(riverDestinations(head, sim)).toHaveLength(count);
-    });
-
-test('uniform steep flow and steep neighbors without incoming water cannot trigger the fan exception', () => {
-    let {sim, head, feeder} = fanFixture();
-    feeder.altitude = 16;
-    expect(riverDestinations(head, sim)).toHaveLength(1);
-    feeder.altitude = 30;
-    feeder.flow.outFlows = [{direction: 5, volume: 100000000}];
-    expect(riverDestinations(head, sim)).toHaveLength(1);
-});
-
-test.each([[10000000, 1], [110000000, 2]])(
-    'main feeder selection uses incoming branch volume %s, not total neighbor volume', (volume, count) => {
-        let {sim, head, feeder, tributary} = fanFixture();
-        feeder.flow.flowVolume = 500000000;
-        feeder.flow.outFlows = [{direction: 4, volume}, {direction: 5, volume: 500000000 - volume}];
-        tributary.altitude = 16;
-        tributary.flow.outFlows = [{direction: 2, volume: 100000000}];
-        expect(riverDestinations(head, sim)).toHaveLength(count);
-    });
-
-test('fan selection retains previous upstream edges until every destination has been chosen', () => {
-    let {sim, head, feeder, left, right, sink} = fanFixture();
-    let router = new RiverRouting(sim);
-    expect(feeder.flow.outFlows).toEqual([]);
-    let arrivals = router.runWater();
-    expect(head.flow.outFlows).toHaveLength(2);
-    expect(left.flow.flowVolume).toBeGreaterThan(0);
-    expect(right.flow.flowVolume).toBeGreaterThan(0);
-    expect(arrivals.get(sink.basin)).toBeCloseTo(100000000, 6);
-    router.runSediment();
-    let net = ([] as Square[]).concat(...sim.map).reduce((sum, square) => sum + square.flow.pendingErosion, 0);
-    expect(net * constants.UNITS.get('squareToVolume')).toBeCloseTo(0, 6);
-});
-
-test('the fan exception keeps the volume, two-neighbor, and elevation-gap requirements', () => {
-    let {sim, head, left} = fanFixture();
-    head.flow.flowVolume = 49000000;
-    expect(riverDestinations(head, sim)).toHaveLength(1);
-    head.flow.flowVolume = 100000000;
-    left.altitude = head.altitude;
-    expect(riverDestinations(head, sim)).toHaveLength(1);
-    left.altitude = 4.6;
-    expect(riverDestinations(head, sim)).toHaveLength(1);
+    expect(head.altitude).toBeCloseTo(11);
+    expect(head.flow.outFlows).toHaveLength(count);
 });
 
 test('a mismatched lowest pair vetoes splitting even when higher alternatives match', () => {
     let {sim, head, hold, left, right} = distributaryFixture();
     head.altitude = 10;
-    hold.altitude = 9;
+    hold.altitude = 8.5;
+    head.flow.flowDirection = 7;
     right.altitude = 9.3;
     left.altitude = 9.4;
     let destinations = riverDestinations(head, sim);
     expect(destinations).toHaveLength(1);
-    expect(destinations[0].square).toBe(right);
+    expect(destinations[0].square).toBe(hold);
 });
 
 test('one downhill neighbor receives all flow even at high river volume', () => {
@@ -498,7 +411,8 @@ test('split eligibility compares lake surface instead of submerged bed elevation
     expect(riverDestinations(head, sim)).toHaveLength(2);
 });
 
-test.each([[0.4, true], [2, false]])('complete turns with slope %s have splits: %s', (slope, shouldSplit) => {
+test.each([[0.4, 0.025, true], [2, 0.025, true], [6, 2, false]])(
+    'complete turns on terrain with drops of %s m and %s m produce splits: %s', (slope, crossSlope, shouldSplit) => {
     let sim: any = new SimBase(12);
     sim.superBasins = new Map();
     sim.altitude = [];
@@ -507,7 +421,7 @@ test.each([[0.4, true], [2, false]])('complete turns with slope %s have splits: 
         sim.altitude.push([]);
         sim.precip.push([]);
         for (let j = 0; j < sim.size; j++) {
-            sim.altitude[i][j] = (500 + (11 - i) * slope + (11 - j) * 0.025) / 3000;
+            sim.altitude[i][j] = (500 + (11 - i) * slope + (11 - j) * crossSlope) / 3000;
             sim.precip[i][j] = 0;
         }
     }
